@@ -25,6 +25,33 @@ export const resourse = [
     },
 ];
 
+export const resourseExample1 = [
+    {
+        id: "r163",
+        name: "163",
+    },
+    {
+        id: "r164",
+        name: "164",
+    },
+    {
+        id: "r165",
+        name: "165",
+
+    },
+];
+
+export const resourseExample2 = [
+    {
+        id: "rLine1",
+        name: "Line1",
+    },
+    {
+        id: "rLine2",
+        name: "Line2",
+    },
+];
+
 export const events = [
     {
         id: 1,
@@ -114,3 +141,115 @@ export const events2 = [
     },
 
 ];
+
+export const eventsExample1 = [
+    {
+        id: 1,
+        start: "2025-02-02 09:00:00",
+        end: "2025-02-02 09:36:00",
+        resourceId: "r163",
+        title: "Job1",
+        // bgColor: "#47c034",
+        resizable: false,
+        movable: false,
+        startResizable: false,
+    },
+    {
+        id: 2,
+        start: "2025-02-02 09:20:00",
+        end: "2025-02-02 10:12:00",
+        resourceId: "r164",
+        title: "Job2",
+        resizable: false,
+        movable: false,
+        startResizable: false,
+    },
+    {
+        id: 3,
+        start: "2025-02-02 09:40:00",
+        end: "2025-02-02 10:25:00",
+        resourceId: "r165",
+        title: "Job3",
+        resizable: false,
+        movable: false,
+        startResizable: false,
+    },
+
+];
+
+export const eventsExample2 = [
+    {
+        id: 1,
+        start: "2025-02-02 09:00:00",
+        end: "2025-02-02 09:36:00",
+        resourceId: "rLine1",
+        title: "Job1",
+        // bgColor: "#47c034",
+        resizable: false,
+        movable: false,
+        startResizable: false,
+    },
+    {
+        id: 2,
+        start: "2025-02-02 09:20:00",
+        end: "2025-02-02 10:12:00",
+        resourceId: "rLine2",
+        title: "Job2",
+        resizable: false,
+        movable: false,
+        startResizable: false,
+    },
+    {
+        id: 3,
+        start: "2025-02-02 09:40:00",
+        end: "2025-02-02 10:25:00",
+        resourceId: "rLine1",
+        title: "Job3",
+        resizable: false,
+        movable: false,
+        startResizable: false,
+    },
+];
+
+export const eventsJson = [
+    {
+        ID: "P1570С30",
+        HardConstraintsPenalty: 0,
+        MediumConstraintsPenalty1: -100,
+        SoftConstraintsPenalty: -767,
+        Projects: [163,164,165],
+        Resources: ["Line1", "Line2"],
+        AllocationList: [
+            {
+                ID: "Allocation1",
+                PID: 163,
+                JID: "Job1",
+                StartDate: "2025-02-02 09:00:00",
+                EndDate: "2025-02-02 09:36:00",
+                Duration: 36,
+                ResourceRequirementList: ["Line1"],
+                PredAllocationList: []
+            },
+            {
+                ID: "Allocation2",
+                PID: "164",
+                JID: "Job1",
+                StartDate: "2025-02-02 09:20:00",
+                EndDate: "2025-02-02 10:12:00",
+                Duration: 36,
+                ResourceRequirementList: ["Line2"],
+                PredAllocationList: []
+            },
+            {
+                ID: "Allocation3",
+                PID: "165",
+                JID: "Job1",
+                StartDate: "2025-02-02 09:40:00",
+                EndDate: "2025-02-02 10:25:00",
+                Duration: 36,
+                ResourceRequirementList: ["Line1"],
+                PredAllocationList: []
+            }
+        ]
+    }
+]

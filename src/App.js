@@ -8,7 +8,15 @@ import "./App.css";
 
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend'
-import {resourse, events, events2} from "./data/data";
+import {
+    resourse,
+    events,
+    events2,
+    resourseExample2,
+    resourseExample1,
+    eventsExample2,
+    eventsExample1
+} from "./data/data";
 import {useEffect, useState} from "react";
 
 moment.updateLocale('ru', {
@@ -58,8 +66,8 @@ function App() {
     useEffect(() => {
 
         configScheduler();
-        schedulerData.setResources(resourse);
-        schedulerData.setEvents(events);
+        schedulerData.setResources(resourseExample1);
+        schedulerData.setEvents(eventsExample1);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
 
@@ -68,7 +76,7 @@ function App() {
     function configScheduler() {
         schedulerData.setSchedulerLocale("ru");
         schedulerData.setCalendarPopoverLocale("by_BY"); // this uses antd [List of supported locales](https://ant.design/docs/react/i18n#supported-languages)
-        schedulerData.setMinuteStep(15);
+        schedulerData.setMinuteStep(10);
         // schedulerData.setEvents(events);
         schedulerData.config.resourceName = "Название";
         // schedulerData.config.schedulerWidth = '1450';
@@ -101,14 +109,16 @@ function App() {
 
     const prevClick = (schedulerData) => {
         schedulerData.prev();
-        schedulerData.setEvents(events);
+        isDisplayByHardware? schedulerData.setEvents(eventsExample2) : schedulerData.setEvents(eventsExample1);
+        // schedulerData.setEvents(events);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
     };
 
     const nextClick = (schedulerData) => {
         schedulerData.next();
-        schedulerData.setEvents(events);
+        isDisplayByHardware? schedulerData.setEvents(eventsExample2) : schedulerData.setEvents(eventsExample1);
+        // schedulerData.setEvents(events);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
     };
@@ -117,7 +127,8 @@ function App() {
         schedulerData.setViewType(view.viewType);
         setCurrentViewType(view.viewType);
         schedulerData.config.customCellWidth = view.viewType === ViewType.Custom1 ? 180 : 80;
-        schedulerData.setEvents(events);
+        isDisplayByHardware? schedulerData.setEvents(eventsExample2) : schedulerData.setEvents(eventsExample1);
+        // schedulerData.setEvents(events);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
 
@@ -126,7 +137,8 @@ function App() {
 
     const onSelectDate = (schedulerData, date) => {
         schedulerData.setDate(date);
-        schedulerData.setEvents(events);
+        isDisplayByHardware? schedulerData.setEvents(eventsExample2) : schedulerData.setEvents(eventsExample1);
+        // schedulerData.setEvents(events);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
 
@@ -140,7 +152,8 @@ function App() {
     const onScrollRight = (schedulerData, schedulerContent, maxScrollLeft) => {
         if (schedulerData.ViewTypes === ViewType.Day) {
             schedulerData.next();
-            schedulerData.setEvents(events);
+            isDisplayByHardware? schedulerData.setEvents(eventsExample2) : schedulerData.setEvents(eventsExample1);
+            // schedulerData.setEvents(events);
             setViewModel(schedulerData);
 
             schedulerContent.scrollLeft = maxScrollLeft - 10;
@@ -151,7 +164,8 @@ function App() {
     const onScrollLeft = (schedulerData, schedulerContent, maxScrollLeft) => {
         if (schedulerData.ViewTypes === ViewType.Day) {
             schedulerData.prev();
-            schedulerData.setEvents(events);
+            isDisplayByHardware? schedulerData.setEvents(eventsExample2) : schedulerData.setEvents(eventsExample1);
+            // schedulerData.setEvents(events);
             setViewModel(schedulerData);
 
             schedulerContent.scrollLeft = 10;
@@ -190,8 +204,8 @@ function App() {
 
 
         let schedulerDataOld = viewModel;
-        schedulerDataOld.setResources(resourse);
-        schedulerDataOld.setEvents(events2);
+        schedulerDataOld.setResources(resourseExample2);
+        schedulerDataOld.setEvents(eventsExample2);
         setViewModel(schedulerDataOld);
         setRenderCounter(prevState => !renderCounter);
     }
@@ -200,8 +214,8 @@ function App() {
         setIsDisplayByHardware(false);
 
         let schedulerDataOld = viewModel;
-        schedulerDataOld.setResources(resourse);
-        schedulerDataOld.setEvents(events);
+        schedulerDataOld.setResources(resourseExample1);
+        schedulerDataOld.setEvents(eventsExample1);
         setViewModel(schedulerDataOld);
         setRenderCounter(prevState => !renderCounter);
     }
