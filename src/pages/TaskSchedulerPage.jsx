@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 import moment from 'moment';
 
 
-import "./App.css";
+import "./../App.css";
 
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend'
@@ -16,7 +16,7 @@ import {
     resourseExample1,
     eventsExample2,
     eventsExample1
-} from "./data/data";
+} from "./../data/data";
 import {useEffect, useState} from "react";
 
 moment.updateLocale('ru', {
@@ -26,7 +26,7 @@ moment.updateLocale('ru', {
 });
 
 
-function App() {
+function TaskSchedulerPage() {
 
     const [isDisplayByHardware, setIsDisplayByHardware] = useState(false);
 
@@ -298,4 +298,4 @@ function App() {
     );
 }
 
-export default App;
+export default TaskSchedulerPage;
