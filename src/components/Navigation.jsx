@@ -1,12 +1,12 @@
 import React, {useContext, useEffect, useRef, useState} from 'react'
 import {Link, useNavigate} from "react-router-dom";
-// import {Context} from "../index";
 import {arrowDown, arrowUp} from "../data/icons";
+import {Context} from "../index";
 
 
 
 export function Navigation(props) {
-    // const {store} = useContext(Context);
+    const {store} = useContext(Context);
     const navigate = useNavigate();
 
     const [dropdownSettings, setDropdownSettings] = useState(false);
@@ -89,21 +89,24 @@ export function Navigation(props) {
             </div>
 
             <div className="flex h-10 w-3/12 lg:h-auto lg:w-auto justify-end items-center">
-                {/*<div className="flex flex-col p-1 lg:p-4 text-white">*/}
-                {/*    <span className="text-lg text-center">{store.user.username}</span>*/}
-                {/*    /!*<span className="text-sm text-center"></span>*!/*/}
-                {/*</div>*/}
+                <div className="flex h-10 w-3/12 lg:h-auto lg:w-auto justify-end items-center">
+                    <div className="flex flex-col p-1 lg:p-4 text-white">
+                        {store.isAuth &&
+                            <span className="text-lg text-center">{store.user.username}</span>
+                        }
+                        {!store.isAuth &&
+                            <span className="text-lg text-center">Гость</span>
+                        }
+                    </div>
 
-                {/*<div>*/}
-                {/*    {store.isAuth &&*/}
-                {/*        <button className="pr-2 text-white pt-2" onClick={()=>store.logout()}>*/}
-                {/*            <svg width="25px" height="25px" viewBox="0 0 24 24" fill="#ffffff"><g strokeWidth="0"></g><g strokeLinecap="round" strokeLinejoin="round"></g><g> <g> <path fill="none" d="M0 0h24v24H0z"></path> <path d="M5 22a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v3h-2V4H6v16h12v-2h2v3a1 1 0 0 1-1 1H5zm13-6v-3h-7v-2h7V8l5 4-5 4z"></path> </g> </g></svg>*/}
-                {/*        </button>*/}
-                {/*    }*/}
-                {/*</div>*/}
+                    <div>
+                        {store.isAuth &&
+                            <button className="pr-2 text-white pt-2" onClick={()=>store.logout()}>
+                                <svg width="25px" height="25px" viewBox="0 0 24 24" fill="#ffffff"><g strokeWidth="0"></g><g strokeLinecap="round" strokeLinejoin="round"></g><g> <g> <path fill="none" d="M0 0h24v24H0z"></path> <path d="M5 22a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v3h-2V4H6v16h12v-2h2v3a1 1 0 0 1-1 1H5zm13-6v-3h-7v-2h7V8l5 4-5 4z"></path> </g> </g></svg>
+                            </button>
+                        }
+                    </div>
 
-                <div className="flex flex-col p-1 lg:p-6 text-white">
-                    <span className="text-lg text-center">Гость</span>
                 </div>
 
             </div>
