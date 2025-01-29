@@ -26,6 +26,7 @@ export function Navigation(props) {
 
     useEffect(() => {
         document.addEventListener("mousedown", handleClickOutside);
+        console.log(store.isAuth)
         return () => document.removeEventListener("mousedown",  handleClickOutside);
     }, []);
 
@@ -52,37 +53,7 @@ export function Navigation(props) {
 
 
 
-                    <button disabled={false} onClick={() => navigate("/pricats")}>Документы</button>
-                    <div>
-                        <div className="flex flex-row items-center">
-                            <button disabled={true}>Статистика</button>
-                            <div className="pl-1 pt-1">
-                                {arrowUp}
-                            </div>
-                        </div>
-                    </div>
 
-                    <div ref={container}>
-                        <div className="flex flex-row items-center" >
-                            <button disabled={false} onClick={() => setDropdownSettings(prev => !prev)}>Настройки</button>
-                            <div className="pl-1 pt-1" onClick={() => setDropdownSettings(prev => !prev)}>
-                                {dropdownSettings && arrowDown}
-                                {!dropdownSettings && arrowUp}
-                            </div>
-                        </div>
-
-                        {dropdownSettings &&
-                            <div className="absolute z-50 text-xs py-3 mt-2 border-1 rounded shadow bg-white text-black">
-                                <ul className="">
-                                    <li className="px-3 py-1 hover:bg-gray-200 hover:text-white ">Моя организация</li>
-                                    <li className="px-3 py-1 hover:bg-blue-700 hover:text-white " onClick={() => navigate("/settings/profile")}>Мой профиль</li>
-                                    <li className="px-3 py-1 hover:bg-gray-200 hover:text-white ">Контрагенты</li>
-                                    <li className="px-3 py-1 hover:bg-gray-200 hover:text-white ">Управление пользователями</li>
-                                    <li className="px-3 py-1 hover:bg-gray-200 hover:text-white ">Уведомления</li>
-                                </ul>
-                            </div>
-                        }
-                    </div>
 
 
                 </div>
@@ -102,6 +73,11 @@ export function Navigation(props) {
                     <div>
                         {store.isAuth &&
                             <button className="pr-2 text-white pt-2" onClick={()=>store.logout()}>
+                                <svg width="25px" height="25px" viewBox="0 0 24 24" fill="#ffffff"><g strokeWidth="0"></g><g strokeLinecap="round" strokeLinejoin="round"></g><g> <g> <path fill="none" d="M0 0h24v24H0z"></path> <path d="M5 22a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v3h-2V4H6v16h12v-2h2v3a1 1 0 0 1-1 1H5zm13-6v-3h-7v-2h7V8l5 4-5 4z"></path> </g> </g></svg>
+                            </button>
+                        }
+                        {!store.isAuth &&
+                            <button className="pr-2 text-white pt-2" onClick={()=>navigate("/login")}>
                                 <svg width="25px" height="25px" viewBox="0 0 24 24" fill="#ffffff"><g strokeWidth="0"></g><g strokeLinecap="round" strokeLinejoin="round"></g><g> <g> <path fill="none" d="M0 0h24v24H0z"></path> <path d="M5 22a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v3h-2V4H6v16h12v-2h2v3a1 1 0 0 1-1 1H5zm13-6v-3h-7v-2h7V8l5 4-5 4z"></path> </g> </g></svg>
                             </button>
                         }

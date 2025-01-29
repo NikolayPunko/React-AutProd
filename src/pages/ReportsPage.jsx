@@ -3,10 +3,10 @@ import {LeftNavigation} from "../components/leftNavigation/LeftNavigation";
 import ReportEditor from "../components/reportsConstruct/ReportEditor";
 import {GrapesjsReact} from "grapesjs-react";
 
-import 'grapesjs/dist/css/grapes.min.css';
+// import 'grapesjs/dist/css/grapes.min.css';
 import gjspresetwebpage from 'grapesjs-preset-webpage';
 import gjsblockbasic from 'grapesjs-blocks-basic'
-import grapesjs from "grapesjs";
+// import grapesjs from "grapesjs";
 import GrapesEditor from "../components/GrapesEditor";
 
 
@@ -20,17 +20,19 @@ const jsonData = {
 
 function ReportsPage() {
 
-     function insertJsonData (jsonData) {
-        const editor = grapesjs.getEditor();
-        const components = editor.getComponents();
-        components.forEach(component => {
-            if (component.get('type') === 'text') {
-                const content = component.get('content');
-                const updatedContent = content.replace(/{{(.*?)}}/g, (match, key) => jsonData[key.trim()] || '');
-                component.set('content', updatedContent);
-            }
-        });
-    };
+    //  function insertJsonData (jsonData) {
+    //     const editor = grapesjs.getEditor();
+    //     const components = editor.getComponents();
+    //     components.forEach(component => {
+    //         if (component.get('type') === 'text') {
+    //             const content = component.get('content');
+    //             const updatedContent = content.replace(/{{(.*?)}}/g, (match, key) => jsonData[key.trim()] || '');
+    //             component.set('content', updatedContent);
+    //         }
+    //     });
+    // };
+
+
     return (
         <>
 
@@ -50,7 +52,7 @@ function ReportsPage() {
 
                     {/*</div>*/}
 
-                    <h1>Report Editor</h1>
+                    {/*<h1>Report Editor</h1>*/}
                     {/*<GrapesjsReact*/}
                     {/*    id='grapesjs-react'*/}
                     {/*    plugins={[*/}
@@ -58,22 +60,24 @@ function ReportsPage() {
                     {/*        gjsblockbasic*/}
                     {/*    ]}*/}
                     {/*    storageManager={false}*/}
-                    {/*    panels={null}*/}
-                    {/*   */}
+                    {/*    // panels={null}*/}
+
                     {/*/>;*/}
 
 
-                    <div>
-                        <h1>Конструктор отчетов</h1>
-                        <GrapesEditor />
+                    {/*<div>*/}
+                    {/*    <h1>Конструктор отчетов</h1>*/}
+                    {/*    <GrapesEditor />*/}
 
-                        <button onClick={() => {
-                            // const jsonData = JSON.parse(document.getElementById('json-input').value);
-                            insertJsonData(jsonData);
-                        }}>
-                            Вставить данные
-                        </button>
-                    </div>
+                    {/*    /!*<button onClick={() => {*!/*/}
+                    {/*    /!*    // const jsonData = JSON.parse(document.getElementById('json-input').value);*!/*/}
+                    {/*    /!*    insertJsonData(jsonData);*!/*/}
+                    {/*    /!*}}>*!/*/}
+                    {/*    /!*    Вставить данные*!/*/}
+                    {/*    /!*</button>*!/*/}
+                    {/*</div>*/}
+
+                    <ReportEditor/>
 
 
 

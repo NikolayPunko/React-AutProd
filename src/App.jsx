@@ -15,7 +15,7 @@ function App() {
     const [isCheckAuth, setIsCheckAuth] = useState(false);
 
     useEffect(() => {
-        if (sessionStorage.getItem('token2')) {
+        if (sessionStorage.getItem('tokenAutomationProduction')) {
             store.checkAuth().then(() => setIsCheckAuth(true));
         } else {
             setIsCheckAuth(true)
@@ -29,9 +29,9 @@ function App() {
                 <Routes>
 
                     <Route path="/" element={<ReportsPage/>}/>
-
+                    <Route path="/scheduler" element={<TaskSchedulerPage/>}/>
                     <Route path="/" element={<PrivateRoute  />}>
-                        <Route path="/scheduler" element={<TaskSchedulerPage/>}/>
+
                     </Route>
 
 

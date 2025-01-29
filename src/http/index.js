@@ -1,7 +1,7 @@
 import axios from "axios";
 
-export const API_URL = 'http://localhost:8080'
-// export const API_URL = 'https://10.35.0.4:8080'
+export const API_URL = 'http://localhost:7474'
+// export const API_URL = 'https://10.35.0.4:7474'
 
 const $api = axios.create({
     withCredentials: true,
@@ -9,8 +9,8 @@ const $api = axios.create({
 })
 
 $api.interceptors.request.use((config) => {
-    if(sessionStorage.getItem('token')!==null)
-    config.headers.Authorization = `Bearer ${sessionStorage.getItem('token')}`
+    if(sessionStorage.getItem('tokenAutomationProduction')!==null)
+    config.headers.Authorization = `Bearer ${sessionStorage.getItem('tokenAutomationProduction')}`
     return config;
 })
 

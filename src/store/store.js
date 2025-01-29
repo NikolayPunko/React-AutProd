@@ -23,8 +23,8 @@ export default class Store {
         this.isAuthInProgress = true;
         try {
             const response = await AuthService.login(username,password);
-            // console.log(response)
-            sessionStorage.setItem('token', response.data.uuid);
+            console.log(response)
+            sessionStorage.setItem('tokenAutomationProduction', response.data.uuid);
             await this.checkAuth()
         } catch (e){
             console.log(e.response?.data?.message)
@@ -36,7 +36,7 @@ export default class Store {
     async logout(){
         try {
             // const response = await AuthService.logout(); //не реализовано на сервере
-            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('tokenAutomationProduction');
             this.setAuth(false);
             this.setUser({});
         } catch (e){

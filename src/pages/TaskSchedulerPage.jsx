@@ -9,15 +9,16 @@ import "./../App.css";
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend'
 import {
-    resourse,
-    events,
-    events2,
-    resourseExample2,
-    resourseExample1,
-    eventsExample2,
-    eventsExample1
+    // resourse,
+    // events,
+    // events2,
+    // resourseExample2,
+    // resourseExample1,
+    // eventsExample2,
+    // eventsExample1
 } from "./../data/data";
 import {useEffect, useState} from "react";
+import SchedulerService, {hardware, party, planByHardware, planByParty} from "../services/SchedulerService";
 
 moment.updateLocale('ru', {
     week: {
@@ -35,11 +36,16 @@ function TaskSchedulerPage() {
     const stylePartyBut = isDisplayByHardware ? "" : " bg-blue-600 text-white";
     const styleHardwareBut = isDisplayByHardware ? " bg-blue-600 text-white" : "";
 
+    const [party, setParty] = useState([]);
+    const [planByParty, setPlanByParty] = useState([]);
+    const [hardware, setHardware] = useState([]);
+    const [planByHardware, setPlanByHardware] = useState([]);
+
 
     const schedulerData = new SchedulerData(
         new dayjs().format(DATE_FORMAT),
         currentViewType, false, false, {
-            customCellWidth : '180',
+            customCellWidth: '180',
             views: [
                 {viewName: 'День', viewType: ViewType.Day},
                 // {viewName: 'Неделя', viewType: ViewType.Week},
@@ -65,13 +71,25 @@ function TaskSchedulerPage() {
 
     useEffect(() => {
 
+
+        setParty(SchedulerService.parseParty());
+        setHardware(SchedulerService.parseHardware());
+        setPlanByParty(SchedulerService.parsePlanByParty());
+        setPlanByHardware(SchedulerService.parsePlanByHardware());
+
         configScheduler();
-        schedulerData.setResources(resourseExample1);
-        schedulerData.setEvents(eventsExample1);
+        schedulerData.setResources(party);
+        schedulerData.setEvents(planByParty);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
 
+
     }, []);
+
+    useEffect(() => {
+        schedulerData.setResources(party);
+        schedulerData.setEvents(planByParty);
+    }, [party,planByHardware])
 
     function configScheduler() {
         schedulerData.setSchedulerLocale("ru");
@@ -109,7 +127,7 @@ function TaskSchedulerPage() {
 
     const prevClick = (schedulerData) => {
         schedulerData.prev();
-        isDisplayByHardware? schedulerData.setEvents(eventsExample2) : schedulerData.setEvents(eventsExample1);
+        isDisplayByHardware ? schedulerData.setEvents(planByHardware) : schedulerData.setEvents(planByParty);
         // schedulerData.setEvents(events);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
@@ -117,7 +135,7 @@ function TaskSchedulerPage() {
 
     const nextClick = (schedulerData) => {
         schedulerData.next();
-        isDisplayByHardware? schedulerData.setEvents(eventsExample2) : schedulerData.setEvents(eventsExample1);
+        isDisplayByHardware ? schedulerData.setEvents(planByHardware) : schedulerData.setEvents(planByParty);
         // schedulerData.setEvents(events);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
@@ -127,7 +145,7 @@ function TaskSchedulerPage() {
         schedulerData.setViewType(view.viewType);
         setCurrentViewType(view.viewType);
         schedulerData.config.customCellWidth = view.viewType === ViewType.Custom1 ? 180 : 80;
-        isDisplayByHardware? schedulerData.setEvents(eventsExample2) : schedulerData.setEvents(eventsExample1);
+        isDisplayByHardware ? schedulerData.setEvents(planByHardware) : schedulerData.setEvents(planByParty);
         // schedulerData.setEvents(events);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
@@ -137,7 +155,7 @@ function TaskSchedulerPage() {
 
     const onSelectDate = (schedulerData, date) => {
         schedulerData.setDate(date);
-        isDisplayByHardware? schedulerData.setEvents(eventsExample2) : schedulerData.setEvents(eventsExample1);
+        isDisplayByHardware ? schedulerData.setEvents(planByHardware) : schedulerData.setEvents(planByHardware);
         // schedulerData.setEvents(events);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
@@ -152,7 +170,7 @@ function TaskSchedulerPage() {
     const onScrollRight = (schedulerData, schedulerContent, maxScrollLeft) => {
         if (schedulerData.ViewTypes === ViewType.Day) {
             schedulerData.next();
-            isDisplayByHardware? schedulerData.setEvents(eventsExample2) : schedulerData.setEvents(eventsExample1);
+            isDisplayByHardware ? schedulerData.setEvents(planByHardware) : schedulerData.setEvents(planByParty);
             // schedulerData.setEvents(events);
             setViewModel(schedulerData);
 
@@ -164,7 +182,7 @@ function TaskSchedulerPage() {
     const onScrollLeft = (schedulerData, schedulerContent, maxScrollLeft) => {
         if (schedulerData.ViewTypes === ViewType.Day) {
             schedulerData.prev();
-            isDisplayByHardware? schedulerData.setEvents(eventsExample2) : schedulerData.setEvents(eventsExample1);
+            isDisplayByHardware ? schedulerData.setEvents(planByHardware) : schedulerData.setEvents(planByParty);
             // schedulerData.setEvents(events);
             setViewModel(schedulerData);
 
@@ -204,8 +222,8 @@ function TaskSchedulerPage() {
 
 
         let schedulerDataOld = viewModel;
-        schedulerDataOld.setResources(resourseExample2);
-        schedulerDataOld.setEvents(eventsExample2);
+        schedulerDataOld.setResources(hardware);
+        schedulerDataOld.setEvents(planByHardware);
         setViewModel(schedulerDataOld);
         setRenderCounter(prevState => !renderCounter);
     }
@@ -214,8 +232,8 @@ function TaskSchedulerPage() {
         setIsDisplayByHardware(false);
 
         let schedulerDataOld = viewModel;
-        schedulerDataOld.setResources(resourseExample1);
-        schedulerDataOld.setEvents(eventsExample1);
+        schedulerDataOld.setResources(party);
+        schedulerDataOld.setEvents(planByParty);
         setViewModel(schedulerDataOld);
         setRenderCounter(prevState => !renderCounter);
     }
