@@ -101,12 +101,6 @@ function TaskSchedulerPage() {
 
     }, []);
 
-    useEffect(() => {
-        console.log("useEffect")
-        let schedulerDataOld = viewModel;
-        schedulerDataOld.setResources(party);
-        schedulerDataOld.setEvents(planByParty);
-    }, [party,planByHardware])
 
     function configScheduler() {
         schedulerData.setSchedulerLocale("ru");
@@ -172,7 +166,7 @@ function TaskSchedulerPage() {
 
     const onSelectDate = (schedulerData, date) => {
         schedulerData.setDate(date);
-        isDisplayByHardware ? schedulerData.setEvents(planByHardware) : schedulerData.setEvents(planByHardware);
+        isDisplayByHardware ? schedulerData.setEvents(planByHardware) : schedulerData.setEvents(planByParty);
         // schedulerData.setEvents(events);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);

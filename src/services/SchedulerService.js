@@ -33,7 +33,7 @@ export default class SchedulerService {
             party[i].id = obj.Projects[i];
             party[i].name = obj.Projects[i];
         }
-        console.log(party)
+        // console.log(party)
         return party;
     }
 
@@ -44,7 +44,7 @@ export default class SchedulerService {
             hardware[i].id = obj.Resources[i];
             hardware[i].name = obj.Resources[i];
         }
-        console.log(hardware)
+        // console.log(hardware)
         return hardware;
     }
 
@@ -58,7 +58,7 @@ export default class SchedulerService {
             planByParty[i].title = obj.AllocationList[i].JID;
             planByParty[i].resourceId = obj.AllocationList[i].PID;
         }
-        console.log(planByParty)
+        // console.log(planByParty)
         return planByParty;
     }
 
@@ -72,7 +72,7 @@ export default class SchedulerService {
             planByHardware[i].title = obj.AllocationList[i].JID;
             planByHardware[i].resourceId = obj.AllocationList[i].ResourceRequirementList.length===0? "": obj.AllocationList[i].ResourceRequirementList[0];
         }
-        console.log(planByHardware)
+        // console.log(planByHardware)
         return planByHardware;
     }
 

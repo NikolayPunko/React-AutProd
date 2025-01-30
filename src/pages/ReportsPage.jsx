@@ -1,13 +1,9 @@
 import {Navigation} from "../components/Navigation";
 import {LeftNavigation} from "../components/leftNavigation/LeftNavigation";
 import ReportEditor from "../components/reportsConstruct/ReportEditor";
-import {GrapesjsReact} from "grapesjs-react";
-
-// import 'grapesjs/dist/css/grapes.min.css';
-import gjspresetwebpage from 'grapesjs-preset-webpage';
-import gjsblockbasic from 'grapesjs-blocks-basic'
-// import grapesjs from "grapesjs";
 import GrapesEditor from "../components/GrapesEditor";
+
+
 
 
 const jsonData = {
