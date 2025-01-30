@@ -26,7 +26,7 @@ const exampleTask = {
 
 export default class SchedulerService {
 
-    static parseParty() {
+    static async parseParty() {
         const obj = JSON.parse(eventsJson2);
         for (let i = 0; i < obj.Projects.length; i++) {
             party[i] =  Object.assign({}, exampleResourse);
@@ -37,7 +37,7 @@ export default class SchedulerService {
         return party;
     }
 
-    static parseHardware() {
+    static async parseHardware() {
         const obj = JSON.parse(eventsJson2);
         for (let i = 0; i < obj.Resources.length; i++) {
             hardware[i] =  Object.assign({}, exampleResourse);
@@ -48,7 +48,7 @@ export default class SchedulerService {
         return hardware;
     }
 
-    static parsePlanByParty() {
+    static async parsePlanByParty() {
         const obj = JSON.parse(eventsJson2);
         for (let i = 0; i < obj.AllocationList.length; i++) {
             planByParty[i] = Object.assign({}, exampleTask);;
@@ -62,7 +62,7 @@ export default class SchedulerService {
         return planByParty;
     }
 
-    static parsePlanByHardware() {
+    static async parsePlanByHardware() {
         const obj = JSON.parse(eventsJson2);
         for (let i = 0; i < obj.AllocationList.length; i++) {
             planByHardware[i] = Object.assign({}, exampleTask);;

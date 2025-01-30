@@ -72,10 +72,25 @@ function TaskSchedulerPage() {
     useEffect(() => {
 
 
-        setParty(SchedulerService.parseParty());
-        setHardware(SchedulerService.parseHardware());
-        setPlanByParty(SchedulerService.parsePlanByParty());
-        setPlanByHardware(SchedulerService.parsePlanByHardware());
+       SchedulerService.parseParty().then((e)=>{
+           setParty(e);
+           viewModel.setResources(e);
+       });
+
+        SchedulerService.parsePlanByParty().then((e)=>{
+            setPlanByParty(e);
+            viewModel.setEvents(e);
+        });
+
+        SchedulerService.parseHardware().then((e)=>{
+            setHardware(e);
+        });
+
+        SchedulerService.parsePlanByHardware().then((e)=>{
+            setPlanByHardware(e);
+        });
+
+
 
         configScheduler();
         schedulerData.setResources(party);
@@ -87,8 +102,10 @@ function TaskSchedulerPage() {
     }, []);
 
     useEffect(() => {
-        schedulerData.setResources(party);
-        schedulerData.setEvents(planByParty);
+        console.log("useEffect")
+        let schedulerDataOld = viewModel;
+        schedulerDataOld.setResources(party);
+        schedulerDataOld.setEvents(planByParty);
     }, [party,planByHardware])
 
     function configScheduler() {
