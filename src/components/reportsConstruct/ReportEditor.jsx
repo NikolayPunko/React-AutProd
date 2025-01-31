@@ -62,7 +62,7 @@ const ReportEditor = () => {
             canvasElement.style.marginTop = '20px';
             canvasElement.style.backgroundColor = '#949494';
             canvasElement.style.border = '5px';
-            canvasElement.style.backgroundColor = '#9a9a9a';
+
 
             editor.Canvas.getBody().style.width = '794px';
             editor.Canvas.getBody().style.height = '1123px';
@@ -70,7 +70,7 @@ const ReportEditor = () => {
             editor.Canvas.getBody().style.border = '5px';
             editor.Canvas.getBody().style.backgroundColor = '#9a9a9a';
             // editor.Canvas.getBody().style.padding = '20px';
-            editor.Canvas.getBody().style.backgroundColor = '#f1f1f1';
+            editor.Canvas.getBody().style.backgroundColor = '#ffffff';
 
             const deviceButton = document.querySelector('.gjs-device-selector');
             if (deviceButton) {
@@ -90,7 +90,7 @@ const ReportEditor = () => {
         //     canvas.style.border = "1px solid #ccc"
         //
         // }, 500);
-        editor.setComponents(`<h1>gggggggg</h1><p>dddddddddd</p>`);
+        editor.setComponents(`<h1 style="text-align:center;">Заголовок h1</h1>`);
 
 
 
@@ -114,6 +114,26 @@ const ReportEditor = () => {
                 className: 'fa fa-file-pdf-o',
                 command: () => exportPDF(editor),
                 attributes: {title: 'Export PDF'},
+            },
+
+            {
+                id: 'export-json',
+                className: 'fa fa-file-pdf-o',
+                command: () => exportToJSON(editor),
+                attributes: {title: 'Export JSON'},
+            },
+            {
+                id: 'import-json',
+                className: 'fa fa-upload',
+                command: () => handleImportJSON(editor),
+                attributes: {title: 'Import JSON'},
+            },
+            {
+                id: 'print',
+                // className: 'fa fa-file-pdf-o',
+                className: 'fa fa-print',
+                command: () => handlePrintReport(editor),
+                attributes: {title: 'Print'},
             },
 
         ]);
@@ -166,42 +186,32 @@ const ReportEditor = () => {
     // Функция экспорта PDF
     const exportPDF = async (editor) => {
 
-        // Получаем HTML контент из редактора
-        // Получаем HTML контент
-        const htmlContent = editor.getHtml();
+        const htmlContent = editor.getHtml(); // Получаем HTML
+        const cssContent = editor.getCss(); // Получаем CSS
 
-        // Получаем CSS, включая классы
-        const cssContent = editor.getCss();
+        // Создаем временный контейнер для рендеринга перед экспортом
+        const tempContainer = document.createElement("div");
+        tempContainer.innerHTML = `<style>${cssContent}</style>${htmlContent}`;
+        tempContainer.style.width = "210mm"; // A4 ширина
+        tempContainer.style.minHeight = "297mm"; // A4 высота
+        tempContainer.style.padding = "20px";
 
-        // Создаем финальный HTML с добавленными стилями
-        const finalHtml = `
-      <html>
-        <head>
-          <style>
-            ${cssContent} <!-- Вставляем все стили -->
-          </style>
-        </head>
-        <body>
-          ${htmlContent} <!-- Вставляем HTML контент -->
-        </body>
-      </html>
-    `;
+        document.body.appendChild(tempContainer); // Временно добавляем в DOM
 
-
-
-        const doc = new jsPDF('p', 'mm', 'a4'); // Инициализация jsPDF для формата A4
-
-        // Добавляем HTML контент в PDF
-        doc.html(finalHtml, {
-            callback: function (doc) {
-                // Сохраняем PDF
-                doc.save('document.pdf');
-            },
-            x: 10,
-            y: 10,
-            width: 180, // Ширина страницы для контента
-            windowWidth: 800, // Окно для расчета размеров
-        });
+        // Конвертируем в PDF
+        html2pdf()
+            .set({
+                margin: 10,
+                filename: "report.pdf",
+                image: { type: "jpeg", quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+            })
+            .from(tempContainer)
+            .save()
+            .then(() => {
+                document.body.removeChild(tempContainer); // Удаляем контейнер после экспорта
+            });
 
 
     };
@@ -217,6 +227,73 @@ const ReportEditor = () => {
 
         // Экспортируем в Excel
         XLSX.writeFile(wb, "report.xlsx");
+    };
+
+    const exportToJSON = (editor) => {
+        const data = editor.getProjectData(); // Получаем данные редактора
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "report.json";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const handleImportJSON = (editor) => {
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = ".json";
+        fileInput.style.display = "none";
+
+        fileInput.addEventListener("change", (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const jsonData = JSON.parse(e.target.result);
+                    editor.loadData(jsonData); // Загружаем JSON в редактор
+                } catch (error) {
+                    alert("Ошибка загрузки JSON");
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        document.body.appendChild(fileInput);
+        fileInput.click();
+        document.body.removeChild(fileInput);
+    };
+
+    const handlePrintReport = (editor) => {
+
+        const htmlContent = editor.getHtml(); // Получаем HTML
+        const cssContent = editor.getCss(); // Получаем CSS
+
+        // Создаем временный iframe
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) return;
+
+        // Заполняем iframe контентом
+        printWindow.document.write(`
+      <html>
+        <head>
+          <style>${cssContent}</style>
+        </head>
+        <body>${htmlContent}</body>
+      </html>
+    `);
+
+        // Ждём рендеринг и вызываем печать
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 500);
     };
 
 
