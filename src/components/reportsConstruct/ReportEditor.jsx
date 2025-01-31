@@ -1,5 +1,5 @@
 import React, {useEffect, useRef} from 'react';
-
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 import * as XLSX from "xlsx";
 import html2canvas from "html2canvas";
@@ -99,7 +99,7 @@ const ReportEditor = () => {
         editor.Panels.addButton('options', [
             {
                 id: 'export-excel',
-                className: 'fa fa-file-excel-o',
+                className: 'fa fa-file-excel',
                 command: () => exportExcel(editor),
                 attributes: {title: 'Export Excel'},
             },
@@ -111,14 +111,14 @@ const ReportEditor = () => {
             },
             {
                 id: 'export-pdf',
-                className: 'fa fa-file-pdf-o',
+                className: 'fa fa-file-pdf',
                 command: () => exportPDF(editor),
                 attributes: {title: 'Export PDF'},
             },
 
             {
                 id: 'export-json',
-                className: 'fa fa-file-pdf-o',
+                className: 'fa fa-file-export',
                 command: () => exportToJSON(editor),
                 attributes: {title: 'Export JSON'},
             },
