@@ -34,6 +34,20 @@ const ReportEditor = () => {
             storageManager: false, // Отключаем сохранение
             // panels: { defaults: [] }, // Убираем стандартные панели
             plugins: [grapesjspresetwebpage],
+            canvas: {
+                styles: [`
+          body { 
+            overflow: hidden; /* 🔥 Запрещаем выход элементов за пределы */
+          }
+          .gjs-cv-canvas {
+            width: 210mm;  /* 🔥 Устанавливаем фиксированную ширину (A4) */
+            height: 297mm; /* 🔥 Устанавливаем фиксированную высоту */
+            margin: auto;
+            position: relative;
+            overflow: hidden; /* 🔥 Запрещаем вылет элементов за границы */
+          }
+        `]
+            },
 
 
 
@@ -49,6 +63,10 @@ const ReportEditor = () => {
 
 
         });
+
+
+
+
         setTimeout(() => {
 
             const canvasElement = editor.Canvas.getElement()
@@ -77,6 +95,9 @@ const ReportEditor = () => {
                 deviceButton.style.display = 'none';  // Прячем кнопку выбора устройства
             }
 
+
+
+
         }, 200);
 
         editor.setStyle({
@@ -91,6 +112,26 @@ const ReportEditor = () => {
         //
         // }, 500);
         editor.setComponents(`<h1 style="text-align:center;">Заголовок h1</h1>`);
+
+
+        editor.on("block:drag:stop", (component) => {
+            const styles = component.getStyle();
+            const canvas = editor.Canvas.getBody();
+
+            // 🔹 Получаем границы холста
+            const canvasWidth = canvas.offsetWidth;
+            const canvasHeight = canvas.offsetHeight;
+
+            // 🔹 Проверяем границы элемента
+            if (styles.left < 0) component.addStyle({ left: "0px" });
+            if (styles.top < 0) component.addStyle({ top: "0px" });
+            if (styles.left + component.view.el.offsetWidth > canvasWidth) {
+                component.addStyle({ left: `${canvasWidth - component.view.el.offsetWidth}px` });
+            }
+            if (styles.top + component.view.el.offsetHeight > canvasHeight) {
+                component.addStyle({ top: `${canvasHeight - component.view.el.offsetHeight}px` });
+            }
+        });
 
 
 
@@ -130,7 +171,6 @@ const ReportEditor = () => {
             },
             {
                 id: 'print',
-                // className: 'fa fa-file-pdf-o',
                 className: 'fa fa-print',
                 command: () => handlePrintReport(editor),
                 attributes: {title: 'Print'},
@@ -189,31 +229,45 @@ const ReportEditor = () => {
         const htmlContent = editor.getHtml(); // Получаем HTML
         const cssContent = editor.getCss(); // Получаем CSS
 
-        // Создаем временный контейнер для рендеринга перед экспортом
-        const tempContainer = document.createElement("div");
-        tempContainer.innerHTML = `<style>${cssContent}</style>${htmlContent}`;
-        tempContainer.style.width = "210mm"; // A4 ширина
-        tempContainer.style.minHeight = "297mm"; // A4 высота
-        tempContainer.style.padding = "20px";
+        // 🔥 Создаем скрытый iframe для "украденного" окна печати
+        const printFrame = document.createElement("iframe");
+        printFrame.style.position = "absolute";
+        printFrame.style.width = "0px";
+        printFrame.style.height = "0px";
+        printFrame.style.border = "none";
 
-        document.body.appendChild(tempContainer); // Временно добавляем в DOM
+        document.body.appendChild(printFrame);
 
-        // Конвертируем в PDF
-        html2pdf()
-            .set({
-                margin: 10,
-                filename: "report.pdf",
-                image: { type: "jpeg", quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-            })
-            .from(tempContainer)
-            .save()
-            .then(() => {
-                document.body.removeChild(tempContainer); // Удаляем контейнер после экспорта
-            });
+        const printDocument = printFrame.contentDocument || printFrame.contentWindow.document;
+        printDocument.open();
+        printDocument.write(`
+      <html>
+        <head>
+          <title>Печать</title>
+          <style>
+            /* 🔥 Убираем все отступы */
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+
+            /* 🔥 Принудительно ставим размер A4 */
+            @page { size: A4; margin: 0; }
+            body { width: 210mm; height: 297mm; margin: 0 auto; overflow: hidden; }
+
+            /* 🔥 Загружаем стили GrapesJS */
+            ${cssContent}
+          </style>
+        </head>
+        <body>${htmlContent}</body>
+      </html>
+    `);
+        printDocument.close();
 
 
+        // Ждем загрузки контента перед печатью
+        setTimeout(() => {
+            printFrame.contentWindow.focus();
+            printFrame.contentWindow.print(); // Открываем окно печати
+            document.body.removeChild(printFrame); // Удаляем iframe после печати
+        }, 1000);
     };
 
     // Функция экспорта Excel

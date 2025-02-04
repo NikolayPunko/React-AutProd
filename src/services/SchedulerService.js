@@ -53,8 +53,8 @@ export default class SchedulerService {
         for (let i = 0; i < obj.AllocationList.length; i++) {
             planByParty[i] = Object.assign({}, exampleTask);;
             planByParty[i].id = i;
-            planByParty[i].start = obj.AllocationList[i].StartDate.replace("T"," ");
-            planByParty[i].end = obj.AllocationList[i].EndDate.replace("T"," ");
+            planByParty[i].start = obj.AllocationList[i].StartDate.replace(""," ");
+            planByParty[i].end = obj.AllocationList[i].EndDate.replace(""," ");
             planByParty[i].title = obj.AllocationList[i].JID;
             planByParty[i].resourceId = obj.AllocationList[i].PID;
         }
@@ -67,8 +67,8 @@ export default class SchedulerService {
         for (let i = 0; i < obj.AllocationList.length; i++) {
             planByHardware[i] = Object.assign({}, exampleTask);;
             planByHardware[i].id = i;
-            planByHardware[i].start = obj.AllocationList[i].StartDate.replace("T"," ");
-            planByHardware[i].end = obj.AllocationList[i].EndDate.replace("T"," ");
+            planByHardware[i].start = obj.AllocationList[i].StartDate.replace(""," ");
+            planByHardware[i].end = obj.AllocationList[i].EndDate.replace(""," ");
             planByHardware[i].title = obj.AllocationList[i].JID;
             planByHardware[i].resourceId = obj.AllocationList[i].ResourceRequirementList.length===0? "": obj.AllocationList[i].ResourceRequirementList[0];
         }
