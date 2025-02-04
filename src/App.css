@@ -150,11 +150,11 @@ table.scheduler-table tr:last-child td {
 }
 
 .round-all {
-    border-radius: 14px;
+    border-radius: 2px;
 }
 
 .round-head {
-    border-radius: 14px 0px 0px 14px;
+    border-radius: 2px 0px 0px 2px;
 }
 
 .round-tail {

@@ -257,91 +257,37 @@ export const eventsJson = [
 export const eventsJson2 = `{
   "ID" : "P1570C30",
   "HardConstraintsPenalty" : 0,
-  "MediumConstraintsPenalty" : -12,
+  "MediumConstraintsPenalty1" : -12,
   "SoftConstraintsPenalty" : -8,
   "Projects" : [ "163", "164", "165" ],
   "Resources" : [ "Line1", "Line2" ],
   "AllocationList" : [ {
-    "ID" : "Allocation1",
-    "PID" : "163",
-    "JID" : "SOURCE",
-    "StartDate" : "2025-02-02 00:00:00",
-    "EndDate" : "2025-02-02 23:59:59",
-    "Duration" : 0,
-    "PredAllocationList" : [ ],
-    "ResourceRequirementList" : [ ]
-  }, {
     "ID" : "Allocation2",
     "PID" : "163",
     "JID" : "Job1",
     "StartDate" : "2025-02-02 00:00:00",
-    "EndDate" : "2025-02-03 00:59:59",
+    "EndDate" : "2025-02-02 01:00:00",
     "Duration" : 60,
     "PredAllocationList" : [ "Allocation1" ],
     "ResourceRequirementList" : [ "Line1" ]
-  }, {
-    "ID" : "Allocation3",
-    "PID" : "163",
-    "JID" : "SINK",
-    "StartDate" : "2025-02-02 01:00:00",
-    "EndDate" : "2025-02-03 00:59:59",
-    "Duration" : 0,
-    "PredAllocationList" : [ "Allocation2" ],
-    "ResourceRequirementList" : [ ]
-  }, {
-    "ID" : "Allocation4",
-    "PID" : "164",
-    "JID" : "SOURCE",
-    "StartDate" : "2025-02-02 00:04:00",
-    "EndDate" : "2025-02-03 00:03:59",
-    "Duration" : 0,
-    "PredAllocationList" : [ ],
-    "ResourceRequirementList" : [ ]
   }, {
     "ID" : "Allocation5",
     "PID" : "164",
     "JID" : "Job1",
     "StartDate" : "2025-02-02 00:04:00",
-    "EndDate" : "2025-02-03 01:13:59",
+    "EndDate" : "2025-02-02 01:14:00",
     "Duration" : 70,
     "PredAllocationList" : [ "Allocation4" ],
     "ResourceRequirementList" : [ "Line2" ]
-  }, {
-    "ID" : "Allocation6",
-    "PID" : "164",
-    "JID" : "SINK",
-    "StartDate" : "2025-02-02 01:14:00",
-    "EndDate" : "2025-02-03 01:13:59",
-    "Duration" : 0,
-    "PredAllocationList" : [ "Allocation5" ],
-    "ResourceRequirementList" : [ ]
-  }, {
-    "ID" : "Allocation7",
-    "PID" : "165",
-    "JID" : "SOURCE",
-    "StartDate" : "2025-02-02 00:08:00",
-    "EndDate" : "2025-02-03 00:07:59",
-    "Duration" : 0,
-    "PredAllocationList" : [ ],
-    "ResourceRequirementList" : [ ]
   }, {
     "ID" : "Allocation8",
     "PID" : "165",
     "JID" : "Job1",
     "StartDate" : "2025-02-02 01:00:00",
-    "EndDate" : "2025-02-03 01:59:59",
+    "EndDate" : "2025-02-02 02:00:00",
     "Duration" : 60,
     "PredAllocationList" : [ "Allocation7" ],
     "ResourceRequirementList" : [ "Line1" ]
-  }, {
-    "ID" : "Allocation9",
-    "PID" : "165",
-    "JID" : "SINK",
-    "StartDate" : "2025-02-02 02:00:00",
-    "EndDate" : "2025-02-03 01:59:59",
-    "Duration" : 0,
-    "PredAllocationList" : [ "Allocation8" ],
-    "ResourceRequirementList" : [ ]
   } ]
 }`
 

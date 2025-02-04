@@ -17,7 +17,7 @@ import {
     // eventsExample2,
     // eventsExample1
 } from "./../data/data";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import SchedulerService, {hardware, party, planByHardware, planByParty} from "../services/SchedulerService";
 
 moment.updateLocale('ru', {
@@ -68,6 +68,8 @@ function TaskSchedulerPage() {
     const [viewModel, setViewModel] = useState(schedulerData);
     const [renderCounter, setRenderCounter] = useState(false);
 
+    const schedulerRef = useRef(null);
+
 
     useEffect(() => {
 
@@ -97,6 +99,8 @@ function TaskSchedulerPage() {
         schedulerData.setEvents(planByParty);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
+
+
 
 
     }, []);
@@ -129,17 +133,18 @@ function TaskSchedulerPage() {
         // schedulerData.config.summaryColor = "#d9d9d9";
         schedulerData.config.movable = false;
         schedulerData.config.creatable = false;
-        schedulerData.config.movable = false;
         // schedulerData.setLocaleMoment(moment);
         schedulerData.config.nonAgendaDayCellHeaderFormat = "HH:mm";
         // schedulerData.config.nonAgendaOtherCellHeaderFormat = "ddd|M/D";
         // schedulerData.config.checkConflict = true;
+        schedulerData.scrollLeft = 2;
     }
 
     const prevClick = (schedulerData) => {
         schedulerData.prev();
         isDisplayByHardware ? schedulerData.setEvents(planByHardware) : schedulerData.setEvents(planByParty);
         // schedulerData.setEvents(events);
+        schedulerData.config.scrollLeft = 0;
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
     };
@@ -305,6 +310,7 @@ function TaskSchedulerPage() {
             <div className="schedular-container">
                 <DndProvider backend={HTML5Backend}>
                     <Scheduler
+                        ref={schedulerRef}
                         schedulerData={viewModel}
                         prevClick={prevClick}
                         nextClick={nextClick}
@@ -318,6 +324,7 @@ function TaskSchedulerPage() {
                         // toggleExpandFunc={toggleExpandFunc}
                         // leftCustomHeader={leftCustomHeader}
                         leftCustomHeader={rightCustomHeader}
+
                     />
                 </DndProvider>
             </div>

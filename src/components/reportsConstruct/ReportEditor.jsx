@@ -36,7 +36,7 @@ const ReportEditor = () => {
             plugins: [grapesjspresetwebpage],
             canvas: {
                 styles: [`
-          body { 
+          body {
             overflow: hidden; /* 🔥 Запрещаем выход элементов за пределы */
           }
           .gjs-cv-canvas {
@@ -96,7 +96,61 @@ const ReportEditor = () => {
             }
 
 
+            // 🔥 Ограничиваем перетаскивание элементов в пределах холста
+            const restrictDragToCanvas = (ev, component) => {
+                const canvas = editor.Canvas.getBody(); // Получаем body холста
+                const canvasWidth = canvas.offsetWidth;
+                const canvasHeight = canvas.offsetHeight;
+                const elementWidth = component.view.el.offsetWidth;
+                const elementHeight = component.view.el.offsetHeight;
 
+                // Получаем текущие координаты элемента
+                let newLeft = parseInt(component.view.el.style.left, 10) || 0;
+                let newTop = parseInt(component.view.el.style.top, 10) || 0;
+
+                // Если элемент выходит за левую границу холста
+                if (newLeft < 0) newLeft = 0;
+                // Если элемент выходит за верхнюю границу холста
+                if (newTop < 0) newTop = 0;
+                // Если элемент выходит за правую границу холста
+                if (newLeft + elementWidth > canvasWidth) {
+                    newLeft = canvasWidth - elementWidth;
+                }
+                // Если элемент выходит за нижнюю границу холста
+                if (newTop + elementHeight > canvasHeight) {
+                    newTop = canvasHeight - elementHeight;
+                }
+
+                // Применяем новые значения для позиции элемента
+                component.addStyle({ left: `${newLeft}px`, top: `${newTop}px` });
+            };
+
+            // Слушаем событие drag:start и обновляем позицию
+            editor.on('component:dragmove', (component) => {
+                restrictDragToCanvas(null, component);
+            });
+
+            // Запрещаем перемещение элементов за пределы
+            editor.on("component:drag:start", (component) => {
+                const canvas = editor.Canvas.getBody();
+                const canvasWidth = canvas.offsetWidth;
+                const canvasHeight = canvas.offsetHeight;
+
+                // Получаем позицию текущего элемента
+                const elementWidth = component.view.el.offsetWidth;
+                const elementHeight = component.view.el.offsetHeight;
+
+                // Получаем стиль элемента (с помощью view)
+                const styles = component.view.el.style;
+                const elementLeft = parseInt(styles.left, 10) || 0;
+                const elementTop = parseInt(styles.top, 10) || 0;
+
+                // Проверка, не выходит ли элемент за границы холста при начале перетаскивания
+                if (elementLeft < 0 || elementTop < 0 || elementLeft + elementWidth > canvasWidth || elementTop + elementHeight > canvasHeight) {
+                    // Если выходит, запрещаем начало перемещения
+                    component.set({ traits: { locked: true } });
+                }
+            });
 
         }, 200);
 
