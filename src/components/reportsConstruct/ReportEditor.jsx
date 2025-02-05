@@ -75,11 +75,14 @@ const ReportEditor = () => {
             canvasElement.style.width = '794px';
             canvasElement.style.height = '1123px';
             canvasElement.style.margin = '0';
-            canvasElement.style.padding = '20px';
-            canvasElement.style.marginLeft = '210px';
+            // canvasElement.style.padding = '20px';
+            canvasElement.style.marginLeft = '10%';
             canvasElement.style.marginTop = '20px';
             canvasElement.style.backgroundColor = '#949494';
             canvasElement.style.border = '5px';
+            canvasElement.style.overflow = 'hidden';
+
+
 
 
             editor.Canvas.getBody().style.width = '794px';
@@ -89,6 +92,8 @@ const ReportEditor = () => {
             editor.Canvas.getBody().style.backgroundColor = '#9a9a9a';
             // editor.Canvas.getBody().style.padding = '20px';
             editor.Canvas.getBody().style.backgroundColor = '#ffffff';
+            editor.Canvas.getBody().style.overflow = 'hidden';
+            editor.Canvas.getBody().style.position = 'relative';
 
             const deviceButton = document.querySelector('.gjs-device-selector');
             if (deviceButton) {
@@ -96,61 +101,12 @@ const ReportEditor = () => {
             }
 
 
-            // 🔥 Ограничиваем перетаскивание элементов в пределах холста
-            const restrictDragToCanvas = (ev, component) => {
-                const canvas = editor.Canvas.getBody(); // Получаем body холста
-                const canvasWidth = canvas.offsetWidth;
-                const canvasHeight = canvas.offsetHeight;
-                const elementWidth = component.view.el.offsetWidth;
-                const elementHeight = component.view.el.offsetHeight;
 
-                // Получаем текущие координаты элемента
-                let newLeft = parseInt(component.view.el.style.left, 10) || 0;
-                let newTop = parseInt(component.view.el.style.top, 10) || 0;
 
-                // Если элемент выходит за левую границу холста
-                if (newLeft < 0) newLeft = 0;
-                // Если элемент выходит за верхнюю границу холста
-                if (newTop < 0) newTop = 0;
-                // Если элемент выходит за правую границу холста
-                if (newLeft + elementWidth > canvasWidth) {
-                    newLeft = canvasWidth - elementWidth;
-                }
-                // Если элемент выходит за нижнюю границу холста
-                if (newTop + elementHeight > canvasHeight) {
-                    newTop = canvasHeight - elementHeight;
-                }
 
-                // Применяем новые значения для позиции элемента
-                component.addStyle({ left: `${newLeft}px`, top: `${newTop}px` });
-            };
 
-            // Слушаем событие drag:start и обновляем позицию
-            editor.on('component:dragmove', (component) => {
-                restrictDragToCanvas(null, component);
-            });
 
-            // Запрещаем перемещение элементов за пределы
-            editor.on("component:drag:start", (component) => {
-                const canvas = editor.Canvas.getBody();
-                const canvasWidth = canvas.offsetWidth;
-                const canvasHeight = canvas.offsetHeight;
 
-                // Получаем позицию текущего элемента
-                const elementWidth = component.view.el.offsetWidth;
-                const elementHeight = component.view.el.offsetHeight;
-
-                // Получаем стиль элемента (с помощью view)
-                const styles = component.view.el.style;
-                const elementLeft = parseInt(styles.left, 10) || 0;
-                const elementTop = parseInt(styles.top, 10) || 0;
-
-                // Проверка, не выходит ли элемент за границы холста при начале перетаскивания
-                if (elementLeft < 0 || elementTop < 0 || elementLeft + elementWidth > canvasWidth || elementTop + elementHeight > canvasHeight) {
-                    // Если выходит, запрещаем начало перемещения
-                    component.set({ traits: { locked: true } });
-                }
-            });
 
         }, 200);
 
@@ -165,27 +121,9 @@ const ReportEditor = () => {
         //     canvas.style.border = "1px solid #ccc"
         //
         // }, 500);
-        editor.setComponents(`<h1 style="text-align:center;">Заголовок h1</h1>`);
+        editor.setComponents(`<h1 style="text-align:center; padding: 10px;">Заголовок h1</h1>`);
 
 
-        editor.on("block:drag:stop", (component) => {
-            const styles = component.getStyle();
-            const canvas = editor.Canvas.getBody();
-
-            // 🔹 Получаем границы холста
-            const canvasWidth = canvas.offsetWidth;
-            const canvasHeight = canvas.offsetHeight;
-
-            // 🔹 Проверяем границы элемента
-            if (styles.left < 0) component.addStyle({ left: "0px" });
-            if (styles.top < 0) component.addStyle({ top: "0px" });
-            if (styles.left + component.view.el.offsetWidth > canvasWidth) {
-                component.addStyle({ left: `${canvasWidth - component.view.el.offsetWidth}px` });
-            }
-            if (styles.top + component.view.el.offsetHeight > canvasHeight) {
-                component.addStyle({ top: `${canvasHeight - component.view.el.offsetHeight}px` });
-            }
-        });
 
 
 
@@ -243,6 +181,38 @@ const ReportEditor = () => {
                 {id: 'id2', name: 'value2'}
             ]
         });
+
+
+
+
+        const restrictDragToCanvas = (component) => {
+            const el = component.view?.el;
+            if (!el) return;
+
+            const canvas = editor.Canvas.getBody();
+            const canvasWidth = canvas.offsetWidth;
+            const canvasHeight = canvas.offsetHeight;
+
+            const style = window.getComputedStyle(el);
+            let newLeft = parseInt(style.left, 10) || 0;
+            let newTop = parseInt(style.top, 10) || 0;
+
+
+            const elementWidth = el.offsetWidth;
+            const elementHeight = el.offsetHeight;
+
+
+            if (newLeft < 0) newLeft = 0;
+            if (newTop < 0) newTop = 0;
+            if (newLeft + elementWidth > canvasWidth) newLeft = canvasWidth - elementWidth;
+            if (newTop + elementHeight > canvasHeight) newTop = canvasHeight - elementHeight;
+
+            component.addStyle({ left: `${newLeft}px`, top: `${newTop}px` });
+        };
+
+        editor.on("component:drag:end", (event => {
+            restrictDragToCanvas(event.target);
+        }));
 
 
     }, []);
