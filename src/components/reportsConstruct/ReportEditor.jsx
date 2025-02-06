@@ -1,5 +1,6 @@
 import React, {useEffect, useRef} from 'react';
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import "./../reportsConstruct/ReportEditor.css";
 
 import * as XLSX from "xlsx";
 import html2canvas from "html2canvas";
@@ -46,6 +47,7 @@ const ReportEditor = () => {
             position: relative;
             overflow: hidden; /* 🔥 Запрещаем вылет элементов за границы */
           }
+          
         `]
             },
 
@@ -269,14 +271,11 @@ const ReportEditor = () => {
         <head>
           <title>Печать</title>
           <style>
-            /* 🔥 Убираем все отступы */
             * { margin: 0; padding: 0; box-sizing: border-box; }
 
-            /* 🔥 Принудительно ставим размер A4 */
             @page { size: A4; margin: 0; }
             body { width: 210mm; height: 297mm; margin: 0 auto; overflow: hidden; }
 
-            /* 🔥 Загружаем стили GrapesJS */
             ${cssContent}
           </style>
         </head>
@@ -357,9 +356,17 @@ const ReportEditor = () => {
 
         // Заполняем iframe контентом
         printWindow.document.write(`
-      <html>
+     <html>
         <head>
-          <style>${cssContent}</style>
+          <title>Печать</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+
+            @page { size: A4; margin: 0; }
+            body { width: 210mm; height: 297mm; margin: 0 auto; overflow: hidden; }
+
+            ${cssContent}
+          </style>
         </head>
         <body>${htmlContent}</body>
       </html>
@@ -393,9 +400,20 @@ const ReportEditor = () => {
             label: "Мой блок",
             content: "<div style='padding:10px; background:#f3f3f3;'>Hello!</div>",
         });
-        editor.BlockManager.add("header", {
-            label: "Заголовок",
-            content: "<h1 style=\"text-align:center;\">Заголовок h1</h1>",
+        editor.BlockManager.add("h1", {
+            label: "Заголовок h1",
+            // content: "<h1 style='padding:30px; '>Заголовок h1</h1>",
+            content: "<div style='padding:10px; font-size:32px; font-weight:bold '>Заголовок h1</div>",
+        });
+        editor.BlockManager.add("h2", {
+            label: "Заголовок h2",
+            // content: "<h1 style='padding:30px; '>Заголовок h1</h1>",
+            content: "<div style='padding:10px; font-size:24px; font-weight:bold '>Заголовок h2</div>",
+        });
+        editor.BlockManager.add("h3", {
+            label: "Заголовок h3",
+            // content: "<h1 style='padding:30px; '>Заголовок h1</h1>",
+            content: "<div style='padding:10px; font-size:19px; font-weight:bold '>Заголовок h3</div>",
         });
         editor.BlockManager.add("paragraph", {
             label: "Абзац",

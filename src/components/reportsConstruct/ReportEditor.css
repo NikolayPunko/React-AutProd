@@ -1,0 +1,19 @@
+.gjs-pn-devices-c {
+    display: none !important;
+}
+
+#editor .gjs-one-bg {
+    background-color: #efefef; /* Устанавливаем желаемый цвет фона */
+}
+
+#editor .gjs-four-color-h:hover {
+    color: #2755e0 !important;
+}
+
+#editor .gjs-field input, .gjs-field select, .gjs-four-color, .gjs-field textarea {
+    color: #2755e0 !important;
+}
+
+.gjs-two-color {
+    color: #858585 !important;
+}

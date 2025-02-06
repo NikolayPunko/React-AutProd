@@ -26,13 +26,12 @@ export function Navigation(props) {
 
     useEffect(() => {
         document.addEventListener("mousedown", handleClickOutside);
-        console.log(store.isAuth)
         return () => document.removeEventListener("mousedown",  handleClickOutside);
     }, []);
 
     return (
 
-        <nav className=" lg:h-[50px] w-full flex justify-between bg-sky-700	 item-center ">
+        <nav className=" lg:h-[50px] w-full flex justify-between bg-blue-800 item-center ">
             <div className="flex flex-col w-9/12 lg:w-full lg:flex-row lg:justify-between items-center">
 
                 <div className="flex h-10 w-full text-center items-center lg:w-[225px] lg:text-center ">

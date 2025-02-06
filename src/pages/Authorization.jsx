@@ -104,12 +104,12 @@ function Authorization() {
                 <div className="flex flex-col pt-8 items-center">
 
                     <button
-                        className="w-[140px] h-[40px] bg-blue-600 text-white rounded shadow-inner hover:bg-blue-500"
+                        className="w-[140px] h-[40px] bg-blue-800 text-white rounded shadow-inner hover:bg-blue-700"
                         onClick={login}>
                         Войти
                     </button>
 
-                    <button className="mt-4 p-1 rounded text-blue-600  hover:bg-blue-50"
+                    <button className="mt-4 p-1 rounded text-blue-800  hover:bg-blue-50"
                             onClick={() => {
                                 navigate(from, {replace: true})
                             }}>

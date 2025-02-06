@@ -254,14 +254,7 @@ table.scheduler-table tr:last-child td {
     padding-right: 4px;
 }
 
-#editor .gjs-one-bg {
-    background-color: #f5f5f5; /* Устанавливаем желаемый цвет фона */
-}
 
-#editor .gjs-four-color-h:hover {
-    color: #1c5eb6;
-}
 
-#editor .gjs-field input, .gjs-field select, .gjs-field textarea {
-    color: #000000;
-}
+
+
