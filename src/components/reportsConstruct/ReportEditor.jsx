@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./../reportsConstruct/ReportEditor.css";
 
@@ -11,6 +11,7 @@ import grapesjs from "grapesjs";
 import grapesjspresetwebpage from 'grapesjs-preset-webpage/dist/index.js';
 // import grapesjstable from 'grapesjs-table/src/blocks.js';
 
+import ru from 'grapesjs/locale/ru';
 
 import htmlToPdfmake from "html-to-pdfmake"; // Импортируем html-to-pdfmake
 
@@ -21,8 +22,13 @@ import pdfFonts from "pdfmake/build/vfs_fonts"; // Импортируем шри
 // pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 const ReportEditor = () => {
+    const [zoom, setZoom] = useState(100);
+    const [editorView, setEditorView] = useState(null);
+
     const editorRef = useRef(null);
     pdfMake.addVirtualFileSystem(pdfFonts);
+
+
     useEffect(() => {
         // Инициализация GrapesJS
         const editor = grapesjs.init({
@@ -31,6 +37,13 @@ const ReportEditor = () => {
             fromElement: true,
             height: "1200px",
             width: 'auto',
+            default_locale: 'ru',
+            i18n: {
+                locale: 'ru', // default locale
+                detectLocale: true, // by default, the editor will detect the language
+                localeFallback: 'ru', // default fallback
+                messages: { ru },
+            },
             dragMode: 'absolute',
             storageManager: false, // Отключаем сохранение
             // panels: { defaults: [] }, // Убираем стандартные панели
@@ -52,7 +65,6 @@ const ReportEditor = () => {
             },
 
 
-
             // Очищаем список устройств
             deviceManager: {
                 devices: [], // Полностью убираем все предустановленные размеры
@@ -65,8 +77,6 @@ const ReportEditor = () => {
 
 
         });
-
-
 
 
         setTimeout(() => {
@@ -85,8 +95,6 @@ const ReportEditor = () => {
             canvasElement.style.overflow = 'hidden';
 
 
-
-
             editor.Canvas.getBody().style.width = '794px';
             editor.Canvas.getBody().style.height = '1123px';
             editor.Canvas.getBody().style.margin = '0';
@@ -97,77 +105,67 @@ const ReportEditor = () => {
             editor.Canvas.getBody().style.overflow = 'hidden';
             editor.Canvas.getBody().style.position = 'relative';
 
-            const deviceButton = document.querySelector('.gjs-device-selector');
-            if (deviceButton) {
-                deviceButton.style.display = 'none';  // Прячем кнопку выбора устройства
-            }
-
-
-
-
-
-
-
-
 
         }, 200);
+
 
         editor.setStyle({
             'background-color': '#bf13d9', // Цвет фона
         });
-        // setTimeout(() => {
-        //     const canvas = editor.Canvas.getBody();
-        //     canvas.style.transform = `scale(0.1)`
-        //     canvas.style.width = "794px"
-        //     canvas.style.height = "1123px"
-        //     canvas.style.border = "1px solid #ccc"
-        //
-        // }, 500);
+
         editor.setComponents(`<h1 style="text-align:center; padding: 10px;">Заголовок h1</h1>`);
-
-
-
-
 
 
         // Добавляем кнопки для экспорта
         editor.Panels.addButton('options', [
             {
+                id: 'zoom-',
+                className: 'fa fa-magnifying-glass-minus',
+                command: () => changeZoom(-10),
+                attributes: {title: 'Уменьшить маштаб'},
+            },
+            {
+                id: 'zoom+',
+                className: 'fa fa-magnifying-glass-plus',
+                command: () => changeZoom(10),
+                attributes: {title: 'Увеличить маштаб'},
+            },
+            {
                 id: 'export-excel',
                 className: 'fa fa-file-excel',
                 command: () => exportExcel(editor),
-                attributes: {title: 'Export Excel'},
+                attributes: {title: 'Экспорт Exel'},
             },
             {
                 id: 'export-html',
                 className: 'fa fa-code',
                 command: () => exportHtml(editor),
-                attributes: {title: 'Export HTML'},
+                attributes: {title: 'Экспорт HTML'},
             },
             {
                 id: 'export-pdf',
                 className: 'fa fa-file-pdf',
                 command: () => exportPDF(editor),
-                attributes: {title: 'Export PDF'},
+                attributes: {title: 'Экспорт PDF'},
             },
 
             {
                 id: 'export-json',
                 className: 'fa fa-file-export',
                 command: () => exportToJSON(editor),
-                attributes: {title: 'Export JSON'},
+                attributes: {title: 'Экспорт JSON'},
             },
             {
                 id: 'import-json',
                 className: 'fa fa-upload',
                 command: () => handleImportJSON(editor),
-                attributes: {title: 'Import JSON'},
+                attributes: {title: 'Импорт JSON'},
             },
             {
                 id: 'print',
                 className: 'fa fa-print',
                 command: () => handlePrintReport(editor),
-                attributes: {title: 'Print'},
+                attributes: {title: 'Печать'},
             },
 
         ]);
@@ -183,8 +181,6 @@ const ReportEditor = () => {
                 {id: 'id2', name: 'value2'}
             ]
         });
-
-
 
 
         const restrictDragToCanvas = (component) => {
@@ -209,7 +205,7 @@ const ReportEditor = () => {
             if (newLeft + elementWidth > canvasWidth) newLeft = canvasWidth - elementWidth;
             if (newTop + elementHeight > canvasHeight) newTop = canvasHeight - elementHeight;
 
-            component.addStyle({ left: `${newLeft}px`, top: `${newTop}px` });
+            component.addStyle({left: `${newLeft}px`, top: `${newTop}px`});
         };
 
         editor.on("component:drag:end", (event => {
@@ -217,7 +213,34 @@ const ReportEditor = () => {
         }));
 
 
+        setEditorView(editor);
+        // updateCanvasZoom(zoom, editor);
+
     }, []);
+
+
+    const updateCanvasZoom = (newZoom) => {
+        if (!editorView) return;
+        const frame = editorView.Canvas.getElement();
+        if (frame) {
+            const scaleValue = newZoom / 100; // Преобразуем проценты в scale
+            frame.style.transform = `scale(${scaleValue})`;
+            frame.style.transformOrigin = "0 0"; // Фиксируем точку начала
+        }
+    };
+
+    const changeZoom = (value) => {
+        setZoom((prevZoom) => {
+            const newZoom = Math.min(Math.max(prevZoom + value, 50), 100);
+            return newZoom;
+        });
+    };
+
+
+    useEffect(() => {
+        if (editorView) updateCanvasZoom(zoom);
+    }, [zoom]);
+
 
     // Функция экспорта HTML
     const exportHtml = (editor) => {
@@ -309,7 +332,7 @@ const ReportEditor = () => {
     const exportToJSON = (editor) => {
         const data = editor.getProjectData(); // Получаем данные редактора
         const jsonStr = JSON.stringify(data, null, 2);
-        const blob = new Blob([jsonStr], { type: "application/json" });
+        const blob = new Blob([jsonStr], {type: "application/json"});
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = "report.json";
@@ -440,7 +463,7 @@ const ReportEditor = () => {
 
     return (
         <div>
-            {/*<div id="blocks" style={{ width: "250px", padding: "10px", background: "#f5f5f5" }} />*/}
+
             <div id="editor" ref={editorRef}/>
         </div>
     );
