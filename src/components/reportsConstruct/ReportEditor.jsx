@@ -27,97 +27,15 @@ const ReportEditor = () => {
 
     const editorRef = useRef(null);
 
-    const [pages, setPages] = useState(() => {
-        const savedPages = localStorage.getItem("reportPages");
-        return savedPages ? JSON.parse(savedPages) : { "Page 1": { html: "<div>Новая страница</div>", css: "" } };
-    });
-    const [currentPage, setCurrentPage] = useState("Страница 1");
+    const [pages, setPages] = useState([{id: 1, content: "", styles: ""}]);
+    const [currentPage, setCurrentPage] = useState(1); // Активная страница
+
 
     pdfMake.addVirtualFileSystem(pdfFonts);
 
-    // Загрузка страницы в редактор
-    const loadPage = (pageName, editor) => {
-        if (!editorView) return;
-        editorView.DomComponents.clear();
-        editorView.CssComposer.clear();
-        const { html, css } = pages[pageName] || { html: "<div>Пустая страница</div>", css: "" };
-        editorView.setComponents(html);
-        editorView.setStyle(css);
-        setCurrentPage(pageName);
-    };
 
-    // Сохранение страницы
-    const savePage = () => {
-        if (editorView) {
-            const html = editorView.getHtml();
-            const css = editorView.getCss();
-            const updatedPages = { ...pages, [currentPage]: { html, css } };
-            setPages(updatedPages);
-            localStorage.setItem("reportPages", JSON.stringify(updatedPages));
-            alert(`Страница "${currentPage}" сохранена!`);
-        }
-    };
 
-    // Экспорт всех страниц в JSON
-    const exportPages = () => {
-        const json = JSON.stringify(pages, null, 2);
-        const blob = new Blob([json], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "report_pages.json";
-        a.click();
-        URL.revokeObjectURL(url);
-    };
 
-    // Импорт JSON-файла
-    const importPages = (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const importedPages = JSON.parse(e.target.result);
-                setPages(importedPages);
-                localStorage.setItem("reportPages", JSON.stringify(importedPages));
-                alert("Страницы успешно импортированы!");
-                loadPage(Object.keys(importedPages)[0]); // Загружаем первую страницу
-            } catch (error) {
-                alert("Ошибка при загрузке JSON!");
-            }
-        };
-        reader.readAsText(file);
-    };
-
-    // Добавление новой страницы
-    const addNewPage = () => {
-        const newPageName = `Page ${Object.keys(pages).length + 1}`;
-        setPages((prev) => ({
-            ...prev,
-            [newPageName]: { html: "<div>Новая страница</div>", css: "" },
-        }));
-        loadPage(newPageName);
-    };
-
-    const deletePage = (pageName) => {
-        if (Object.keys(pages).length === 1) {
-            alert("Нельзя удалить последнюю страницу!");
-            return;
-        }
-
-        const updatedPages = { ...pages };
-        delete updatedPages[pageName];
-
-        // Выбираем новую активную страницу
-        const newPageName = Object.keys(updatedPages)[0];
-
-        setPages(updatedPages);
-        localStorage.setItem("reportPages", JSON.stringify(updatedPages));
-
-        // Загружаем новую страницу
-        loadPage(newPageName);
-    };
 
     useEffect(() => {
         // Инициализация GrapesJS
@@ -132,11 +50,11 @@ const ReportEditor = () => {
                 locale: 'ru', // default locale
                 detectLocale: true, // by default, the editor will detect the language
                 localeFallback: 'ru', // default fallback
-                messages: { ru },
+                messages: {ru},
             },
             dragMode: 'absolute',
             storageManager: false, // Отключаем сохранение
-            // panels: { defaults: [] }, // Убираем стандартные панели
+            // panels: { defaults: [] }, // Убираем стандартные панелиnpm
             plugins: [grapesjspresetwebpage],
             canvas: {
                 styles: [`
@@ -198,12 +116,18 @@ const ReportEditor = () => {
 
         }, 200);
 
+        editor.setComponents(pages[0].content);
 
         editor.setStyle({
             'background-color': '#bf13d9', // Цвет фона
         });
 
         editor.setComponents(`<h1 style="text-align:center; padding: 10px;">Заголовок h1</h1>`);
+
+
+        // console.log(editor.Panels.getPanels())
+
+
 
 
         // Добавляем кнопки для экспорта
@@ -302,13 +226,163 @@ const ReportEditor = () => {
             restrictDragToCanvas(event.target);
         }));
 
-
         setEditorView(editor);
-        // updateCanvasZoom(zoom, editor);
 
 
-        loadPage(currentPage, editor);
+        document.querySelector('.gjs-pn-devices-c').querySelector('.gjs-pn-buttons').innerHTML = "" // удаляем дефолтный div с девайсами
+
+        editor.Panels.addButton('devices-c', [
+            {
+                id: 'prevPage',
+                className: 'fa-solid fa-angle-left',
+                command: () => switchPage(1),
+                attributes: {title: 'Пред. страница'},
+            },
+            {
+                id: 'currentPage',
+                className: 'custom-page-display',
+                attributes: {
+                    title: 'Текущая страница',
+                },
+                label: `${currentPage} / ${pages.length}`
+            },
+            {
+                id: 'nextPage',
+                className: 'fa-solid fa-angle-right',
+                command: () => switchPage(2),
+                attributes: {title: 'След. страница'},
+            },
+            ])
+
+        editorRef.current = editor;
+        setEditorView(editor);
+
+
+
     }, []);
+
+    useEffect(() => {
+        if (editorView) {
+            const panel = editorView.Panels.getButton('devices-c', 'currentPage');
+            if (panel) {
+                panel.set('label', `${currentPage} / ${pages.length}`);
+            }
+        }
+    }, [pages, currentPage]);
+
+    const switchPage = (id) => {
+       const editor = editorRef.current
+        // if (!editor) {
+        //     return;
+        // }
+        saveCurrentPage(); // Сначала сохраняем текущую страницу
+
+        setTimeout(() => {
+
+
+            const page = pages.find((p) => p.id === id);
+            if (page) {
+                editor.setComponents(page.content);
+                editor.setStyle(page.styles);
+                setCurrentPage(id);
+            }
+        }, 100); // Небольшая задержка для обновления состояния
+    };
+
+    const saveCurrentPage = async () => {
+
+        if (!editorView) {
+            return;
+        }
+        const html = editorView.getHtml();
+        const css = editorView.getCss();
+
+        return new Promise((resolve) => {
+            setPages((prevPages) => {
+                const updatedPages = prevPages.map((page) =>
+                    page.id === currentPage ? {...page, content: html, styles: css} : page
+                );
+                resolve(updatedPages);  // После обновления страницы вызываем resolve
+                return updatedPages;
+            });
+        });
+    };
+
+
+    const addPage = () => {
+        saveCurrentPage();
+
+        setTimeout(() => {
+            const newPage = {
+                id: pages.length + 1,
+                content: "",
+                styles: "",
+            };
+
+            setPages((prevPages) => [...prevPages, newPage]);
+            setCurrentPage(newPage.id);
+
+            if (editorView) {
+                editorView.setComponents("");
+                editorView.setStyle("");
+            }
+        }, 100);
+    };
+
+    const removePage = () => {
+        setPages((prevPages) => {
+            if (prevPages.length > 1) {
+                // Создаем копию массива страниц и удаляем последнюю
+                const updatedPages = [...prevPages];
+                updatedPages.pop();  // Удаляем последнюю страницу
+
+                if (currentPage === prevPages.length) {
+                    switchPage(updatedPages.length);
+                }
+                return updatedPages;
+            }
+
+            return prevPages;
+        });
+
+    };
+
+
+    const exportJSON = async () => {
+        try {
+            const updatedPages = await saveCurrentPage();
+            const json = JSON.stringify(updatedPages, null, 2);
+            const blob = new Blob([json], {type: "application/json"});
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "report.json";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error("Ошибка при сохранении и экспорте:", error);
+        }
+    };
+
+
+    const importJSON = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        setPages([{id: 1, content: "", styles: ""}])
+        reader.onload = (e) => {
+            const importedPages = JSON.parse(e.target.result);
+            setPages(importedPages);
+            setCurrentPage(importedPages[0]?.id || 1);
+
+
+            editorView.setComponents(importedPages[0].content);
+            editorView.setStyle(importedPages[0].styles);
+
+        };
+        reader.readAsText(file);
+    };
 
 
     const updateCanvasZoom = (newZoom) => {
@@ -500,18 +574,28 @@ const ReportEditor = () => {
         let combinedHTML = "";
         let combinedCSS = "";
 
-        Object.entries(pages).forEach(([pageName, { html, css }], index) => {
+        for (let i = 0; i < pages.length; i++) {
             combinedHTML += `
-     
       
      <div class="print-page">
-     <h1>dsf</h1>
-        <h2>${pageName}</h2>
-        ${html}
-      </div>
-    `;
-            combinedCSS += " " + css;
-        });
+        ${pages[i].content}
+     </div>
+     `;
+            combinedCSS += " " + pages[i].styles;
+        }
+
+        //     Object.entries(pages).forEach(([id, { html, css }], index) => {
+        //         combinedHTML += `
+        //
+        //  <div class="print-page">
+        //  <h1>dsf</h1>
+        //     <h2>${id}</h2>
+        //     ${html}
+        //   </div>
+        // `;
+        //         combinedCSS += " " + css;
+        //     });
+
 
         const printWindow = window.open("", "_blank");
         printWindow.document.write(`
@@ -624,28 +708,36 @@ const ReportEditor = () => {
 
     return (
         <div>
+
+            {/*<div>*/}
+            {/*    <span onClick={()=>{switchPage(currentPage-1)}}>пред</span>*/}
+            {/*    <span>{currentPage}/{pages.length}</span>*/}
+            {/*    <span onClick={()=>{switchPage(currentPage+1)}}>след</span>*/}
+            {/*</div>*/}
+
             {/* Панель управления страницами */}
-            <div style={{ padding: "10px", background: "#333", color: "#fff", display: "flex", gap: "10px" }}>
-                {Object.keys(pages).map((page) => (
-                    <button key={page} onClick={() => loadPage(page)} style={{ padding: "5px 10px", cursor: "pointer" }}>
-                        {page}
+            <div style={{marginBottom: "10px"}}>
+                {pages.map((page) => (
+                    <button
+                        key={page.id}
+                        onClick={() => switchPage(page.id)}
+                        style={{
+                            marginRight: "5px",
+                            background: currentPage === page.id ? "lightblue" : "white",
+                        }}
+                    >
+                        Страница {page.id}
                     </button>
                 ))}
-                {Object.keys(pages).map((page) => (
-                    <div key={page} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                        <button onClick={() => loadPage(page)} style={{ padding: "5px 10px", cursor: "pointer" }}>
-                            {page}
-                        </button>
-                        <button onClick={() => deletePage(page)} style={{ padding: "5px", cursor: "pointer", background: "red", color: "white" }}>
-                            🗑
-                        </button>
-                    </div>
-                ))}
-                <button onClick={addNewPage} style={{ padding: "5px 10px", cursor: "pointer" }}>➕ Добавить страницу</button>
-                <button onClick={savePage} style={{ padding: "5px 10px", cursor: "pointer" }}>💾 Сохранить</button>
-                <button onClick={exportPages} style={{ padding: "5px 10px", cursor: "pointer" }}>📤 Экспорт</button>
-                <button onClick={printAllPages} style={{ padding: "5px 10px", cursor: "pointer" }}>🖨📄 Печать всех</button>
-                <input type="file" accept="application/json" onChange={importPages} style={{ padding: "5px", cursor: "pointer" }} />
+                <button onClick={addPage}>➕ Добавить страницу</button>
+                <button onClick={() => removePage}>❌ Удалить страницу</button>
+                <button onClick={printAllPages}>🖨️ Печать всех страниц</button>
+                <button onClick={exportJSON}>📤 Экспорт JSON</button>
+                <input type="file" accept=".json" onChange={importJSON} style={{display: "none"}} id="import-json"/>
+                <label htmlFor="import-json"
+                       style={{cursor: "pointer", padding: "5px", border: "1px solid gray", marginLeft: "5px"}}>📥 Импорт
+                    JSON</label>
+
             </div>
             <div id="editor" ref={editorRef}/>
         </div>
