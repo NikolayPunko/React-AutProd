@@ -34,9 +34,6 @@ const ReportEditor = () => {
     pdfMake.addVirtualFileSystem(pdfFonts);
 
 
-
-
-
     useEffect(() => {
         // Инициализация GrapesJS
         const editor = grapesjs.init({
@@ -76,8 +73,7 @@ const ReportEditor = () => {
             // Очищаем список устройств
             deviceManager: {
                 devices: [], // Полностью убираем все предустановленные размеры
-            },
-            // styleManager: {
+            }, // styleManager: {
             //     sectors: [
             //         // Отображаем только необходимые настройки стилей
             //     ]
@@ -96,7 +92,7 @@ const ReportEditor = () => {
             canvasElement.style.height = '1123px';
             canvasElement.style.margin = '0';
             // canvasElement.style.padding = '20px';
-            canvasElement.style.marginLeft = '10%';
+            canvasElement.style.marginLeft = '15%';
             canvasElement.style.marginTop = '20px';
             canvasElement.style.backgroundColor = '#949494';
             canvasElement.style.border = '5px';
@@ -106,7 +102,6 @@ const ReportEditor = () => {
             editor.Canvas.getBody().style.width = '794px';
             editor.Canvas.getBody().style.height = '1123px';
             editor.Canvas.getBody().style.margin = '0';
-            editor.Canvas.getBody().style.border = '5px';
             editor.Canvas.getBody().style.backgroundColor = '#9a9a9a';
             // editor.Canvas.getBody().style.padding = '20px';
             editor.Canvas.getBody().style.backgroundColor = '#ffffff';
@@ -122,12 +117,11 @@ const ReportEditor = () => {
             'background-color': '#bf13d9', // Цвет фона
         });
 
-        editor.setComponents(`<h1 style="text-align:center; padding: 10px;">Заголовок h1</h1>`);
+        editor.setComponents(`<span style="text-align:center; padding: 10px; width:300px; left: 60px;
+              position: absolute; top:60px; font-size: larger;font-weight: 700;">Начните создание отчета...</span>`);
 
 
         // console.log(editor.Panels.getPanels())
-
-
 
 
         // Добавляем кнопки для экспорта
@@ -137,50 +131,45 @@ const ReportEditor = () => {
                 className: 'fa fa-magnifying-glass-minus',
                 command: () => changeZoom(-10),
                 attributes: {title: 'Уменьшить маштаб'},
-            },
-            {
+            }, {
                 id: 'zoom+',
                 className: 'fa fa-magnifying-glass-plus',
                 command: () => changeZoom(10),
                 attributes: {title: 'Увеличить маштаб'},
             },
-            {
-                id: 'export-excel',
-                className: 'fa fa-file-excel',
-                command: () => exportExcel(editor),
-                attributes: {title: 'Экспорт Exel'},
-            },
-            {
-                id: 'export-html',
-                className: 'fa fa-code',
-                command: () => exportHtml(editor),
-                attributes: {title: 'Экспорт HTML'},
-            },
-            {
-                id: 'export-pdf',
-                className: 'fa fa-file-pdf',
-                command: () => exportPDF(editor),
-                attributes: {title: 'Экспорт PDF'},
-            },
-
-            {
-                id: 'export-json',
-                className: 'fa fa-file-export',
-                command: () => exportToJSON(editor),
-                attributes: {title: 'Экспорт JSON'},
-            },
-            {
-                id: 'import-json',
-                className: 'fa fa-upload',
-                command: () => handleImportJSON(editor),
-                attributes: {title: 'Импорт JSON'},
-            },
-            {
-                id: 'print',
-                className: 'fa fa-print',
-                command: () => handlePrintReport(editor),
-                attributes: {title: 'Печать'},
-            },
+            // {
+            //     id: 'export-excel',
+            //     className: 'fa fa-file-excel',
+            //     command: () => exportExcel(editor),
+            //     attributes: {title: 'Экспорт Exel'},
+            // }, {
+            //     id: 'export-html',
+            //     className: 'fa fa-code',
+            //     command: () => exportHtml(editor),
+            //     attributes: {title: 'Экспорт HTML'},
+            // }, {
+            //     id: 'export-pdf',
+            //     className: 'fa fa-file-pdf',
+            //     command: () => exportPDF(editor),
+            //     attributes: {title: 'Экспорт PDF'},
+            // },
+            //
+            //     {
+            //         id: 'export-json',
+            //         className: 'fa fa-file-export',
+            //         command: () => exportToJSON(editor),
+            //         attributes: {title: 'Экспорт JSON'},
+            //     }, {
+            //         id: 'import-json',
+            //         className: 'fa fa-upload',
+            //         command: () => handleImportJSON(editor),
+            //         attributes: {title: 'Импорт JSON'},
+            //     }, {
+            //         id: 'print',
+            //         className: 'fa fa-print',
+            //         command: () => handlePrintReport(editor),
+            //         attributes: {title: 'Печать'},
+            //     },
 
         ]);
 
@@ -189,11 +178,7 @@ const ReportEditor = () => {
         addBlocks(editor);
 
         editor.DataSources.add({
-            id: 'my_data_source_id',
-            records: [
-                {id: 'id1', name: 'value1'},
-                {id: 'id2', name: 'value2'}
-            ]
+            id: 'my_data_source_id', records: [{id: 'id1', name: 'value1'}, {id: 'id2', name: 'value2'}]
         });
 
 
@@ -226,39 +211,86 @@ const ReportEditor = () => {
             restrictDragToCanvas(event.target);
         }));
 
+
         setEditorView(editor);
 
 
         document.querySelector('.gjs-pn-devices-c').querySelector('.gjs-pn-buttons').innerHTML = "" // удаляем дефолтный div с девайсами
 
-        editor.Panels.addButton('devices-c', [
-            {
-                id: 'prevPage',
-                className: 'fa-solid fa-angle-left',
-                command: () => switchPage(1),
-                attributes: {title: 'Пред. страница'},
-            },
-            {
-                id: 'currentPage',
-                className: 'custom-page-display',
-                attributes: {
-                    title: 'Текущая страница',
-                },
-                label: `${currentPage} / ${pages.length}`
-            },
-            {
-                id: 'nextPage',
-                className: 'fa-solid fa-angle-right',
-                command: () => switchPage(2),
-                attributes: {title: 'След. страница'},
-            },
-            ])
 
-        editorRef.current = editor;
+        editor.Panels.addButton('devices-c', [// {
+            //     id: 'prevPage',
+            //     className: 'fa-solid fa-angle-left',
+            //     command: () => switchPage(1),
+            //     attributes: {title: 'Пред. страница'},
+            // },
+            // {
+            //     id: 'currentPage',
+            //     className: 'custom-page-display',
+            //     attributes: {
+            //         title: 'Текущая страница',
+            //     },
+            //     label: `${currentPage} / ${pages.length}`
+            // },
+            // {
+            //     id: 'nextPage',
+            //     className: 'fa-solid fa-angle-right',
+            //     command: () => switchPage(2),
+            //     attributes: {title: 'След. страница'},
+            // },
+            //     {
+            //     id: 'export-excel',
+            //     className: 'fa fa-file-excel',
+            //     command: () => exportExcel(editor),
+            //     attributes: {title: 'Экспорт Exel'},
+            // }, {
+            //     id: 'export-html',
+            //     className: 'fa fa-code',
+            //     command: () => exportHtml(editor),
+            //     attributes: {title: 'Экспорт HTML'},
+            // }, {
+            //     id: 'export-pdf',
+            //     className: 'fa fa-file-pdf',
+            //     command: () => exportPDF(editor),
+            //     attributes: {title: 'Экспорт PDF'},
+            // },
+            //
+            //     {
+            //         id: 'export-json',
+            //         className: 'fa fa-file-export',
+            //         command: () => exportToJSON(editor),
+            //         attributes: {title: 'Экспорт JSON'},
+            //     }, {
+            //         id: 'import-json',
+            //         className: 'fa fa-upload',
+            //         command: () => handleImportJSON(editor),
+            //         attributes: {title: 'Импорт JSON'},
+            //     }, {
+            //         id: 'print',
+            //         className: 'fa fa-print',
+            //         command: () => handlePrintReport(editor),
+            //         attributes: {title: 'Печать'},
+            //     },
+        ])
+
+
+
+        // editorRef.current = editor;
         setEditorView(editor);
 
+        // editor.on("components:update", () => {
+        //     console.log("style:update");
+        //     saveCurrentPage(editor);
+        // });
 
-
+        // editor.on("component:add", (model) => console.log("Добавлен компонент:", model));
+        // editor.on("component:remove", (model) => console.log("Удален компонент:", model));
+        // editor.on("component:drag:end", (model) => console.log("Компонент перемещен:", model));
+        // editor.on("components:update", () => console.log("Изменена структура всех компонентов!"));
+        // editor.on("component:change:content", (model) => console.log("Изменен текст:", model));
+        // editor.on("style:update", (model) => console.log("Обновлены стили компонента:", model));
+        editor.on("change", (model) => console.log("Обновлены атрибуты компонента:", model));
+        // editor.on("component:selected", (model) => console.log("Выбран компонент:", model));
     }, []);
 
     useEffect(() => {
@@ -270,15 +302,20 @@ const ReportEditor = () => {
         }
     }, [pages, currentPage]);
 
+    useEffect(() => {
+        console.log("useEffect editor")
+    }, [editorView])
+
     const switchPage = (id) => {
-       const editor = editorRef.current
+        const editor = editorView
         // if (!editor) {
         //     return;
         // }
-        saveCurrentPage(); // Сначала сохраняем текущую страницу
+        saveCurrentPage(editor); // Сначала сохраняем текущую страницу
 
         setTimeout(() => {
 
+            console.log(pages)
 
             const page = pages.find((p) => p.id === id);
             if (page) {
@@ -289,19 +326,21 @@ const ReportEditor = () => {
         }, 100); // Небольшая задержка для обновления состояния
     };
 
-    const saveCurrentPage = async () => {
-
-        if (!editorView) {
+    const saveCurrentPage = async (editor) => {
+        if (!editor) {
             return;
         }
-        const html = editorView.getHtml();
-        const css = editorView.getCss();
+        console.log("saveCurrentPage")
+        const html = editor.getHtml();
+        const css = editor.getCss();
 
         return new Promise((resolve) => {
             setPages((prevPages) => {
-                const updatedPages = prevPages.map((page) =>
-                    page.id === currentPage ? {...page, content: html, styles: css} : page
-                );
+                const updatedPages = prevPages.map((page) => page.id === currentPage ? {
+                    ...page,
+                    content: html,
+                    styles: css
+                } : page);
                 resolve(updatedPages);  // После обновления страницы вызываем resolve
                 return updatedPages;
             });
@@ -310,21 +349,20 @@ const ReportEditor = () => {
 
 
     const addPage = () => {
-        saveCurrentPage();
+        const editor = editorView
+        saveCurrentPage(editor);
 
         setTimeout(() => {
             const newPage = {
-                id: pages.length + 1,
-                content: "",
-                styles: "",
+                id: pages.length + 1, content: "", styles: "",
             };
 
             setPages((prevPages) => [...prevPages, newPage]);
             setCurrentPage(newPage.id);
 
-            if (editorView) {
-                editorView.setComponents("");
-                editorView.setStyle("");
+            if (editor) {
+                editor.setComponents("");
+                editor.setStyle("");
             }
         }, 100);
     };
@@ -350,8 +388,8 @@ const ReportEditor = () => {
 
     const exportJSON = async () => {
         try {
-            const updatedPages = await saveCurrentPage();
-            const json = JSON.stringify(updatedPages, null, 2);
+            // const updatedPages = await saveCurrentPage();
+            const json = JSON.stringify(pages, null, 2);
             const blob = new Blob([json], {type: "application/json"});
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
@@ -365,23 +403,43 @@ const ReportEditor = () => {
     };
 
 
-    const importJSON = (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
+    const importJSON = () => {
 
-        const reader = new FileReader();
-        setPages([{id: 1, content: "", styles: ""}])
-        reader.onload = (e) => {
-            const importedPages = JSON.parse(e.target.result);
-            setPages(importedPages);
-            setCurrentPage(importedPages[0]?.id || 1);
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = ".json";
+        fileInput.style.display = "none";
+
+        fileInput.addEventListener("change", (event) => {
 
 
-            editorView.setComponents(importedPages[0].content);
-            editorView.setStyle(importedPages[0].styles);
+            const file = event.target.files[0];
+            if (!file) return;
 
-        };
-        reader.readAsText(file);
+            const reader = new FileReader();
+            setPages([{id: 1, content: "", styles: ""}])
+            try {
+                reader.onload = (e) => {
+                    const importedPages = JSON.parse(e.target.result);
+                    setPages(importedPages);
+                    setCurrentPage(importedPages[0]?.id || 1);
+
+                    editorView.setComponents(importedPages[0].content);
+                    editorView.setStyle(importedPages[0].styles);
+
+                };
+            } catch (error) {
+                alert("Ошибка загрузки JSON");
+            }
+
+            reader.readAsText(file);
+        });
+
+        document.body.appendChild(fileInput);
+        fileInput.click();
+        document.body.removeChild(fileInput);
+
+
     };
 
 
@@ -571,31 +629,22 @@ const ReportEditor = () => {
     };
 
     const printAllPages = () => {
+        console.log(pages[0].content)
+        // saveCurrentPage();
+
+
         let combinedHTML = "";
         let combinedCSS = "";
 
         for (let i = 0; i < pages.length; i++) {
             combinedHTML += `
       
-     <div class="print-page">
-        ${pages[i].content}
-     </div>
-     `;
+         <div class="print-page">
+            ${pages[i].content}
+         </div>
+         `;
             combinedCSS += " " + pages[i].styles;
         }
-
-        //     Object.entries(pages).forEach(([id, { html, css }], index) => {
-        //         combinedHTML += `
-        //
-        //  <div class="print-page">
-        //  <h1>dsf</h1>
-        //     <h2>${id}</h2>
-        //     ${html}
-        //   </div>
-        // `;
-        //         combinedCSS += " " + css;
-        //     });
-
 
         const printWindow = window.open("", "_blank");
         printWindow.document.write(`
@@ -606,7 +655,7 @@ const ReportEditor = () => {
           <style>
             ${combinedCSS}
 
-@media print {
+            @media print {
             body {
               margin: 0;
               padding: 0;
@@ -665,31 +714,25 @@ const ReportEditor = () => {
 
     function addBlocks(editor) {
         editor.BlockManager.add("my-block", {
-            label: "Мой блок",
-            content: "<div style='padding:10px; background:#f3f3f3;'>Hello!</div>",
+            label: "Мой блок", content: "<div style='padding:10px; background:#f3f3f3;'>Hello!</div>",
         });
         editor.BlockManager.add("h1", {
-            label: "Заголовок h1",
-            // content: "<h1 style='padding:30px; '>Заголовок h1</h1>",
+            label: "Заголовок h1", // content: "<h1 style='padding:30px; '>Заголовок h1</h1>",
             content: "<div style='padding:10px; font-size:32px; font-weight:bold '>Заголовок h1</div>",
         });
         editor.BlockManager.add("h2", {
-            label: "Заголовок h2",
-            // content: "<h1 style='padding:30px; '>Заголовок h1</h1>",
+            label: "Заголовок h2", // content: "<h1 style='padding:30px; '>Заголовок h1</h1>",
             content: "<div style='padding:10px; font-size:24px; font-weight:bold '>Заголовок h2</div>",
         });
         editor.BlockManager.add("h3", {
-            label: "Заголовок h3",
-            // content: "<h1 style='padding:30px; '>Заголовок h1</h1>",
+            label: "Заголовок h3", // content: "<h1 style='padding:30px; '>Заголовок h1</h1>",
             content: "<div style='padding:10px; font-size:19px; font-weight:bold '>Заголовок h3</div>",
         });
         editor.BlockManager.add("paragraph", {
-            label: "Абзац",
-            content: "<p style=\"font-size: 14px;\">Введите текст отчета...</p>",
+            label: "Абзац", content: "<p style=\"font-size: 14px;\">Введите текст отчета...</p>",
         });
         editor.BlockManager.add("table", {
-            label: "Таблица",
-            content: `
+            label: "Таблица", content: `
                 <table class="table table-bordered">
                   <thead>
                     <tr><th>Заголовок 1</th><th>Заголовок 2</th></tr>
@@ -701,42 +744,61 @@ const ReportEditor = () => {
               `,
         });
         editor.BlockManager.add("my-block", {
-            label: "Мой блок",
-            content: "<div style='padding:10px; background:#f3f3f3;'>Hello!</div>",
+            label: "Мой блок", content: "<div style='padding:10px; background:#f3f3f3;'>Hello!</div>",
         });
     }
 
     return (
         <div>
 
-            {/*<div>*/}
-            {/*    <span onClick={()=>{switchPage(currentPage-1)}}>пред</span>*/}
-            {/*    <span>{currentPage}/{pages.length}</span>*/}
-            {/*    <span onClick={()=>{switchPage(currentPage+1)}}>след</span>*/}
-            {/*</div>*/}
+            <div className=" gjs-two-color gjs-one-bg flex flex-row justify-between py-1 gjs-pn-commands">
+                <div className="flex justify-start text-center ml-2 w-1/3">
+                    <span className="gjs-pn-btn font-medium">Конструктор отчетов</span>
+                    <span className="gjs-pn-btn">
+                        <i className="fa-solid fa-pencil"></i>
+                    </span>
 
-            {/* Панель управления страницами */}
-            <div style={{marginBottom: "10px"}}>
-                {pages.map((page) => (
-                    <button
-                        key={page.id}
-                        onClick={() => switchPage(page.id)}
-                        style={{
-                            marginRight: "5px",
-                            background: currentPage === page.id ? "lightblue" : "white",
-                        }}
-                    >
-                        Страница {page.id}
-                    </button>
-                ))}
-                <button onClick={addPage}>➕ Добавить страницу</button>
-                <button onClick={() => removePage}>❌ Удалить страницу</button>
-                <button onClick={printAllPages}>🖨️ Печать всех страниц</button>
-                <button onClick={exportJSON}>📤 Экспорт JSON</button>
-                <input type="file" accept=".json" onChange={importJSON} style={{display: "none"}} id="import-json"/>
-                <label htmlFor="import-json"
-                       style={{cursor: "pointer", padding: "5px", border: "1px solid gray", marginLeft: "5px"}}>📥 Импорт
-                    JSON</label>
+                </div>
+                <div className="flex justify-start text-center w-1/3">
+                    <span className="gjs-pn-btn" onClick={() => switchPage(currentPage - 1)}
+                          title="Пред. страница">
+                        <i className="fa-solid fa-angle-left"></i>
+                    </span>
+                    <span className="gjs-pn-btn">
+                       {currentPage} / {pages.length}
+                    </span>
+                    <span className="gjs-pn-btn" onClick={() => switchPage(currentPage + 1)}
+                          title="След. страница">
+                        <i className="fa-solid fa-angle-right"></i>
+                    </span>
+                    <span className="gjs-pn-btn" onClick={addPage} title="Добавить страницу">
+                        <i className="fa-solid fa-file-circle-plus"></i>
+                    </span>
+                    <span className="gjs-pn-btn" onClick={removePage} title="Удалить последнюю страницу">
+                        <i className="fa-solid fa-trash"></i>
+                    </span>
+                </div>
+
+                <div className="flex justify-end text-center mr-2 w-1/3">
+                    <span className="gjs-pn-btn" onClick={() => exportExcel(editorView)} title="Экспорт Exel">
+                        <i className="fa fa-file-excel"></i>
+                    </span>
+                    <span className="gjs-pn-btn" onClick={() => exportHtml(editorView)} title="Экспорт HTML">
+                        <i className="fa fa-code"></i>
+                    </span>
+                    <span className="gjs-pn-btn" onClick={() => exportPDF(editorView)} title="Экспорт PDF">
+                        <i className="fa fa-file-pdf"></i>
+                    </span>
+                    <span className="gjs-pn-btn" onClick={exportJSON} title="Экспорт JSON">
+                        <i className="fa fa-file-export"></i>
+                    </span>
+                    <span className="gjs-pn-btn" onClick={importJSON} title="Импорт JSON">
+                        <i className="fa fa-upload"></i>
+                    </span>
+                    <span className="gjs-pn-btn" onClick={printAllPages} title="Печать">
+                        <i className="fa fa-print"></i>
+                    </span>
+                </div>
 
             </div>
             <div id="editor" ref={editorRef}/>

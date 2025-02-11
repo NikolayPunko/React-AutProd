@@ -2,8 +2,8 @@
     /*display: none !important;*/
 }
 
-#editor .gjs-one-bg {
-    background-color: #efefef; /* Устанавливаем желаемый цвет фона */
+ .gjs-one-bg {
+    background-color: #f6f6f6 !important; /* Устанавливаем желаемый цвет фона */
 }
 
 #editor .gjs-four-color-h:hover {
@@ -16,4 +16,15 @@
 
 .gjs-two-color {
     color: #858585 !important;
+}
+
+.gjs-cv-canvas {
+    border: 1px solid #c4c4c4 !important;
+}
+
+.gjs-pn-commands {
+    width: calc(100% ) !important;
+    left: 0 !important;
+    top: 0 !important;
+    box-shadow: 0 0 2px var(--gjs-main-dark-color) !important;
 }
