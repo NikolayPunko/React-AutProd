@@ -274,7 +274,6 @@ const ReportEditor = () => {
         ])
 
 
-
         // editorRef.current = editor;
         setEditorView(editor);
 
@@ -289,7 +288,10 @@ const ReportEditor = () => {
         // editor.on("components:update", () => console.log("Изменена структура всех компонентов!"));
         // editor.on("component:change:content", (model) => console.log("Изменен текст:", model));
         // editor.on("style:update", (model) => console.log("Обновлены стили компонента:", model));
-        editor.on("change", (model) => console.log("Обновлены атрибуты компонента:", model));
+        // editor.on("change", (model) => {
+        //     console.log("Обновлены атрибуты компонента:", model)
+        //     saveCurrentPage(editor)
+        // });
         // editor.on("component:selected", (model) => console.log("Выбран компонент:", model));
     }, []);
 
@@ -387,19 +389,22 @@ const ReportEditor = () => {
 
 
     const exportJSON = async () => {
-        try {
-            // const updatedPages = await saveCurrentPage();
-            const json = JSON.stringify(pages, null, 2);
-            const blob = new Blob([json], {type: "application/json"});
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "report.json";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } catch (error) {
-            console.error("Ошибка при сохранении и экспорте:", error);
-        }
+        saveCurrentPage(editorView).then((updatedPages) => {
+            try {
+                // const updatedPages = await saveCurrentPage();
+                const json = JSON.stringify(updatedPages, null, 2);
+                const blob = new Blob([json], {type: "application/json"});
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "report.json";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error("Ошибка при сохранении и экспорте:", error);
+            }
+        })
+
     };
 
 
@@ -499,155 +504,33 @@ const ReportEditor = () => {
     // Функция экспорта PDF
     const exportPDF = async (editor) => {
 
-        const htmlContent = editor.getHtml(); // Получаем HTML
-        const cssContent = editor.getCss(); // Получаем CSS
+        saveCurrentPage(editorView).then((updatedPages) => {
 
-        // 🔥 Создаем скрытый iframe для "украденного" окна печати
-        const printFrame = document.createElement("iframe");
-        printFrame.style.position = "absolute";
-        printFrame.style.width = "0px";
-        printFrame.style.height = "0px";
-        printFrame.style.border = "none";
+            let combinedHTML = "";
+            let combinedCSS = "";
 
-        document.body.appendChild(printFrame);
-
-        const printDocument = printFrame.contentDocument || printFrame.contentWindow.document;
-        printDocument.open();
-        printDocument.write(`
-      <html>
-        <head>
-          <title>Печать</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-
-            @page { size: A4; margin: 0; }
-            body { width: 210mm; height: 297mm; margin: 0 auto; overflow: hidden; }
-
-            ${cssContent}
-          </style>
-        </head>
-        <body>${htmlContent}</body>
-      </html>
-    `);
-        printDocument.close();
-
-
-        // Ждем загрузки контента перед печатью
-        setTimeout(() => {
-            printFrame.contentWindow.focus();
-            printFrame.contentWindow.print(); // Открываем окно печати
-            document.body.removeChild(printFrame); // Удаляем iframe после печати
-        }, 1000);
-    };
-
-    // Функция экспорта Excel
-    const exportExcel = (editor) => {
-        const htmlContent = editor.getHtml(); // Получаем HTML контент из GrapesJS
-
-        // Создаем рабочую книгу
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet([[htmlContent]]); // Преобразуем HTML в рабочий лист
-        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-
-        // Экспортируем в Excel
-        XLSX.writeFile(wb, "report.xlsx");
-    };
-
-    const exportToJSON = (editor) => {
-        const data = editor.getProjectData(); // Получаем данные редактора
-        const jsonStr = JSON.stringify(data, null, 2);
-        const blob = new Blob([jsonStr], {type: "application/json"});
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "report.json";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    const handleImportJSON = (editor) => {
-        const fileInput = document.createElement("input");
-        fileInput.type = "file";
-        fileInput.accept = ".json";
-        fileInput.style.display = "none";
-
-        fileInput.addEventListener("change", (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const jsonData = JSON.parse(e.target.result);
-                    editor.loadData(jsonData); // Загружаем JSON в редактор
-                } catch (error) {
-                    alert("Ошибка загрузки JSON");
-                }
-            };
-            reader.readAsText(file);
-        });
-
-        document.body.appendChild(fileInput);
-        fileInput.click();
-        document.body.removeChild(fileInput);
-    };
-
-    const handlePrintReport = (editor) => {
-
-        const htmlContent = editor.getHtml(); // Получаем HTML
-        const cssContent = editor.getCss(); // Получаем CSS
-
-        // Создаем временный iframe
-        const printWindow = window.open("", "_blank");
-        if (!printWindow) return;
-
-        // Заполняем iframe контентом
-        printWindow.document.write(`
-     <html>
-        <head>
-          <title>Печать</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-
-            @page { size: A4; margin: 0; }
-            body { width: 210mm; height: 297mm; margin: 0 auto; overflow: hidden; }
-
-            ${cssContent}
-          </style>
-        </head>
-        <body>${htmlContent}</body>
-      </html>
-    `);
-
-        // Ждём рендеринг и вызываем печать
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
-        }, 500);
-    };
-
-    const printAllPages = () => {
-        console.log(pages[0].content)
-        // saveCurrentPage();
-
-
-        let combinedHTML = "";
-        let combinedCSS = "";
-
-        for (let i = 0; i < pages.length; i++) {
-            combinedHTML += `
+            for (let i = 0; i < updatedPages.length; i++) {
+                combinedHTML += `
       
          <div class="print-page">
-            ${pages[i].content}
+            ${updatedPages[i].content}
          </div>
          `;
-            combinedCSS += " " + pages[i].styles;
-        }
+                combinedCSS += " " + updatedPages[i].styles;
+            }
 
-        const printWindow = window.open("", "_blank");
-        printWindow.document.write(`
+            // Создаем скрытый iframe для окна печати
+            const printFrame = document.createElement("iframe");
+            printFrame.style.position = "absolute";
+            printFrame.style.width = "0px";
+            printFrame.style.height = "0px";
+            printFrame.style.border = "none";
+
+            document.body.appendChild(printFrame);
+
+            const printDocument = printFrame.contentDocument || printFrame.contentWindow.document;
+            printDocument.open("", "_blank");
+            printDocument.write(`
    
      <html>
         <head>
@@ -692,10 +575,127 @@ const ReportEditor = () => {
         </head>
         <body>${combinedHTML}
       </html>
+        
+       
       
   `);
-        printWindow.document.close();
-        setTimeout(() => printWindow.print(), 500); // Небольшая задержка для корректной загрузки
+
+            printDocument.close();
+
+            setTimeout(() => {
+                printFrame.contentWindow.focus();
+                document.title = "Report"
+                printFrame.contentWindow.print();
+                document.title = "React App"
+                document.body.removeChild(printFrame);
+            }, 500);
+
+        });
+    };
+
+
+    const exportExcel = (editor) => {
+        const htmlContent = editor.getHtml(); // Получаем HTML контент из GrapesJS
+
+        // Создаем рабочую книгу
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet([[htmlContent]]); // Преобразуем HTML в рабочий лист
+        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+
+        // Экспортируем в Excel
+        XLSX.writeFile(wb, "report.xlsx");
+    };
+
+    const printAllPages = () => {
+
+        saveCurrentPage(editorView).then((updatedPages) => {
+
+            let combinedHTML = "";
+            let combinedCSS = "";
+
+            for (let i = 0; i < updatedPages.length; i++) {
+                combinedHTML += `
+      
+         <div class="print-page">
+            ${updatedPages[i].content}
+         </div>
+         `;
+                combinedCSS += " " + updatedPages[i].styles;
+            }
+
+            // Создаем скрытый iframe для окна печати
+            const printFrame = document.createElement("iframe");
+            printFrame.style.position = "absolute";
+            printFrame.style.width = "0px";
+            printFrame.style.height = "0px";
+            printFrame.style.border = "none";
+
+            document.body.appendChild(printFrame);
+
+            const printDocument = printFrame.contentDocument || printFrame.contentWindow.document;
+            printDocument.open("", "_blank");
+            printDocument.write(`
+   
+     <html>
+        <head>
+          <title>Печать</title>
+          <style>
+            ${combinedCSS}
+
+            @media print {
+            body {
+              margin: 0;
+              padding: 0;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+            }
+            .print-page {
+              width: 100%;
+              max-width: 100%;
+              height: 100vh;
+              min-height: 100vh;
+              box-sizing: border-box;
+              display: flex;
+              flex-direction: column;
+              justify-content: flex-start;
+              align-items: flex-start;
+              padding: 20px;
+              margin: 0 auto;
+              position: relative;
+              overflow: hidden;
+              page-break-after: always; /* Стабильное разбиение страниц */
+              break-after: page;
+            }
+            .print-page:last-child {
+              page-break-after: auto; /* Убираем лишний пустой лист в конце */
+            }
+          }
+            @page { size: A4; margin: 0; }
+            body { width: 210mm; height: 297mm; margin: 0 auto; overflow: hidden; }
+
+            
+          </style>
+        </head>
+        <body>${combinedHTML}
+      </html>
+        
+       
+      
+  `);
+
+            printDocument.close();
+
+            setTimeout(() => {
+                printFrame.contentWindow.focus();
+                document.title = "Report"
+                printFrame.contentWindow.print();
+                document.title = "React App"
+                document.body.removeChild(printFrame);
+            }, 500);
+
+        });
+
     };
 
 
@@ -780,14 +780,14 @@ const ReportEditor = () => {
                 </div>
 
                 <div className="flex justify-end text-center mr-2 w-1/3">
-                    <span className="gjs-pn-btn" onClick={() => exportExcel(editorView)} title="Экспорт Exel">
-                        <i className="fa fa-file-excel"></i>
+                    {/*<span className="gjs-pn-btn" onClick={() => exportExcel(editorView)} title="Экспорт Exel">*/}
+                    {/*    <i className="fa fa-file-excel"></i>*/}
+                    {/*</span>*/}
+                    <span className="gjs-pn-btn" onClick={() => exportPDF(editorView)} title="Экспорт PDF">
+                        <i className="fa fa-file-pdf"></i>
                     </span>
                     <span className="gjs-pn-btn" onClick={() => exportHtml(editorView)} title="Экспорт HTML">
                         <i className="fa fa-code"></i>
-                    </span>
-                    <span className="gjs-pn-btn" onClick={() => exportPDF(editorView)} title="Экспорт PDF">
-                        <i className="fa fa-file-pdf"></i>
                     </span>
                     <span className="gjs-pn-btn" onClick={exportJSON} title="Экспорт JSON">
                         <i className="fa fa-file-export"></i>
