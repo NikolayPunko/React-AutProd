@@ -313,7 +313,7 @@ const ReportEditor = () => {
         // if (!editor) {
         //     return;
         // }
-        saveCurrentPage(editor); // Сначала сохраняем текущую страницу
+        saveCurrentPage(editor);
 
         setTimeout(() => {
 
@@ -372,9 +372,9 @@ const ReportEditor = () => {
     const removePage = () => {
         setPages((prevPages) => {
             if (prevPages.length > 1) {
-                // Создаем копию массива страниц и удаляем последнюю
+
                 const updatedPages = [...prevPages];
-                updatedPages.pop();  // Удаляем последнюю страницу
+                updatedPages.pop();
 
                 if (currentPage === prevPages.length) {
                     switchPage(updatedPages.length);
@@ -399,6 +399,9 @@ const ReportEditor = () => {
                 link.download = "report.json";
                 document.body.appendChild(link);
                 link.click();
+                setTimeout(() => {
+
+                }, 1000);
                 document.body.removeChild(link);
             } catch (error) {
                 console.error("Ошибка при сохранении и экспорте:", error);
@@ -588,7 +591,7 @@ const ReportEditor = () => {
                 printFrame.contentWindow.print();
                 document.title = "React App"
                 document.body.removeChild(printFrame);
-            }, 500);
+            }, 1000);
 
         });
     };
@@ -692,7 +695,7 @@ const ReportEditor = () => {
                 printFrame.contentWindow.print();
                 document.title = "React App"
                 document.body.removeChild(printFrame);
-            }, 500);
+            }, 1000);
 
         });
 

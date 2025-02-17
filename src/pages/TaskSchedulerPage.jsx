@@ -9,6 +9,7 @@ import "./../App.css";
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend'
 import {
+    eventsJson2
     // resourse,
     // events,
     // events2,
@@ -19,6 +20,7 @@ import {
 } from "./../data/data";
 import {useEffect, useRef, useState} from "react";
 import SchedulerService, {hardware, party, planByHardware, planByParty} from "../services/SchedulerService";
+import Select from 'react-select';
 
 moment.updateLocale('ru', {
     week: {
@@ -74,29 +76,29 @@ function TaskSchedulerPage() {
     useEffect(() => {
 
 
-       SchedulerService.parseParty().then((e)=>{
-           setParty(e);
-           viewModel.setResources(e);
-       });
-
-        SchedulerService.parsePlanByParty().then((e)=>{
-            setPlanByParty(e);
-            viewModel.setEvents(e);
-        });
-
-        SchedulerService.parseHardware().then((e)=>{
-            setHardware(e);
-        });
-
-        SchedulerService.parsePlanByHardware().then((e)=>{
-            setPlanByHardware(e);
-        });
+       // SchedulerService.parseParty(eventsJson2).then((e)=>{
+       //     setParty(e);
+       //     viewModel.setResources(e);
+       // });
+       //
+       //  SchedulerService.parsePlanByParty(eventsJson2).then((e)=>{
+       //      setPlanByParty(e);
+       //      viewModel.setEvents(e);
+       //  });
+       //
+       //  SchedulerService.parseHardware(eventsJson2).then((e)=>{
+       //      setHardware(e);
+       //  });
+       //
+       //  SchedulerService.parsePlanByHardware(eventsJson2).then((e)=>{
+       //      setPlanByHardware(e);
+       //  });
 
 
 
         configScheduler();
-        schedulerData.setResources(party);
-        schedulerData.setEvents(planByParty);
+        // schedulerData.setResources(party);
+        // schedulerData.setEvents(planByParty);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
 
@@ -302,10 +304,103 @@ function TaskSchedulerPage() {
         };
     }
 
+    const [selectedOption, setSelectedOption] = useState(null);
+    const [options, setOptions] = useState(null);
+
+    const [downloadedPlan, setDownloadedPlan] = useState(null);
+
+    useEffect(() => {
+
+        if(downloadedPlan) {
+            SchedulerService.parseParty(downloadedPlan.data).then((e)=>{
+                setParty(e);
+                viewModel.setResources(e);
+            });
+
+            SchedulerService.parsePlanByParty(downloadedPlan.data).then((e)=>{
+                setPlanByParty(e);
+                viewModel.setEvents(e);
+            });
+
+            SchedulerService.parseHardware(downloadedPlan.data).then((e)=>{
+                setHardware(e);
+            });
+
+            SchedulerService.parsePlanByHardware(downloadedPlan.data).then((e)=>{
+                setPlanByHardware(e);
+            });
+        }
+
+        setRenderCounter(prevState => !renderCounter);
+
+    }, [downloadedPlan]);
+
+    useEffect(() => {
+
+        fetchPlansId();
+
+    }, []);
+
+    async function fetchPlanByPlanId(planId) {
+        try {
+            const response = await SchedulerService.getByPlanId(planId)
+            console.log(response)
+            setDownloadedPlan(response.data)
+        } catch (e) {
+            // console.log("Ошибка!")
+            const error = e;
+        }
+    }
+
+    async function fetchPlansId() {
+        try {
+            const response = await SchedulerService.getPlansId()
+            convertPlansIdToOptions(response.data)
+        } catch (e) {
+            // console.log("Ошибка!")
+            const error = e;
+        }
+    }
+
+    function convertPlansIdToOptions(plansId) {
+        const options = []
+        for (let i = 0; i < plansId.length; i++) {
+            options.push({ value: plansId[i], label: plansId[i] })
+        }
+        setOptions(options);
+    }
+
+
+    function handleChangePlan(event) {
+        if (event != null) {
+            setSelectedOption(event);
+
+            fetchPlanByPlanId(event.value)
+        } else {
+            setSelectedOption([]);
+        }
+    }
+
     return (
 
         <div className="text-center">
+
+
+
+
             <h1 className="font-bold text-2xl my-8">Планировщик задач</h1>
+
+            <div className="mb-2 mx-10">
+                <Select className="text-xs font-medium"
+                        placeholder={"Выберите план для отображения"}
+                        value={selectedOption}
+                        onChange={handleChangePlan}
+                    // styles={CustomStyle}
+                        options={options}
+                        isClearable={true}
+                        isSearchable={false}
+                />
+            </div>
 
             <div className="schedular-container">
                 <DndProvider backend={HTML5Backend}>

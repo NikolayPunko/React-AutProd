@@ -1,5 +1,6 @@
 import {eventsJson2, resourse} from "../data/data";
 import {useState} from "react";
+import $api, {API_URL} from "../http";
 
 export const party = []
 export const hardware = []
@@ -26,8 +27,8 @@ const exampleTask = {
 
 export default class SchedulerService {
 
-    static async parseParty() {
-        const obj = JSON.parse(eventsJson2);
+    static async parseParty(json) {
+        const obj = JSON.parse(json);
         for (let i = 0; i < obj.Projects.length; i++) {
             party[i] =  Object.assign({}, exampleResourse);
             party[i].id = obj.Projects[i];
@@ -37,8 +38,8 @@ export default class SchedulerService {
         return party;
     }
 
-    static async parseHardware() {
-        const obj = JSON.parse(eventsJson2);
+    static async parseHardware(json) {
+        const obj = JSON.parse(json);
         for (let i = 0; i < obj.Resources.length; i++) {
             hardware[i] =  Object.assign({}, exampleResourse);
             hardware[i].id = obj.Resources[i];
@@ -48,8 +49,8 @@ export default class SchedulerService {
         return hardware;
     }
 
-    static async parsePlanByParty() {
-        const obj = JSON.parse(eventsJson2);
+    static async parsePlanByParty(json) {
+        const obj = JSON.parse(json);
         for (let i = 0; i < obj.AllocationList.length; i++) {
             planByParty[i] = Object.assign({}, exampleTask);;
             planByParty[i].id = i;
@@ -62,8 +63,8 @@ export default class SchedulerService {
         return planByParty;
     }
 
-    static async parsePlanByHardware() {
-        const obj = JSON.parse(eventsJson2);
+    static async parsePlanByHardware(json) {
+        const obj = JSON.parse(json);
         for (let i = 0; i < obj.AllocationList.length; i++) {
             planByHardware[i] = Object.assign({}, exampleTask);;
             planByHardware[i].id = i;
@@ -74,6 +75,14 @@ export default class SchedulerService {
         }
         // console.log(planByHardware)
         return planByHardware;
+    }
+
+    static async getPlansId() {
+        return $api.get(`${API_URL}/api/scheduler/plansId`)
+    }
+
+    static async getByPlanId(planId) {
+        return $api.get(`${API_URL}/api/scheduler/` + planId)
     }
 
 

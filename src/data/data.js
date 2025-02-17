@@ -274,8 +274,8 @@ export const eventsJson2 = `{
     "ID" : "Allocation5",
     "PID" : "164",
     "JID" : "Job1",
-    "StartDate" : "2025-02-02 00:04:00",
-    "EndDate" : "2025-02-02 01:14:00",
+    "StartDate" : "2025-03-02 00:04:00",
+    "EndDate" : "2025-03-02 01:14:00",
     "Duration" : 70,
     "PredAllocationList" : [ "Allocation4" ],
     "ResourceRequirementList" : [ "Line2" ]
@@ -283,8 +283,8 @@ export const eventsJson2 = `{
     "ID" : "Allocation8",
     "PID" : "165",
     "JID" : "Job1",
-    "StartDate" : "2025-02-02 01:00:00",
-    "EndDate" : "2025-02-02 02:00:00",
+    "StartDate" : "2025-03-02 01:00:00",
+    "EndDate" : "2025-03-02 02:00:00",
     "Duration" : 60,
     "PredAllocationList" : [ "Allocation7" ],
     "ResourceRequirementList" : [ "Line1" ]
