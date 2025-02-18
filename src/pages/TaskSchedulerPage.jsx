@@ -8,19 +8,10 @@ import "./../App.css";
 
 import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend'
-import {
-    eventsJson2
-    // resourse,
-    // events,
-    // events2,
-    // resourseExample2,
-    // resourseExample1,
-    // eventsExample2,
-    // eventsExample1
-} from "./../data/data";
 import {useEffect, useRef, useState} from "react";
 import SchedulerService, {hardware, party, planByHardware, planByParty} from "../services/SchedulerService";
 import Select from 'react-select';
+import {CustomStyle} from "../data/styleForSelect";
 
 moment.updateLocale('ru', {
     week: {
@@ -76,24 +67,23 @@ function TaskSchedulerPage() {
     useEffect(() => {
 
 
-       // SchedulerService.parseParty(eventsJson2).then((e)=>{
-       //     setParty(e);
-       //     viewModel.setResources(e);
-       // });
-       //
-       //  SchedulerService.parsePlanByParty(eventsJson2).then((e)=>{
-       //      setPlanByParty(e);
-       //      viewModel.setEvents(e);
-       //  });
-       //
-       //  SchedulerService.parseHardware(eventsJson2).then((e)=>{
-       //      setHardware(e);
-       //  });
-       //
-       //  SchedulerService.parsePlanByHardware(eventsJson2).then((e)=>{
-       //      setPlanByHardware(e);
-       //  });
-
+        // SchedulerService.parseParty(eventsJson2).then((e)=>{
+        //     setParty(e);
+        //     viewModel.setResources(e);
+        // });
+        //
+        //  SchedulerService.parsePlanByParty(eventsJson2).then((e)=>{
+        //      setPlanByParty(e);
+        //      viewModel.setEvents(e);
+        //  });
+        //
+        //  SchedulerService.parseHardware(eventsJson2).then((e)=>{
+        //      setHardware(e);
+        //  });
+        //
+        //  SchedulerService.parsePlanByHardware(eventsJson2).then((e)=>{
+        //      setPlanByHardware(e);
+        //  });
 
 
         configScheduler();
@@ -101,8 +91,6 @@ function TaskSchedulerPage() {
         // schedulerData.setEvents(planByParty);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
-
-
 
 
     }, []);
@@ -257,18 +245,6 @@ function TaskSchedulerPage() {
     }
 
 
-    let rightCustomHeader = (
-        <div className="">
-            <button onClick={displayByParty}
-                    className={"border h-[32px] border-gray-300 border-r-0 rounded-l-md px-2" + stylePartyBut}>По
-                партиям
-            </button>
-            <button onClick={displayByHardware}
-                    className={"border h-[32px] border-gray-300 rounded-r-md px-2" + styleHardwareBut}>По оборудованию
-            </button>
-        </div>
-    );
-
     function getCustomDate(schedulerData, num, date = undefined) {
 
         if (!date) {
@@ -311,22 +287,22 @@ function TaskSchedulerPage() {
 
     useEffect(() => {
 
-        if(downloadedPlan) {
-            SchedulerService.parseParty(downloadedPlan.data).then((e)=>{
+        if (downloadedPlan) {
+            SchedulerService.parseParty(downloadedPlan.data).then((e) => {
                 setParty(e);
                 viewModel.setResources(e);
             });
 
-            SchedulerService.parsePlanByParty(downloadedPlan.data).then((e)=>{
+            SchedulerService.parsePlanByParty(downloadedPlan.data).then((e) => {
                 setPlanByParty(e);
                 viewModel.setEvents(e);
             });
 
-            SchedulerService.parseHardware(downloadedPlan.data).then((e)=>{
+            SchedulerService.parseHardware(downloadedPlan.data).then((e) => {
                 setHardware(e);
             });
 
-            SchedulerService.parsePlanByHardware(downloadedPlan.data).then((e)=>{
+            SchedulerService.parsePlanByHardware(downloadedPlan.data).then((e) => {
                 setPlanByHardware(e);
             });
         }
@@ -365,7 +341,7 @@ function TaskSchedulerPage() {
     function convertPlansIdToOptions(plansId) {
         const options = []
         for (let i = 0; i < plansId.length; i++) {
-            options.push({ value: plansId[i], label: plansId[i] })
+            options.push({value: plansId[i], label: plansId[i]})
         }
         setOptions(options);
     }
@@ -381,26 +357,37 @@ function TaskSchedulerPage() {
         }
     }
 
+    let rightCustomHeader = (
+        <div className="">
+            <button onClick={displayByParty}
+                    className={"border h-[32px] border-gray-300 border-r-0 rounded-l-md px-2" + stylePartyBut}>По
+                партиям
+            </button>
+            <button onClick={displayByHardware}
+                    className={"border h-[32px] border-gray-300 rounded-r-md px-2" + styleHardwareBut}>По оборудованию
+            </button>
+        </div>
+    );
+
+    let leftCustomHeader = (
+        <div className="w-40" style={{ position: "relative", zIndex: 20 }}>
+            <Select className="text-xs font-medium"
+                    placeholder={"Выберите план"}
+                    value={selectedOption}
+                    onChange={handleChangePlan}
+                    styles={CustomStyle}
+                    options={options}
+                    isClearable={false}
+                    isSearchable={false}
+            />
+        </div>
+    )
+
     return (
 
         <div className="text-center">
 
-
-
-
             <h1 className="font-bold text-2xl my-8">Планировщик задач</h1>
-
-            <div className="mb-2 mx-10">
-                <Select className="text-xs font-medium"
-                        placeholder={"Выберите план для отображения"}
-                        value={selectedOption}
-                        onChange={handleChangePlan}
-                    // styles={CustomStyle}
-                        options={options}
-                        isClearable={true}
-                        isSearchable={false}
-                />
-            </div>
 
             <div className="schedular-container">
                 <DndProvider backend={HTML5Backend}>
@@ -417,7 +404,7 @@ function TaskSchedulerPage() {
                         onScrollTop={onScrollTop}
                         onScrollBottom={onScrollBottom}
                         // toggleExpandFunc={toggleExpandFunc}
-                        // leftCustomHeader={leftCustomHeader}
+                        rightCustomHeader={leftCustomHeader}
                         leftCustomHeader={rightCustomHeader}
 
                     />
