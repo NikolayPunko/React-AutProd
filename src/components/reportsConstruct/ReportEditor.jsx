@@ -50,6 +50,8 @@ const ReportEditor = () => {
                 messages: {ru},
             },
             dragMode: 'absolute',
+            // dragMode: 'transition',
+            selectorManager: { componentFirst: true },
             storageManager: false, // Отключаем сохранение
             // panels: { defaults: [] }, // Убираем стандартные панелиnpm
             plugins: [grapesjspresetwebpage],
@@ -122,6 +124,141 @@ const ReportEditor = () => {
 
 
         // console.log(editor.Panels.getPanels())
+
+
+        // Добавляем стили для блоков
+        editor.Css.addRules(`
+        .report-page {
+          width: 210mm;
+          height: 297mm;
+          padding: 20mm;
+          border: 1px solid #000;
+          margin-bottom: 20px;
+          background: #fff;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+        }
+        .band {
+          width: 100%;
+          padding: 10px;
+          border: 1px dashed #000;
+          margin-bottom: 10px;
+          background: #f0f0f0;
+          min-height: 50px;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;
+          position: relative;
+        }
+        .band-content {
+          flex-grow: 1;
+        }
+
+        /* Стили для визуальной индикации */
+        .droppable-hover {
+          border: 2px solid #00ff00 !important; /* Зеленая рамка при наведении */
+          background-color: rgba(0, 255, 0, 0.2);
+        }
+      `);
+
+        // Добавляем блоки для перетаскивания
+        const blocks = [
+            {
+                id: "report-page",
+                label: "Report Page (A4)",
+                content: `
+            <div class="report-page" style="width: 210mm; height: 297mm; padding: 20mm;">
+              <h3>New Page</h3>
+            </div>
+          `,
+                category: "Pages",
+                draggable: true,
+                droppable: true,
+            },
+            {
+                id: "page-header",
+                label: "Page Header (Band)",
+                content: `
+            <div class="band page-header">
+              <div class="band-content">Page Header</div>
+            </div>
+          `,
+                category: "Bands",
+                draggable: true,
+                droppable: true,
+            },
+            {
+                id: "text-block",
+                label: "Text Block",
+                content: '<div class="band-content">This is some text.</div>',
+                category: "Text",
+                draggable: true,
+                droppable: false,
+            },
+        ];
+
+        blocks.forEach((block) => editor.BlockManager.add(block.id, block));
+
+        // Событие добавления компонента
+        editor.on("component:add", (model) => {
+            console.log("Компонент добавлен:", model);
+        });
+
+        // Событие начала перетаскивания компонента
+        editor.on("component:drag:start", (model) => {
+            console.log("Началось перетаскивание компонента:", model);
+            // Убираем индикаторы с возможных контейнеров
+            editor.getComponents().forEach((comp) => {
+                comp.removeClass("droppable-hover");
+            });
+        });
+
+        // Обработчик события перемещения компонента
+        editor.on("component:drag:stop", (model) => {
+            console.log("Перетаскивание завершено:", model);
+            // Убираем индикатор с контейнера
+            editor.getComponents().forEach((comp) => {
+                comp.removeClass("droppable-hover");
+            });
+
+            // Проверяем, куда был вставлен компонент
+            const parent = model.getParent();
+            if (parent && parent.get("droppable")) {
+                parent.append(model); // Вставляем элемент внутрь родителя
+            }
+        });
+
+        // Логика добавления визуального индикатора при перетаскивании
+        editor.on("component:drag:start", (model) => {
+            const componentEl = model.target.view.el;
+            const canvasEl = editor.Canvas.getElement();
+
+            // Перемещение элементов относительно канваса
+            const offsetX = componentEl.getBoundingClientRect().left - canvasEl.getBoundingClientRect().left;
+            const offsetY = componentEl.getBoundingClientRect().top - canvasEl.getBoundingClientRect().top;
+
+
+            console.log("Offset X:", offsetX, "Offset Y:", offsetY);
+
+            // Показать возможность вставки в контейнер
+            editor.getComponents().forEach((component) => {
+                const { left, top, width, height } = component.getBoundingRect();
+                if (offsetX >= left && offsetX <= left + width && offsetY >= top && offsetY <= top + height) {
+                    component.addClass("droppable-hover");
+                }
+            });
+        });
+
+        // Визуальная индикация, что контейнер может принимать компоненты
+        editor.on("component:drag:stop", (model) => {
+            editor.getComponents().forEach((comp) => {
+                comp.removeClass("droppable-hover");
+            });
+        });
+
+
+
 
 
         // Добавляем кнопки для экспорта
@@ -216,6 +353,8 @@ const ReportEditor = () => {
 
 
         document.querySelector('.gjs-pn-devices-c').querySelector('.gjs-pn-buttons').innerHTML = "" // удаляем дефолтный div с девайсами
+
+
 
 
         editor.Panels.addButton('devices-c', [// {
@@ -718,6 +857,8 @@ const ReportEditor = () => {
     function addBlocks(editor) {
         editor.BlockManager.add("my-block", {
             label: "Мой блок", content: "<div style='padding:10px; background:#f3f3f3;'>Hello!</div>",
+            draggable: true, // Это перетаскиваемый элемент
+            droppable: false, // Это не контейнер
         });
         editor.BlockManager.add("h1", {
             label: "Заголовок h1", // content: "<h1 style='padding:30px; '>Заголовок h1</h1>",

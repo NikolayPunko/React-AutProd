@@ -34,9 +34,12 @@ function TaskSchedulerPage() {
     const [hardware, setHardware] = useState([]);
     const [planByHardware, setPlanByHardware] = useState([]);
 
+    let occupiedSlots = [];
+
 
     const schedulerData = new SchedulerData(
-        new dayjs().format(DATE_FORMAT),
+        new dayjs().format(DATE_FORMAT) ,
+        // new dayjs("2025-02-03") ,
         currentViewType, false, false, {
             customCellWidth: '180',
             views: [
@@ -99,8 +102,10 @@ function TaskSchedulerPage() {
     function configScheduler() {
         schedulerData.setSchedulerLocale("ru");
         schedulerData.setCalendarPopoverLocale("by_BY"); // this uses antd [List of supported locales](https://ant.design/docs/react/i18n#supported-languages)
-        schedulerData.setMinuteStep(10);
-        // schedulerData.setEvents(events);
+
+        schedulerData.config.dayCellWidth = 5; //ширина клеток для дня
+        schedulerData.config.minuteStep = 1;
+
         schedulerData.config.resourceName = "Название";
         // schedulerData.config.schedulerWidth = '1450';
         // schedulerData.config.dayResourceTableWidth = '30';
@@ -114,7 +119,10 @@ function TaskSchedulerPage() {
         schedulerData.config.scrollToSpecialDaysjsEnabled = true;
         // schedulerData.config.tableHeaderHeight = 300;
 
+        // schedulerData.config.eventItemPopoverEnabled = false;
+
         // schedulerData.config.eventItemHeight = 22;
+        // schedulerData.config.eventItemHeight = 40;
         // schedulerData.config.eventItemLineHeight = 50;
         // schedulerData.config.defaultEventBgColor = "#1c5eb6";
         // schedulerData.config.nonWorkingTimeHeadColor = "#000000";
@@ -128,7 +136,20 @@ function TaskSchedulerPage() {
         // schedulerData.config.nonAgendaOtherCellHeaderFormat = "ddd|M/D";
         // schedulerData.config.checkConflict = true;
         schedulerData.scrollLeft = 2;
+
+
+
+        // schedulerData.config.dayResourceTableWidth = 20;
+        // schedulerData.config.creatable = true;
+        // schedulerData.config.crossResourceMove = true;
+        // schedulerData.config.creatable = true;
+
+
+
     }
+
+
+
 
     const prevClick = (schedulerData) => {
         schedulerData.prev();
@@ -223,16 +244,19 @@ function TaskSchedulerPage() {
         return false;
     }
 
+
     function displayByHardware() {
         setIsDisplayByHardware(true);
-
 
         let schedulerDataOld = viewModel;
         schedulerDataOld.setResources(hardware);
         schedulerDataOld.setEvents(planByHardware);
+
         setViewModel(schedulerDataOld);
         setRenderCounter(prevState => !renderCounter);
     }
+
+
 
     function displayByParty() {
         setIsDisplayByHardware(false);
@@ -406,6 +430,8 @@ function TaskSchedulerPage() {
                         // toggleExpandFunc={toggleExpandFunc}
                         rightCustomHeader={leftCustomHeader}
                         leftCustomHeader={rightCustomHeader}
+                        // eventItemTemplateResolver={eventItemTemplateResolver} // Используем кастомизацию отображения
+                        // eventItemPopoverTemplateResolver={}
 
                     />
                 </DndProvider>
