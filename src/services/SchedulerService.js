@@ -30,6 +30,7 @@ export default class SchedulerService {
     static async parseParty(json) {
         const obj = JSON.parse(json);
         for (let i = 0; i < obj.Projects.length; i++) {
+        // for (let i = 0; i < 15; i++) {
             party[i] =  Object.assign({}, exampleResourse);
             party[i].id = obj.Projects[i];
             party[i].name = obj.Projects[i];
@@ -52,6 +53,7 @@ export default class SchedulerService {
     static async parsePlanByParty(json) {
         const obj = JSON.parse(json);
         for (let i = 0; i < obj.AllocationList.length; i++) {
+        // for (let i = 0; i < 15; i++) {
             planByParty[i] = Object.assign({}, exampleTask);;
             planByParty[i].id = i;
             planByParty[i].start = obj.AllocationList[i].StartDate.replace(""," ");

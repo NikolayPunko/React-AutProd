@@ -29,4 +29,12 @@
     box-shadow: 0 0 2px var(--gjs-main-dark-color) !important;
 }
 
+.a4-page {
+    width: 1123px; /* Ширина A4 */
+    height: 1587px; /* Высота A4 */
+    page-break-after: always; /* Разрыв страницы при печати */
+    border: 1px solid #ccc; /* Визуальная граница */
+    margin-bottom: 20px; /* Отступ между страницами */
+    overflow: hidden; /* Обрезка лишнего */
+}
 

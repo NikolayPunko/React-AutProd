@@ -12,6 +12,7 @@ import {useEffect, useRef, useState} from "react";
 import SchedulerService, {hardware, party, planByHardware, planByParty} from "../services/SchedulerService";
 import Select from 'react-select';
 import {CustomStyle} from "../data/styleForSelect";
+import {useLocation, useNavigate} from "react-router-dom";
 
 moment.updateLocale('ru', {
     week: {
@@ -22,9 +23,12 @@ moment.updateLocale('ru', {
 
 function TaskSchedulerPage() {
 
+    const navigate = useNavigate();
+    const from = '/'
+
     const [isDisplayByHardware, setIsDisplayByHardware] = useState(false);
 
-    const [currentViewType, setCurrentViewType] = useState(ViewType.Month);
+    const [currentViewType, setCurrentViewType] = useState(ViewType.Day);
 
     const stylePartyBut = isDisplayByHardware ? "" : " bg-blue-600 text-white";
     const styleHardwareBut = isDisplayByHardware ? " bg-blue-600 text-white" : "";
@@ -34,12 +38,17 @@ function TaskSchedulerPage() {
     const [hardware, setHardware] = useState([]);
     const [planByHardware, setPlanByHardware] = useState([]);
 
-    let occupiedSlots = [];
+    const [isLoading, setIsLoading] = useState(false);
+
+
+    //Пагинация для партий в за период - день
+    const [page, setPage] = useState(1);
+    const maxItemPage = 20;
 
 
     const schedulerData = new SchedulerData(
-        new dayjs().format(DATE_FORMAT) ,
-        // new dayjs("2025-02-03") ,
+        // new dayjs().format(DATE_FORMAT) ,
+        new dayjs("2025-02-08"),
         currentViewType, false, false, {
             customCellWidth: '180',
             views: [
@@ -52,7 +61,7 @@ function TaskSchedulerPage() {
                 {viewName: 'Год', viewType: ViewType.Custom2},
             ],
             besidesWidth: window.innerWidth <= 1600 ? 100 : 350,
-            // schedulerContentHeight: '100%'
+            schedulerContentHeight: window.innerHeight - 300
 
         }, {
             getCustomDateFunc: getCustomDate,
@@ -106,8 +115,14 @@ function TaskSchedulerPage() {
         schedulerData.config.dayCellWidth = 5; //ширина клеток для дня
         schedulerData.config.minuteStep = 1;
 
+        //предложить идею если по партиям только одна синяя полоска то можно делать интервал хоть 5 минут, а когда переключаем по оборудованию тогда 1 минута
+        //или делать пагинацию
+
+        //почитать про библиотеки , такие как react-window или react-virtualized, чтобы отрисовывать только те элементы, которые находятся в видимой области.
+
         schedulerData.config.resourceName = "Название";
         // schedulerData.config.schedulerWidth = '1450';
+        // schedulerData.config.schedulerContentHeight = "300"
         // schedulerData.config.dayResourceTableWidth = '30';
         // schedulerData.config.monthResourceTableWidth = '30';
         // schedulerData.config.yearResourceTableWidth = '30';
@@ -138,17 +153,13 @@ function TaskSchedulerPage() {
         schedulerData.scrollLeft = 2;
 
 
-
         // schedulerData.config.dayResourceTableWidth = 20;
         // schedulerData.config.creatable = true;
         // schedulerData.config.crossResourceMove = true;
         // schedulerData.config.creatable = true;
 
 
-
     }
-
-
 
 
     const prevClick = (schedulerData) => {
@@ -172,7 +183,16 @@ function TaskSchedulerPage() {
         schedulerData.setViewType(view.viewType);
         setCurrentViewType(view.viewType);
         schedulerData.config.customCellWidth = view.viewType === ViewType.Custom1 ? 180 : 80;
-        isDisplayByHardware ? schedulerData.setEvents(planByHardware) : schedulerData.setEvents(planByParty);
+        // isDisplayByHardware ? schedulerData.setEvents(planByHardware) : schedulerData.setEvents(planByParty);
+
+        if (isDisplayByHardware) {
+            schedulerData.setEvents(planByHardware);
+            schedulerData.setResources(hardware);
+        } else {
+            schedulerData.setEvents(planByParty)
+            checkPaginationNeeded() ? viewModel.setResources(party.slice(0, maxItemPage)) : viewModel.setResources(party)
+        }
+
         // schedulerData.setEvents(events);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
@@ -256,14 +276,69 @@ function TaskSchedulerPage() {
         setRenderCounter(prevState => !renderCounter);
     }
 
+    function checkPaginationNeeded() {
+        return viewModel.viewType === 0 && planByParty.length + 1 > maxItemPage;
+    }
 
 
     function displayByParty() {
+        setIsLoading(true)
         setIsDisplayByHardware(false);
 
         let schedulerDataOld = viewModel;
-        schedulerDataOld.setResources(party);
+
         schedulerDataOld.setEvents(planByParty);
+
+        if (checkPaginationNeeded()) {
+            setPage(1);
+            schedulerDataOld.setResources(party.slice(0,maxItemPage))
+        } else {
+            schedulerDataOld.setResources(party);
+        }
+
+        setViewModel(schedulerDataOld);
+        setRenderCounter(prevState => !renderCounter);
+        setIsLoading(false)
+    }
+
+    function nextPage() {
+
+
+        if (page === planByParty.length / maxItemPage) return;
+
+        let schedulerDataOld = viewModel;
+
+        let count = 0;
+        let list = [];
+
+        for (let i = page * maxItemPage; i < (page + 1) * maxItemPage; i++) {
+
+            list[count] = party[i];
+            count++;
+        }
+        setPage(prevState => prevState + 1)
+        schedulerDataOld.setResources(list);
+        setViewModel(schedulerDataOld);
+        setRenderCounter(prevState => !renderCounter);
+
+    }
+
+    function prevPage() {
+
+        if (page === 1) return;
+
+        let schedulerDataOld = viewModel;
+
+        let count = 0;
+        let list = [];
+
+        for (let i = (page - 1) * maxItemPage - maxItemPage; i < (page - 1) * maxItemPage; i++) {
+
+            list[count] = party[i];
+            count++;
+        }
+        setPage(prevState => prevState - 1)
+        schedulerDataOld.setResources(list);
         setViewModel(schedulerDataOld);
         setRenderCounter(prevState => !renderCounter);
     }
@@ -314,20 +389,27 @@ function TaskSchedulerPage() {
         if (downloadedPlan) {
             SchedulerService.parseParty(downloadedPlan.data).then((e) => {
                 setParty(e);
-                viewModel.setResources(e);
+                if (!isDisplayByHardware){
+                    viewModel.viewType === 0 ? viewModel.setResources(e.slice(0, maxItemPage)) : viewModel.setResources(e)
+                }
             });
 
             SchedulerService.parsePlanByParty(downloadedPlan.data).then((e) => {
                 setPlanByParty(e);
+                if (!isDisplayByHardware)
                 viewModel.setEvents(e);
             });
 
             SchedulerService.parseHardware(downloadedPlan.data).then((e) => {
                 setHardware(e);
+                if (isDisplayByHardware)
+                    viewModel.setResources(e)
             });
 
             SchedulerService.parsePlanByHardware(downloadedPlan.data).then((e) => {
                 setPlanByHardware(e);
+                if (isDisplayByHardware)
+                    viewModel.setEvents(e);
             });
         }
 
@@ -394,7 +476,7 @@ function TaskSchedulerPage() {
     );
 
     let leftCustomHeader = (
-        <div className="w-40" style={{ position: "relative", zIndex: 20 }}>
+        <div className="w-40" style={{position: "relative", zIndex: 20}}>
             <Select className="text-xs font-medium"
                     placeholder={"Выберите план"}
                     value={selectedOption}
@@ -405,13 +487,24 @@ function TaskSchedulerPage() {
                     isSearchable={false}
             />
         </div>
-    )
+    );
+
 
     return (
 
-        <div className="text-center">
+        <div className="">
 
-            <h1 className="font-bold text-2xl my-8">Планировщик задач</h1>
+            {isLoading && <div
+                className="fixed bg-black/50 top-0 z-30 right-0 left-0 bottom-0 text-center "
+
+            >Загрузка</div> }
+
+            <button onClick={() => {
+                navigate(from, {replace: true})
+            }} className="mt-2 ml-8 py-1 px-2 rounded text-blue-800  hover:bg-blue-50">Вернуться назад
+            </button>
+
+            <h1 className="font-bold text-center text-2xl mb-8">Планировщик задач</h1>
 
             <div className="schedular-container">
                 <DndProvider backend={HTML5Backend}>
@@ -435,6 +528,17 @@ function TaskSchedulerPage() {
 
                     />
                 </DndProvider>
+            </div>
+
+            <div className="flex flex-row justify-center">
+                <button onClick={prevPage}
+                        className="mt-2 ml-8 py-1 px-2 rounded text-blue-800  hover:bg-blue-50">Пред.
+                </button>
+                <span
+                    className="mt-2 ml-8 py-1 px-2 rounded text-blue-800">{page}/{planByParty.length / maxItemPage}</span>
+                <button onClick={nextPage}
+                        className="mt-2 ml-8 py-1 px-2 rounded text-blue-800  hover:bg-blue-50">След.
+                </button>
             </div>
 
 
