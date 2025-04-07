@@ -266,24 +266,24 @@ table.scheduler-table tr:last-child td {
 }
 
 
-/*.event-item {*/
-/*    margin: 1px 0;*/
-/*    width: 100%;*/
-/*    overflow: hidden;*/
-/*    text-overflow: ellipsis;*/
-/*    white-space: nowrap;*/
-/*    color: #fff;*/
-/*    padding-right: 20px !important;*/
-/*    background-color: #1677ff;*/
-/*}*/
+.event-item {
+    margin: 1px 0;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #fff;
+    padding-right: 20px !important;
+    background-color: #1677ff;
+}
 
-/*.round-all {*/
-/*    border-radius: 2px;*/
-/*}*/
-
-
+.round-all {
+    border-radius: 2px;
+}
 
 
-/*table.scheduler-bg-table td {*/
-/*    border-right: none !important; !* Убирает вертикальные линии *!*/
-/*}*/
+
+
+table.scheduler-bg-table td {
+    border-right: none !important; /* Убирает вертикальные линии */
+}

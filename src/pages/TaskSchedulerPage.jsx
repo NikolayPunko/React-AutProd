@@ -28,7 +28,7 @@ function TaskSchedulerPage() {
 
     const [isDisplayByHardware, setIsDisplayByHardware] = useState(false);
 
-    const [currentViewType, setCurrentViewType] = useState(ViewType.Day);
+    const [currentViewType, setCurrentViewType] = useState(ViewType.Month);
 
     const stylePartyBut = isDisplayByHardware ? "" : " bg-blue-600 text-white";
     const styleHardwareBut = isDisplayByHardware ? " bg-blue-600 text-white" : "";
@@ -41,14 +41,14 @@ function TaskSchedulerPage() {
     const [isLoading, setIsLoading] = useState(false);
 
 
-    //Пагинация для партий в за период - день
+    //Пагинация для партий за период - день
     const [page, setPage] = useState(1);
-    const maxItemPage = 20;
+    const maxItemPage = 23;
 
 
     const schedulerData = new SchedulerData(
         // new dayjs().format(DATE_FORMAT) ,
-        new dayjs("2025-02-08"),
+        new dayjs("2025-04-06"),
         currentViewType, false, false, {
             customCellWidth: '180',
             views: [
@@ -112,8 +112,8 @@ function TaskSchedulerPage() {
         schedulerData.setSchedulerLocale("ru");
         schedulerData.setCalendarPopoverLocale("by_BY"); // this uses antd [List of supported locales](https://ant.design/docs/react/i18n#supported-languages)
 
-        schedulerData.config.dayCellWidth = 5; //ширина клеток для дня
-        schedulerData.config.minuteStep = 1;
+        schedulerData.config.dayCellWidth = 20; //ширина клеток для дня
+        schedulerData.config.minuteStep = 5;
 
         //предложить идею если по партиям только одна синяя полоска то можно делать интервал хоть 5 минут, а когда переключаем по оборудованию тогда 1 минута
         //или делать пагинацию
@@ -197,7 +197,6 @@ function TaskSchedulerPage() {
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
 
-
     }
 
     const onSelectDate = (schedulerData, date) => {
@@ -207,7 +206,7 @@ function TaskSchedulerPage() {
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
 
-        //дописать логику когда по партиям когда по оборудоавнию
+
     }
 
     const eventClicked = (schedulerData, event) => {
@@ -239,11 +238,11 @@ function TaskSchedulerPage() {
     }
 
     const onScrollTop = (schedulerData, schedulerContent, maxScrollTop) => {
-        console.log('onScrollTop');
+        // console.log('onScrollTop');
     }
 
     const onScrollBottom = (schedulerData, schedulerContent, maxScrollTop) => {
-        console.log('onScrollBottom');
+        // console.log('onScrollBottom');
     }
 
     const toggleExpandFunc = (schedulerData, slotId) => {
@@ -264,11 +263,33 @@ function TaskSchedulerPage() {
         return false;
     }
 
+    function getViewTypeById(id){
+        switch (id) {
+            case 0: return ViewType.Day
+            case 2: return ViewType.Month
+            case 3: return ViewType.Quarter
+            case 6: return ViewType.Custom1
+            case 7: return ViewType.Custom2
+        }
+    }
+
 
     function displayByHardware() {
         setIsDisplayByHardware(true);
 
+        let currDate = viewModel.getViewDates().startDate
+
+        viewModel.config.dayCellWidth = 5;
+        viewModel.config.minuteStep = 1;
+
+        let currViewType = viewModel.viewType
+        viewModel.setViewType(ViewType.Month) // нужно из-за багов
+        viewModel.setViewType(currViewType)
+
         let schedulerDataOld = viewModel;
+
+        schedulerDataOld.setDate(currDate)
+
         schedulerDataOld.setResources(hardware);
         schedulerDataOld.setEvents(planByHardware);
 
@@ -283,11 +304,20 @@ function TaskSchedulerPage() {
 
     function displayByParty() {
         setIsLoading(true)
+        let currDate = viewModel.getViewDates().startDate
         setIsDisplayByHardware(false);
+        viewModel.config.dayCellWidth = 20;
+        viewModel.config.minuteStep = 5;
+
+        let currViewType = viewModel.viewType
+        viewModel.setViewType(ViewType.Month)
+        viewModel.setViewType(currViewType)
 
         let schedulerDataOld = viewModel;
 
+        schedulerDataOld.setDate(currDate);
         schedulerDataOld.setEvents(planByParty);
+
 
         if (checkPaginationNeeded()) {
             setPage(1);
@@ -303,8 +333,7 @@ function TaskSchedulerPage() {
 
     function nextPage() {
 
-
-        if (page === planByParty.length / maxItemPage) return;
+        if (page === Math.ceil(planByParty.length / maxItemPage)) return;
 
         let schedulerDataOld = viewModel;
 
@@ -312,6 +341,8 @@ function TaskSchedulerPage() {
         let list = [];
 
         for (let i = page * maxItemPage; i < (page + 1) * maxItemPage; i++) {
+
+            if(party.length === i) break;
 
             list[count] = party[i];
             count++;
@@ -530,16 +561,16 @@ function TaskSchedulerPage() {
                 </DndProvider>
             </div>
 
-            <div className="flex flex-row justify-center">
+            {viewModel.viewType === 0 && !isDisplayByHardware && planByParty.length>maxItemPage && <div className="flex flex-row justify-center">
                 <button onClick={prevPage}
                         className="mt-2 ml-8 py-1 px-2 rounded text-blue-800  hover:bg-blue-50">Пред.
                 </button>
                 <span
-                    className="mt-2 ml-8 py-1 px-2 rounded text-blue-800">{page}/{planByParty.length / maxItemPage}</span>
+                    className="mt-2 ml-8 py-1 px-2 rounded text-blue-800">{page}/{Math.ceil(planByParty.length / maxItemPage)}</span>
                 <button onClick={nextPage}
                         className="mt-2 ml-8 py-1 px-2 rounded text-blue-800  hover:bg-blue-50">След.
                 </button>
-            </div>
+            </div> }
 
 
         </div>
