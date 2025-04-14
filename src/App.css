@@ -37,6 +37,7 @@
 .scheduler {
     margin-left: 3%;
     border-spacing: 0;
+    width: 1800px
 }
 
 .scheduler td {

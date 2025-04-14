@@ -28,14 +28,14 @@ const ReportEditor = () => {
         const editorRef = useRef(null);
 
         const [pages, setPages] = useState([
-            {id: 1, content: "", styles: ""},
-            {id: 2, content: "", styles: ""},
-            {id: 3, content: "", styles: ""}
+            {id: 1, content: "", styles: ""}
         ]);
+        const [oldPages, setOldPage] = useState([]);
         const [currentPage, setCurrentPage] = useState(1); // Активная страница
 
-        const [previewHtml, setPreviewHtml] = useState('');
         const [tables, setTables] = useState(['table1', 'table2'])
+
+        const [isPreviewMode, setIsPreviewMode] = useState(false);
 
 
         pdfMake.addVirtualFileSystem(pdfFonts);
@@ -56,7 +56,7 @@ const ReportEditor = () => {
                     localeFallback: 'ru', // default fallback
                     messages: {ru},
                 },
-                dragMode: 'absolute',
+                dragMode: 'absolute',  //https://github.com/GrapesJS/grapesjs/issues/1936 почитать, полезные вещи
                 // dragMode: 'transition',
                 selectorManager: {componentFirst: true},
                 storageManager: false, // Отключаем сохранение
@@ -71,7 +71,7 @@ const ReportEditor = () => {
             width: 210mm;  /* 🔥 Устанавливаем фиксированную ширину (A4) */
             height: 297mm; /* 🔥 Устанавливаем фиксированную высоту */
             margin: auto;
-            position: relative;
+           
             overflow: hidden; /* 🔥 Запрещаем вылет элементов за границы */
           }
           
@@ -119,7 +119,7 @@ const ReportEditor = () => {
                 // editor.Canvas.getBody().style.padding = '20px';
                 editor.Canvas.getBody().style.backgroundColor = '#ffffff';
                 editor.Canvas.getBody().style.overflow = 'hidden';
-                editor.Canvas.getBody().style.position = 'relative';
+                // editor.Canvas.getBody().style.position = 'relative';
 
 
             }, 200);
@@ -134,9 +134,6 @@ const ReportEditor = () => {
             //   position: absolute; top:60px; font-size: larger;font-weight: 700;">Начните создание отчета...</span>`);
 
 
-            // console.log(editor.Panels.getPanels())
-
-
             // Добавляем стили для блоков
             editor.Css.addRules(`
         .report-page {
@@ -146,7 +143,7 @@ const ReportEditor = () => {
           border: 1px solid #000;
           margin-bottom: 20px;
           background: #fff;
-          position: relative;
+       
           display: flex;
           flex-direction: column;
         }
@@ -226,10 +223,163 @@ const ReportEditor = () => {
 
             blocks.forEach((block) => editor.BlockManager.add(block.id, block));
 
-            // Событие добавления компонента
-            editor.on("component:add", (model) => {
-                // console.log("Компонент добавлен:", model);
+            editor.on('component:add', component => {
+                const parent = component.parent();
+
+                if (parent && parent.getStyle()['position'] === 'relative') {
+                    const style = component.getStyle();
+                    style.position = 'absolute';
+                    style.top = style.top || '0px';
+                    style.left = style.left || '0px';
+                    component.setStyle(style);
+                }
             });
+
+
+            // function findTargetComponentAtPoint(components, x, y, ignoreEl) {
+            //     let target = null;
+            //
+            //     components.each(comp => {
+            //
+            //         const view = comp.view;
+            //         if (!view || !view.el || view.el === ignoreEl) return;
+            //
+            //
+            //         const rect = view.el.getBoundingClientRect();
+            //         if (
+            //             x >= rect.left &&
+            //             x <= rect.right &&
+            //             y >= rect.top &&
+            //             y <= rect.bottom
+            //         ) {
+            //             target = comp;
+            //             const nested = findTargetComponentAtPoint(comp.components(), x, y, ignoreEl);
+            //             if (nested) target = nested;
+            //         }
+            //     });
+            //
+            //     return target;
+            // }
+            //
+            // editor.on('component:drag:end', (model) => {
+            // // editor.on('component:add', (model) => {
+            //     console.log(model)
+            //
+            //     setTimeout(() => {
+            //         console.log('component:drag:end')
+            //         const view = model.target.view;
+            //         if (!view || !view.el) return;
+            //         console.log('прошел проверку')
+            //         const el = view.el;
+            //
+            //
+            //
+            //         const rect = el.getBoundingClientRect();
+            //         const x = rect.left + rect.width / 2;
+            //         const y = rect.top + rect.height / 2;
+            //
+            //         const all = editor.DomComponents.getComponents();
+            //         const target = findTargetComponentAtPoint(all, x, y, el);
+            //
+            //         if (target && target !== model.parent) {
+            //             const parent = model.parent;
+            //             // console.log(parent)
+            //             // parent.remove(model.target, { temporary: true });
+            //             target.append(model.target);
+            //             console.log('Добавлено в нового родителя:', target);
+            //         }
+            //
+            //     }, 0); // Небольшая задержка для обновления состояния
+            //
+            // });
+
+
+            editor.on('component:drag:end', model => {
+
+
+                const el = model.target.view?.el;
+                const ready = el instanceof Element && typeof el.getBoundingClientRect === 'function';
+
+                if (ready) {
+                    moveComponentToTarget(model);
+                } else {
+                    // Ждём пока DOM появится
+                    model.once('view:render', () => {
+                        moveComponentToTarget(model);
+                    });
+                }
+            });
+
+            function moveComponentToTarget(model) {
+                const modelEl = model.target.view?.el;
+                if (!(modelEl instanceof Element)) {
+                    console.warn('Нет DOM-элемента у перетаскиваемого компонента');
+                    return;
+                }
+
+                const modelRectBefore = modelEl.getBoundingClientRect();
+
+                const x = modelRectBefore.left + modelRectBefore.width / 2;
+                const y = modelRectBefore.top + modelRectBefore.height / 2;
+
+                const target = findTargetComponentAtPoint(editor.DomComponents.getComponents(), x, y, modelEl);
+
+                if (target && target !== model.parent) {
+                    const targetEl = target.view?.el;
+
+                    if (targetEl) {
+                        const targetRect = targetEl.getBoundingClientRect();
+
+                        // Сохраняем положение модели до вставки
+                        const modelTopBefore = modelRectBefore.top + window.scrollY;
+
+                        // Вставляем модель внутрь нового родителя
+                        target.append(model.target);
+
+                        // Ждём ререндер, чтобы получить новое положение
+                        requestAnimationFrame( () => { // компенсируем смещение при вложенности
+                            const modelElAfter = model.target.view?.el;
+                            if (!modelElAfter) return;
+
+                            const modelRectAfter = modelElAfter.getBoundingClientRect();
+                            const modelTopAfter = modelRectAfter.top + window.scrollY;
+
+                            const delta = modelTopBefore - modelTopAfter;
+
+
+                            model.target.addStyle({
+                                // position: 'relative',
+                                top: `${delta}px`
+                            });
+
+                            console.log(`Компенсировали смещение: ${delta}px`);
+                        });
+                    }
+                }
+            }
+
+            function findTargetComponentAtPoint(components, x, y, ignoreEl) {
+                let target = null;
+
+                components.each(comp => {
+                    const el = comp.view?.el;
+                    if (!(el instanceof Element) || el === ignoreEl) return;
+
+                    const rect = el.getBoundingClientRect();
+                    if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                        target = comp;
+                        const nested = findTargetComponentAtPoint(comp.components(), x, y, ignoreEl);
+                        if (nested) target = nested;
+                    }
+                });
+
+                return target;
+            }
+
+            // // Событие добавления компонента
+            // editor.on("component:add", (model) => {
+            //     // console.log("Компонент добавлен:", model);
+            // });
 
             // Событие начала перетаскивания компонента
             editor.on("component:drag:start", (model) => {
@@ -257,23 +407,23 @@ const ReportEditor = () => {
 
             // Логика добавления визуального индикатора при перетаскивании
             editor.on("component:drag:start", (model) => {
-                const componentEl = model.target.view.el;
-                const canvasEl = editor.Canvas.getElement();
-
-                // Перемещение элементов относительно канваса
-                const offsetX = componentEl.getBoundingClientRect().left - canvasEl.getBoundingClientRect().left;
-                const offsetY = componentEl.getBoundingClientRect().top - canvasEl.getBoundingClientRect().top;
-
-
-                console.log("Offset X:", offsetX, "Offset Y:", offsetY);
-
-                // Показать возможность вставки в контейнер
-                editor.getComponents().forEach((component) => {
-                    const {left, top, width, height} = component.getBoundingRect();
-                    if (offsetX >= left && offsetX <= left + width && offsetY >= top && offsetY <= top + height) {
-                        component.addClass("droppable-hover");
-                    }
-                });
+                // const componentEl = model.target.view.el;
+                // const canvasEl = editor.Canvas.getElement();
+                //
+                // // Перемещение элементов относительно канваса
+                // const offsetX = componentEl.getBoundingClientRect().left - canvasEl.getBoundingClientRect().left;
+                // const offsetY = componentEl.getBoundingClientRect().top - canvasEl.getBoundingClientRect().top;
+                //
+                //
+                // console.log("Offset X:", offsetX, "Offset Y:", offsetY);
+                //
+                // // Показать возможность вставки в контейнер
+                // editor.getComponents().forEach((component) => {
+                //     const {left, top, width, height} = component.getBoundingRect();
+                //     if (offsetX >= left && offsetX <= left + width && offsetY >= top && offsetY <= top + height) {
+                //         component.addClass("droppable-hover");
+                //     }
+                // });
             });
 
             // Визуальная индикация, что контейнер может принимать компоненты
@@ -374,6 +524,40 @@ const ReportEditor = () => {
 
             setEditorView(editor);
 
+            editor.BlockManager.add('abs-container', {
+                label: 'Контейнер',
+                content: {
+                    tagName: 'div',
+                    type: 'default',
+                    droppable: true,
+                    style: {
+                        position: 'relative',
+                        width: '400px',
+                        height: '400px',
+                        border: '2px dashed #aaa',
+                        margin: '20px',
+                    }
+                }
+            });
+
+            editor.BlockManager.add('abs-child', {
+                label: 'Абсолютный блок',
+                content: {
+                    tagName: 'div',
+                    type: 'default',
+                    draggable: true,
+                    droppable: true,
+                    style: {
+                        position: 'absolute',
+                        top: '50px',
+                        left: '50px',
+                        width: '100px',
+                        height: '100px',
+                        background: '#ffc',
+                        border: '1px solid #333',
+                    }
+                }
+            });
 
             document.querySelector('.gjs-pn-devices-c').querySelector('.gjs-pn-buttons').innerHTML = "" // удаляем дефолтный div с девайсами
 
@@ -465,7 +649,7 @@ const ReportEditor = () => {
         }, [pages, currentPage]);
 
         useEffect(() => {
-            console.log("useEffect editor")
+
         }, [editorView])
 
         const switchPage = (id) => {
@@ -485,7 +669,7 @@ const ReportEditor = () => {
                     editor.setStyle(page.styles);
                     setCurrentPage(id);
                 }
-            }, 100); // Небольшая задержка для обновления состояния
+            }, 100);
         };
 
         const saveCurrentPage = async (editor) => {
@@ -507,44 +691,6 @@ const ReportEditor = () => {
                     return updatedPages;
                 });
             });
-        };
-
-
-        const addPage = () => {
-            const editor = editorView
-            saveCurrentPage(editor);
-
-            setTimeout(() => {
-                const newPage = {
-                    id: pages.length + 1, content: "", styles: "",
-                };
-
-                setPages((prevPages) => [...prevPages, newPage]);
-                setCurrentPage(newPage.id);
-
-                if (editor) {
-                    editor.setComponents("");
-                    editor.setStyle("");
-                }
-            }, 100);
-        };
-
-        const removePage = () => {
-            setPages((prevPages) => {
-                if (prevPages.length > 1) {
-
-                    const updatedPages = [...prevPages];
-                    updatedPages.pop();
-
-                    if (currentPage === prevPages.length) {
-                        switchPage(updatedPages.length);
-                    }
-                    return updatedPages;
-                }
-
-                return prevPages;
-            });
-
         };
 
 
@@ -719,7 +865,7 @@ const ReportEditor = () => {
               flex-direction: column;
               justify-content: flex-start;
               align-items: flex-start;
-              padding: 20px;
+              padding: 0;
               margin: 0 auto;
               position: relative;
               overflow: hidden;
@@ -823,7 +969,7 @@ const ReportEditor = () => {
               flex-direction: column;
               justify-content: flex-start;
               align-items: flex-start;
-              padding: 20px;
+              padding: 0;
               margin: 0 auto;
               position: relative;
               overflow: hidden;
@@ -915,14 +1061,6 @@ const ReportEditor = () => {
 
         function addDataBand(tableName) {
 
-            //     editorView.addComponents(`
-            //   <div data-band="true" id="12" style="border: 1px dashed #3b82f6; padding: 10px; ">
-            //     <div style="">Data Band</div>
-            //     <p>Data Band: Add fields like {{fieldName}}</p>
-            //     <button onclick={addDataBand}>Data Band</button>
-            //   </div>
-            // `);
-
             editorView.Components.addType('data-band-block', {
                 model: {
                     defaults: {
@@ -930,10 +1068,10 @@ const ReportEditor = () => {
                         draggable: true,
                         highlightable: true,
                         components: `
-             <div data-band="true" id="${tableName}" style="position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; margin-top:10px; overflow: visible;">
-               <div class="data-band-table" style="
+              <div data-band="true" id="${tableName}" style="height: 200px; width: 794px; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+                 <div class="data-band-table" style="
                     position: absolute;
-                    top: -10px;
+                    top: 0;
                     left: 0;
                     background: #3b82f6;
                     color: white;
@@ -941,12 +1079,12 @@ const ReportEditor = () => {
                     border-radius: 4px;
                     font-size: 12px;
                     white-space: nowrap;
-               ">${tableName}</div>
-               <h2>Record</h2>
-               <p class="data-band-field">Select field: {{name}}</p>
-               <p class="data-band-field">Age: {{age}}</p>
-               <p class="data-band-field">Band</p>
-            </div>
+                 ">${tableName}</div>
+                 <h2 style="position: absolute; margin-top: 10px">Record</h2>
+                 <p class="data-band-field" style="position: absolute; margin-top: 50px">Select field: {{name}}</p>
+                 <p class="data-band-field" style="position: absolute; margin-top: 80px">Age: {{age}}</p>
+                 <p class="data-band-field" style="position: absolute; margin-top: 110px">Band</p>
+              </div>
       `,
                         script: function () {
                             this.querySelector('.data-band-field').addEventListener('click', function () {
@@ -970,11 +1108,12 @@ const ReportEditor = () => {
                     defaults: {
                         tagName: 'div',
                         draggable: true,
+                        droppable: true,
                         highlightable: true,
                         components: `
-             <div id="pageHeader" style="position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; margin-top:10px; overflow: visible;">
+             <div id="pageHeader" style="height: 200px; width: 794px; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
             
-               <h2 style="background: #d81d52">Page header band</h2>
+               <h2 style="">Page header band</h2>
               
             </div>
       `,
@@ -984,74 +1123,42 @@ const ReportEditor = () => {
             });
 
             const components = editorView.getComponents();
-            components.add('<div data-gjs-type="pageHeader-band-block"></div>', { at: 0 }); // Добавляем первым элементом
+            components.add('<div data-gjs-type="pageHeader-band-block"></div>', {at: 0}); // Добавляем первым элементом
 
             // editorView.addComponents('<div data-gjs-type="data-band-block"></div>');
         }
 
-    function addPageFooterBand() {
-        editorView.Components.addType('pageFooter-band-block', {
-            model: {
-                defaults: {
-                    tagName: 'div',
-                    draggable: true,
-                    highlightable: true,
-                    components: `
-             <div id="pageHeader" style="position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; margin-top:10px; overflow: visible;">
+        function addPageFooterBand() {
+            editorView.Components.addType('pageFooter-band-block', {
+                model: {
+                    defaults: {
+                        tagName: 'div',
+                        draggable: true,
+                        highlightable: true,
+                        components: `
+             <div id="pageHeader" style="height: 200px; width: 794px; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
             
-               <h2 style="background: #d81d52">Page footer band</h2>
+               <h2 style="">Page footer band</h2>
               
             </div>
       `,
 
+                    },
                 },
-            },
-        });
+            });
 
-        const components = editorView.getComponents();
-        components.add('<div data-gjs-type="pageFooter-band-block"></div>', { at: components.length }); // Добавляем первым элементом
+            const components = editorView.getComponents();
+            components.add('<div data-gjs-type="pageFooter-band-block"></div>', {at: components.length}); // Добавляем первым элементом
 
-    }
+        }
 
-        function renderDataBand(htmlTemplate, dataArray) {
-            // const parser = new DOMParser();
-            // const doc = parser.parseFromString(htmlTemplate, 'text/html');
-            //
-            // const bands = doc.querySelectorAll('[data-band="true"]');
-            //
-            // bands.forEach(band => {
-            //     const bandHtml = band.innerHTML;
-            //     let repeatedHtml = '';
-            //
-            //     dataArray.forEach(item => {
-            //         const bandId = band.getAttribute('id');
-            //
-            //
-            //         const tableKey = Object.keys(item)[0]; // Получаем ключ (table1, table2)
-            //         if(bandId === tableKey){
-            //             const tableData = item[tableKey]; // Получаем объект данных
-            //
-            //             let instanceHtml = bandHtml;
-            //
-            //             Object.keys(tableData).forEach(field => {
-            //                 instanceHtml = instanceHtml.replaceAll(`{{${field}}}`, tableData[field]);
-            //             });
-            //
-            //             repeatedHtml += `<div>${instanceHtml}</div>`;
-            //         }
-            //
-            //     });
-            //
-            //     band.innerHTML = repeatedHtml;
-            // });
-            //
-            // return doc.body.innerHTML;
+        function renderDataBand(htmlTemplate, dataArray, css) {
 
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlTemplate, 'text/html');
 
             const bands = doc.querySelectorAll('[data-band="true"]');
-            console.log(bands)
+            // console.log(bands)
 
             bands.forEach(band => {
                 const bandHtml = band.innerHTML;
@@ -1079,167 +1186,160 @@ const ReportEditor = () => {
             });
 
 
-
-            splitIntoA4Pages(doc.body.innerHTML).then((pagedHtml) => {
+            splitIntoA4Pages(doc.body.innerHTML, css).then((pagedHtml) => {
                 editorView.setComponents(pagedHtml);
 
             });
 
             return doc.body.innerHTML;
-
-
-        }
-
-        function render(htmlTemplate, dataArray){
-
-
-
-
-
         }
 
 
-        function testRender() {
+        function exitPreviewMode() {
+            setIsPreviewMode(!isPreviewMode);
+
+            setPages(oldPages);
+
+            editorView.setComponents(oldPages[0].content);
+            editorView.setStyle(oldPages[0].styles);
+
+            document.querySelector('.gjs-pn-panels').style.display = '';
+            document.querySelector('.gjs-pn-views-container').style.display = '';
+            editorView.getWrapper().view.$el.css('pointer-events', '');
+        }
+
+        function enterPreviewMode() {
+            setIsPreviewMode(!isPreviewMode);
+            render();
+            document.querySelector('.gjs-pn-panels').style.display = 'none';
+            document.querySelector('.gjs-pn-views-container').style.display = 'none';
+            editorView.getWrapper().view.$el.css('pointer-events', 'none');
+        }
+
+
+        function render() {
             const html = editorView.getHtml();
-            const css = editorView.getCss();
+            let css = editorView.getCss();
+
+            setOldPage([{id: 1, content: html, styles: css}])
+
+            // console.log(css)
             const data = [
                 {
                     tableName: "table1",
-                    data:[
-                        { name: 'John11', age: 31 } ,
-                        { name: 'John12', age: 31 } ,
-                        { name: 'John13', age: 31 }
+                    data: [
+                        {name: 'John11', age: 31},
+                        {name: 'John12', age: 32},
+                        {name: 'John13', age: 33}
                     ]
                 },
                 {
                     tableName: "table2",
-                    data:[
-                        { name: 'John21', age: 32 } ,
-                        { name: 'John22', age: 32 } ,
-                        { name: 'John23', age: 32 },
-                        { name: 'John24', age: 32 }
+                    data: [
+                        {name: 'John21', age: 32},
+                        {name: 'John22', age: 33},
+                        {name: 'John23', age: 34},
+                        {name: 'John24', age: 35},
+                        {name: 'John25', age: 36},
+                        {name: 'John26', age: 37},
+                        {name: 'John27', age: 38}
                     ]
                 },
 
             ];
 
-            // console.log(css);
-            const renderedHtml = renderDataBand(html, data);
-            // console.log(editorView.getCss());
-
-
-            // console.log(html);
-            // console.log(renderedHtml);
-
+            css = transformIDs(css);
             setTimeout(() => {
                 // editorView.setComponents(renderedHtml);
-                // editorView.setStyle(css);
+                editorView.setStyle(css);
             }, 100); // Небольшая задержка для обновления состояния
+
+            // console.log(css);
+            let renderedHtml = renderDataBand(html, data, css);
 
         }
 
-    function splitIntoA4Pages(htmlString) {
-        return new Promise((resolve) => {
-            // 1. Создаём невидимый контейнер для измерения высоты
-            const tempContainer = document.createElement("div");
-            tempContainer.style.position = "absolute";
-            // tempContainer.style.left = "-9999px";
-            tempContainer.style.width = "794px"; // Ширина A4
-            tempContainer.innerHTML = htmlString;
 
-            document.body.appendChild(tempContainer);
-
-            // 2. Проверяем высоту всего контента
-            const contentHeight = tempContainer.scrollHeight;
-
-            const maxHeight = 1123; // Высота A4
-
-            console.log(contentHeight)
-            console.log(editorView.Canvas.getBody().scrollHeight)
-            // 3. Если контент помещается, просто возвращаем его
-            if (contentHeight <= maxHeight) {
-                document.body.removeChild(tempContainer);
-                return resolve(htmlString);
-            }
-
-            let pageId = 0;
-
-            // 4. Разбиваем контент на страницы
-            let firstpageHtml = "";
-            let currentHeight = 0;
-            let pageContent = "";
-
-            const childNodes = Array.from(tempContainer.childNodes);
-
-            console.log(childNodes)
-
-            childNodes.forEach((node) => {
-                // Создаём временный контейнер для измерения
-                const tempDiv = document.createElement("div");
-                tempDiv.appendChild(node.cloneNode(true));
-                document.body.appendChild(tempDiv);
-
-                const nodeHeight = tempDiv.scrollHeight;
-                document.body.removeChild(tempDiv);
-
-                if (pageId === 0){
-                    firstpageHtml = pageContent;
-                }
-
-                // Если элемент не влезает - начинаем новую страницу
-                if (currentHeight + nodeHeight > maxHeight) {
-                    console.log(currentHeight)
-                    console.log("Если элемент не влезает")
-                    console.log("pageContent: " + pageContent)
-
-                    const css = editorView.getCss();
-                    pages[pageId].content = pageContent;
-                    pages[pageId].styles = css;
-                    // pagesHtml += `<div class="a4-page">${pageContent}</div>`;
-                    pageContent = "";
-                    currentHeight = 0;
-
-                    pageId++;
-                    // addPage();
-
-                }
-
-                // Добавляем элемент на текущую страницу
-                pageContent += node.outerHTML;
-                currentHeight += nodeHeight;
-
-
-
-//Стили не работают или работают криво, доделывать автоматическое разбиение на страницы
-
-
+        function transformIDs(css) { //т.к. нужно применять ко всем дубликатам бэнда
+            return css.replace(/(?<!:)\#([a-zA-Z_][\w-]+)/g, (match, id) => {
+                return `[id^='${id}']`; // заменяем #id на [id^='id']
             });
+        }
 
-            // const html = editor.getHtml();
-            // const css = editor.getCss();
-            //
-            // return new Promise((resolve) => {
-            //     setPages((prevPages) => {
-            //         const updatedPages = prevPages.map((page) => page.id === currentPage ? {
-            //             ...page,
-            //             content: html,
-            //             styles: css
-            //         } : page);
-            //         resolve(updatedPages);  // После обновления страницы вызываем resolve
-            //         return updatedPages;
-            //     });
-            // });
 
-            // Добавляем последнюю страницу
-            // if (pageContent) {
-            //     pagesHtml += `<div class="a4-page">${pageContent}</div>`;
-            // }
+        function splitIntoA4Pages(htmlString, css) {
+            return new Promise((resolve) => {
 
-            document.body.removeChild(tempContainer);
-            resolve(firstpageHtml);
+                const tempContainer = document.createElement("div");
+                tempContainer.style.position = "absolute";
+                // tempContainer.style.left = "-9999px";
+                tempContainer.style.width = "794px"; // Ширина A4
+                tempContainer.innerHTML = `<style>${css}</style>${htmlString}`;
 
-        });
-    }
+                document.body.appendChild(tempContainer);
+
+
+                const contentHeight = tempContainer.scrollHeight;
+
+                const maxHeight = 1123; // Высота A4
+
+                // console.log(contentHeight)
+                // console.log(editorView.Canvas.getBody().scrollHeight)
+
+                //  Если контент помещается, просто возвращаем его
+                if (contentHeight <= maxHeight) {
+                    document.body.removeChild(tempContainer);
+                    return resolve(htmlString);
+                }
+
+                let pageId = 0;
+
+                // Разбиваем контент на страницы
+                let firstPageHtml = "";
+                let currentHeight = 0;
+                let pageContent = "";
+
+                const childNodes = Array.from(tempContainer.childNodes);
+
+
+                const pagesBuf = [
+                    {id: 1, content: "", styles: ""}
+                ];
+
+                childNodes.forEach((node) => {
+                    // Создаём временный контейнер для измерения
+                    const tempDiv = document.createElement("div");
+                    tempDiv.appendChild(node.cloneNode(true));
+                    document.body.appendChild(tempDiv);
+
+                    const nodeHeight = tempDiv.scrollHeight;
+
+                    document.body.removeChild(tempDiv);
+
+                    if (pageId === 0) {
+                        firstPageHtml = pageContent;
+                    }
+
+                    // Если элемент не влезает - начинаем новую страницу
+                    if (currentHeight + nodeHeight > maxHeight) {
+                        pageContent = "";
+                        currentHeight = 0;
+                        pageId++;
+                        pagesBuf.push({id: pageId + 1, content: "", styles: ""});
+                    }
+
+                    pageContent += node.outerHTML;
+                    currentHeight += nodeHeight;
+                    pagesBuf[pageId].content = pageContent;
+                    pagesBuf[pageId].styles = css;
+                });
+
+                setPages(pagesBuf);
+
+                document.body.removeChild(tempContainer);
+                resolve(firstPageHtml);
+            });
+        }
 
 
         return (
@@ -1250,10 +1350,9 @@ const ReportEditor = () => {
                         <span className="gjs-pn-btn font-medium">Конструктор отчетов</span>
                         <span className="gjs-pn-btn">
                         <i className="fa-solid fa-pencil"></i>
-                    </span>
-
+                        </span>
                     </div>
-                    <div className="flex justify-start text-center w-1/3">
+                    {isPreviewMode && <div className="flex justify-start text-center w-1/3">
                     <span className="gjs-pn-btn" onClick={() => switchPage(currentPage - 1)}
                           title="Пред. страница">
                         <i className="fa-solid fa-angle-left"></i>
@@ -1265,18 +1364,6 @@ const ReportEditor = () => {
                               title="След. страница">
                         <i className="fa-solid fa-angle-right"></i>
                     </span>
-                        <span className="gjs-pn-btn" onClick={addPage} title="Добавить страницу">
-                        <i className="fa-solid fa-file-circle-plus"></i>
-                    </span>
-                        <span className="gjs-pn-btn" onClick={removePage} title="Удалить последнюю страницу">
-                        <i className="fa-solid fa-trash"></i>
-                    </span>
-                    </div>
-
-                    <div className="flex justify-end text-center mr-2 w-1/3">
-                        {/*<span className="gjs-pn-btn" onClick={() => exportExcel(editorView)} title="Экспорт Exel">*/}
-                        {/*    <i className="fa fa-file-excel"></i>*/}
-                        {/*</span>*/}
                         <span className="gjs-pn-btn" onClick={() => exportPDF(editorView)} title="Экспорт PDF">
                         <i className="fa fa-file-pdf"></i>
                     </span>
@@ -1292,6 +1379,27 @@ const ReportEditor = () => {
                         <span className="gjs-pn-btn" onClick={printAllPages} title="Печать">
                         <i className="fa fa-print"></i>
                     </span>
+                    </div>}
+
+                    <div className="flex justify-end text-center mr-2 w-1/3">
+                        {/*<span className="gjs-pn-btn" onClick={() => exportExcel(editorView)} title="Экспорт Exel">*/}
+                        {/*    <i className="fa fa-file-excel"></i>*/}
+                        {/*</span>*/}
+                        {/*    <span className="gjs-pn-btn" onClick={() => exportPDF(editorView)} title="Экспорт PDF">*/}
+                        {/*    <i className="fa fa-file-pdf"></i>*/}
+                        {/*</span>*/}
+                        {/*    <span className="gjs-pn-btn" onClick={() => exportHtml(editorView)} title="Экспорт HTML">*/}
+                        {/*    <i className="fa fa-code"></i>*/}
+                        {/*</span>*/}
+                        {/*    <span className="gjs-pn-btn" onClick={exportJSON} title="Экспорт JSON">*/}
+                        {/*    <i className="fa fa-file-export"></i>*/}
+                        {/*</span>*/}
+                        {/*    <span className="gjs-pn-btn" onClick={importJSON} title="Импорт JSON">*/}
+                        {/*    <i className="fa fa-upload"></i>*/}
+                        {/*</span>*/}
+                        {/*    <span className="gjs-pn-btn" onClick={printAllPages} title="Печать">*/}
+                        {/*    <i className="fa fa-print"></i>*/}
+                        {/*</span>*/}
                     </div>
 
                 </div>
@@ -1306,8 +1414,11 @@ const ReportEditor = () => {
                     </button>
                     <button onClick={addPageHeaderBand}>Заголовок стр.</button>
                     <button onClick={addPageFooterBand}>Подвал стр.</button>
-                    <button onClick={testRender}>TestRender</button>
-                    <button onClick={testRender}>Просмотр</button>
+
+                    {!isPreviewMode && <button onClick={enterPreviewMode}>Просмотр</button>}
+                    {isPreviewMode && <button onClick={exitPreviewMode}>Редактор</button>}
+
+
                 </div>
                 <div id="editor" ref={editorRef}/>
             </div>

@@ -133,6 +133,7 @@ function TaskSchedulerPage() {
         schedulerData.config.calendarPopoverEnabled = true;
         schedulerData.config.scrollToSpecialDaysjsEnabled = true;
         // schedulerData.config.tableHeaderHeight = 300;
+        schedulerData.config.schedulerWidth = "100%"
 
         // schedulerData.config.eventItemPopoverEnabled = false;
 
