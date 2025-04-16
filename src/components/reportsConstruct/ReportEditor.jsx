@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {forwardRef, useEffect, useRef, useState} from 'react';
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./../reportsConstruct/ReportEditor.css";
 
@@ -16,7 +16,8 @@ import ru from 'grapesjs/locale/ru';
 import htmlToPdfmake from "html-to-pdfmake"; // Импортируем html-to-pdfmake
 
 import pdfMake from "pdfmake/build/pdfmake";
-import pdfFonts from "pdfmake/build/vfs_fonts"; // Импортируем шрифты для pdfmake
+import pdfFonts from "pdfmake/build/vfs_fonts";
+
 
 // Добавляем шрифт Roboto в виртуальную файловую систему pdfmake
 // pdfMake.vfs = pdfFonts.pdfMake.vfs;
@@ -62,6 +63,9 @@ const ReportEditor = () => {
                 storageManager: false, // Отключаем сохранение
                 // panels: { defaults: [] }, // Убираем стандартные панелиnpm
                 plugins: [grapesjspresetwebpage],
+                pluginsOpts: {
+                    blocks: [],
+                },
                 canvas: {
                     styles: [`
           body {
@@ -172,30 +176,7 @@ const ReportEditor = () => {
 
             // Добавляем блоки для перетаскивания
             const blocks = [
-                {
-                    id: "report-page",
-                    label: "Report Page (A4)",
-                    content: `
-            <div class="report-page" style="width: 210mm; height: 297mm; padding: 20mm;">
-              <h3>New Page</h3>
-            </div>
-          `,
-                    category: "Pages",
-                    draggable: true,
-                    droppable: true,
-                },
-                {
-                    id: "page-header",
-                    label: "Page Header (Band)",
-                    content: `
-            <div class="band page-header">
-              <div class="band-content">Page Header</div>
-            </div>
-          `,
-                    category: "Bands",
-                    draggable: true,
-                    droppable: true,
-                },
+
                 {
                     id: "text-block",
                     label: "Text Block",
@@ -204,7 +185,6 @@ const ReportEditor = () => {
                     draggable: true,
                     droppable: false,
                 },
-
 
                 {
                     id: "Data Band", //пробуем Data бэнд
@@ -215,13 +195,28 @@ const ReportEditor = () => {
                    </div>
                 `,
                     category: "Bands",
-                    draggable: true,
-                    droppable: true,
+                    activate: true,
+                    // draggable: true,
+                    // droppable: true,
+                    onClick: (() => {
+                        setTimeout(() => {
+                            addDataBand(tables[0])
+                        }, 1000)
+
+                    }),
+
                 },
 
             ];
 
             blocks.forEach((block) => editor.BlockManager.add(block.id, block));
+
+
+            //удаляем базовые блоки
+            editor.BlockManager.remove('quote')
+            editor.BlockManager.remove('link-block')
+            editor.BlockManager.remove('text-basic')
+
 
             editor.on('component:add', component => {
                 const parent = component.parent();
@@ -336,24 +331,25 @@ const ReportEditor = () => {
                         // Вставляем модель внутрь нового родителя
                         target.append(model.target);
 
-                        // Ждём ререндер, чтобы получить новое положение
-                        requestAnimationFrame( () => { // компенсируем смещение при вложенности
-                            const modelElAfter = model.target.view?.el;
-                            if (!modelElAfter) return;
-
-                            const modelRectAfter = modelElAfter.getBoundingClientRect();
-                            const modelTopAfter = modelRectAfter.top + window.scrollY;
-
-                            const delta = modelTopBefore - modelTopAfter;
-
-
-                            model.target.addStyle({
-                                // position: 'relative',
-                                top: `${delta}px`
-                            });
-
-                            console.log(`Компенсировали смещение: ${delta}px`);
-                        });
+                        //Компенсация отступа сверху при перетаскивании, потом включить и доработать
+                        // // Ждём ререндер, чтобы получить новое положение
+                        // requestAnimationFrame(() => { // компенсируем смещение при вложенности
+                        //     const modelElAfter = model.target.view?.el;
+                        //     if (!modelElAfter) return;
+                        //
+                        //     const modelRectAfter = modelElAfter.getBoundingClientRect();
+                        //     const modelTopAfter = modelRectAfter.top + window.scrollY;
+                        //
+                        //     const delta = modelTopBefore - modelTopAfter;
+                        //
+                        //
+                        //     model.target.addStyle({
+                        //         // position: 'relative',
+                        //         top: `${delta}px`
+                        //     });
+                        //
+                        //     console.log(`Компенсировали смещение: ${delta}px`);
+                        // });
                     }
                 }
             }
@@ -1043,16 +1039,26 @@ const ReportEditor = () => {
                 label: "Абзац", content: "<p style=\"font-size: 14px;\">Введите текст отчета...</p>",
             });
             editor.BlockManager.add("table", {
-                label: "Таблица", content: `
-                <table class="table table-bordered">
-                  <thead>
-                    <tr><th>Заголовок 1</th><th>Заголовок 2</th></tr>
-                  </thead>
+                label: "Таблица",
+                content: `
+                <table class="table table-bordered" style="">
+<!--                  <thead>-->
+<!--                    <tr><th><div>Заголовок 1</div></th><th><div>Заголовок 2</div></th></tr>-->
+<!--                  </thead>-->
                   <tbody>
-                    <tr><td>Данные 1</td><td>Данные 2</td></tr>
+                    <tr>
+                       <td><div>Данные 1</div></td>
+                       <td><div>Данные 2</div></td>
+                       <td><div>Данные 3</div></td>
+                       <td><div>Данные 4</div></td>
+                       <td><div>Данные 5</div></td>
+                    </tr>
                   </tbody>
                 </table>
               `,
+                category: "Text",
+                draggable: false,
+                droppable: false,
             });
             editor.BlockManager.add("my-block", {
                 label: "Мой блок", content: "<div style='padding:10px; background:#f3f3f3;'>Hello!</div>",
@@ -1111,7 +1117,8 @@ const ReportEditor = () => {
                         droppable: true,
                         highlightable: true,
                         components: `
-             <div id="pageHeader" style="height: 200px; width: 794px; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+             <div band="true" id="pageHeader" style="height: 100px; width: 794px; position: relative;
+              border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
             
                <h2 style="">Page header band</h2>
               
@@ -1128,6 +1135,32 @@ const ReportEditor = () => {
             // editorView.addComponents('<div data-gjs-type="data-band-block"></div>');
         }
 
+        function addReportTitleBand() {
+            editorView.Components.addType('reportTitle-band-block', {
+                model: {
+                    defaults: {
+                        tagName: 'div',
+                        draggable: true,
+                        droppable: true,
+                        highlightable: true,
+                        components: `
+             <div band="true" id="reportTitle" style="height: 100px; width: 794px; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+            
+               <h2 style="">Report title band</h2>
+              
+            </div>
+      `,
+
+                    },
+                },
+            });
+
+            const components = editorView.getComponents();
+            components.add('<div data-gjs-type="reportTitle-band-block"></div>', {at: 0}); // Добавляем первым элементом
+
+            // editorView.addComponents('<div data-gjs-type="data-band-block"></div>');
+        }
+
         function addPageFooterBand() {
             editorView.Components.addType('pageFooter-band-block', {
                 model: {
@@ -1136,12 +1169,12 @@ const ReportEditor = () => {
                         draggable: true,
                         highlightable: true,
                         components: `
-             <div id="pageHeader" style="height: 200px; width: 794px; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+             <div band="true" id="pageFooter" style="height: 100px; width: 794px; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
             
                <h2 style="">Page footer band</h2>
               
             </div>
-      `,
+            `,
 
                     },
                 },
@@ -1152,15 +1185,39 @@ const ReportEditor = () => {
 
         }
 
+        function addReportSummaryBand() {
+            editorView.Components.addType('reportSummary-band-block', {
+                model: {
+                    defaults: {
+                        tagName: 'div',
+                        draggable: true,
+                        highlightable: true,
+                        components: `
+             <div band="true" id="reportSummary" style="height: 100px; width: 794px; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+            
+               <h2 style="">Report summary band</h2>
+              
+            </div>
+            `,
+                    },
+                },
+            });
+
+            const components = editorView.getComponents();
+            components.add('<div data-gjs-type="reportSummary-band-block"></div>', {at: components.length}); // Добавляем первым элементом
+        }
+
         function renderDataBand(htmlTemplate, dataArray, css) {
+
 
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlTemplate, 'text/html');
 
-            const bands = doc.querySelectorAll('[data-band="true"]');
+            const dataBands = doc.querySelectorAll('[data-band="true"]');
             // console.log(bands)
 
-            bands.forEach(band => {
+
+            dataBands.forEach(band => {
                 const bandHtml = band.innerHTML;
 
                 const bandId = band.getAttribute('id');
@@ -1185,8 +1242,16 @@ const ReportEditor = () => {
                 doc.body.removeChild(band.parentNode)
             });
 
+            const bands = doc.querySelectorAll('[band="true"]');
+            console.log(bands)
 
-            splitIntoA4Pages(doc.body.innerHTML, css).then((pagedHtml) => {
+            bands.forEach(band => {
+                doc.body.removeChild(band.parentNode)
+            })
+
+            //передать бэнды заголовков в разделение на страницы и распределить
+
+            splitIntoA4Pages(doc.body.innerHTML, css, bands).then((pagedHtml) => {
                 editorView.setComponents(pagedHtml);
 
             });
@@ -1224,29 +1289,42 @@ const ReportEditor = () => {
             setOldPage([{id: 1, content: html, styles: css}])
 
             // console.log(css)
-            const data = [
-                {
-                    tableName: "table1",
-                    data: [
-                        {name: 'John11', age: 31},
-                        {name: 'John12', age: 32},
-                        {name: 'John13', age: 33}
-                    ]
-                },
-                {
-                    tableName: "table2",
-                    data: [
-                        {name: 'John21', age: 32},
-                        {name: 'John22', age: 33},
-                        {name: 'John23', age: 34},
-                        {name: 'John24', age: 35},
-                        {name: 'John25', age: 36},
-                        {name: 'John26', age: 37},
-                        {name: 'John27', age: 38}
-                    ]
-                },
+            const data = {
+                globalVar: [
+                    {
+                        var1: "111",
+                    },
+                    {
+                        var2: "222",
+                    },
+                    {
+                        var3: "333",
+                    },
+                ],
+                tableData: [
+                    {
+                        tableName: "table1",
+                        data: [
+                            {name: 'John11', age: 31},
+                            {name: 'John12', age: 32},
+                            {name: 'John13', age: 33}
+                        ]
+                    },
+                    {
+                        tableName: "table2",
+                        data: [
+                            {name: 'John21', age: 32},
+                            {name: 'John22', age: 33},
+                            {name: 'John23', age: 34},
+                            {name: 'John24', age: 35},
+                            {name: 'John25', age: 36},
+                            {name: 'John26', age: 37},
+                            {name: 'John27', age: 38}
+                        ]
+                    },
+                ],
+            };
 
-            ];
 
             css = transformIDs(css);
             setTimeout(() => {
@@ -1255,7 +1333,7 @@ const ReportEditor = () => {
             }, 100); // Небольшая задержка для обновления состояния
 
             // console.log(css);
-            let renderedHtml = renderDataBand(html, data, css);
+            let renderedHtml = renderDataBand(html, data.tableData, css);
 
         }
 
@@ -1266,8 +1344,114 @@ const ReportEditor = () => {
             });
         }
 
+        function insertNodeListIgnoringStyleAndScript(tempContainer, band, indexInsert) { //вставка игнорируя эелменты типа style и script
 
-        function splitIntoA4Pages(htmlString, css) {
+            if(tempContainer.childNodes.length === 0 ) {
+                tempContainer.append(band);
+                return;
+            }
+
+            let count = 0;
+
+            for (let i = 0; i < tempContainer.childNodes.length; i++) {
+                console.log(tempContainer.childNodes[i].nodeName)
+                let node = tempContainer.childNodes[i];
+                if((node.nodeName === "STYLE") || (node.nodeName === "SCRIPT")) count++;
+
+                if(indexInsert === tempContainer.childNodes.length-1){
+                    console.log("конец")
+                    tempContainer.append(band);
+                    return;
+                }
+
+                if((i - count) === indexInsert){
+                    // console.log(indexInsert)
+                    // console.log(i)
+                    // console.log(count)
+                    tempContainer.insertBefore(band, tempContainer.childNodes[i])
+                    return;
+                }
+            }
+        }
+
+    function insertReversNodeListIgnoringStyleAndScript(tempContainer, band, indexInsert) { //вставка игнорируя эелменты типа style и script
+
+        for (let i = tempContainer.childNodes.length-1; i >= 0 ; i--) {
+            console.log(tempContainer.childNodes[i].nodeName)
+            let node = tempContainer.childNodes[i];
+            if((node.nodeName === "STYLE") || (node.nodeName === "SCRIPT")) indexInsert--;
+            console.log(i)
+            console.log(indexInsert)
+            if(i === indexInsert){
+                console.log("Условие")
+                tempContainer.insertBefore(band, tempContainer.childNodes[i])
+            }
+        }
+
+    }
+
+        function insertBands(tempContainer, bands) { //для страниц сделать переменную page и если она первая или последняя тогда добовлять бэнды нужные
+            // console.log(bands)
+
+            let isReportTitleInserted = false;
+            let isReportSummaryInserted = false;
+
+            console.log(tempContainer.childNodes)
+            for (let i = 0; i < bands.length; i++) {
+                // console.log(bands[i].id)
+
+                switch (bands[i].id) {
+                    case 'reportTitle': {
+                        // console.log(tempContainer.childNodes)
+                        // console.log(tempContainer.scrollHeight)
+                        console.log("reportTitle")
+                        // tempContainer.insertBefore(bands[i], tempContainer.childNodes[3])
+                        console.log(tempContainer.childNodes.length)
+                        insertNodeListIgnoringStyleAndScript(tempContainer, bands[i], 0)
+                        console.log("reportTitle: " + tempContainer.scrollHeight)
+                        isReportTitleInserted = true;
+                        break;
+                    }
+                    case 'pageHeader': {
+                        console.log("pageHeader")
+                        let indexInsert;
+                        isReportTitleInserted? indexInsert = 1 : indexInsert = 0;
+                        insertNodeListIgnoringStyleAndScript(tempContainer, bands[i], indexInsert)
+                        console.log("pageHeader: " + tempContainer.scrollHeight)
+                        break;
+                    }
+                    case 'reportSummary': {
+                        console.log("reportSummary")
+                        tempContainer.append(bands[i])
+                        isReportSummaryInserted = true;
+                        console.log("reportSummary: " + tempContainer.scrollHeight)
+                        break;
+                    }
+                    case 'pageFooter': {
+                        console.log("pageFooter")
+                        if(isReportSummaryInserted) {
+                            insertReversNodeListIgnoringStyleAndScript(tempContainer, bands[i], tempContainer.childNodes.length-1)
+                        } else {
+                            tempContainer.append(bands[i])
+                        }
+                        console.log("pageFooter: " + tempContainer.scrollHeight)
+                        break; //Нужно доделать, т.к. при некоторых сценариях не отображается
+                    }
+                }
+            }
+
+            console.log(tempContainer.childNodes)
+
+
+        }
+
+        function removeStyle(htmlString) {
+            let styleRegex = /<style[^>]*>[\s\S]*?<\/style>/gi;
+            return htmlString.replace(styleRegex, '');
+        }
+
+
+        function splitIntoA4Pages(htmlString, css, bands) {
             return new Promise((resolve) => {
 
                 const tempContainer = document.createElement("div");
@@ -1276,7 +1460,11 @@ const ReportEditor = () => {
                 tempContainer.style.width = "794px"; // Ширина A4
                 tempContainer.innerHTML = `<style>${css}</style>${htmlString}`;
 
+
                 document.body.appendChild(tempContainer);
+
+                //Логика вставки бэндов в разметку
+                insertBands(tempContainer, bands);
 
 
                 const contentHeight = tempContainer.scrollHeight;
@@ -1286,10 +1474,13 @@ const ReportEditor = () => {
                 // console.log(contentHeight)
                 // console.log(editorView.Canvas.getBody().scrollHeight)
 
+                let newHtml = removeStyle(tempContainer.innerHTML) //html с бэндами
+                // console.log(newHtml)
+
                 //  Если контент помещается, просто возвращаем его
                 if (contentHeight <= maxHeight) {
                     document.body.removeChild(tempContainer);
-                    return resolve(htmlString);
+                    return resolve(newHtml);
                 }
 
                 let pageId = 0;
@@ -1370,36 +1561,28 @@ const ReportEditor = () => {
                         <span className="gjs-pn-btn" onClick={() => exportHtml(editorView)} title="Экспорт HTML">
                         <i className="fa fa-code"></i>
                     </span>
-                        <span className="gjs-pn-btn" onClick={exportJSON} title="Экспорт JSON">
-                        <i className="fa fa-file-export"></i>
-                    </span>
-                        <span className="gjs-pn-btn" onClick={importJSON} title="Импорт JSON">
-                        <i className="fa fa-upload"></i>
-                    </span>
-                        <span className="gjs-pn-btn" onClick={printAllPages} title="Печать">
-                        <i className="fa fa-print"></i>
-                    </span>
-                    </div>}
-
-                    <div className="flex justify-end text-center mr-2 w-1/3">
-                        {/*<span className="gjs-pn-btn" onClick={() => exportExcel(editorView)} title="Экспорт Exel">*/}
-                        {/*    <i className="fa fa-file-excel"></i>*/}
-                        {/*</span>*/}
-                        {/*    <span className="gjs-pn-btn" onClick={() => exportPDF(editorView)} title="Экспорт PDF">*/}
-                        {/*    <i className="fa fa-file-pdf"></i>*/}
-                        {/*</span>*/}
-                        {/*    <span className="gjs-pn-btn" onClick={() => exportHtml(editorView)} title="Экспорт HTML">*/}
-                        {/*    <i className="fa fa-code"></i>*/}
-                        {/*</span>*/}
                         {/*    <span className="gjs-pn-btn" onClick={exportJSON} title="Экспорт JSON">*/}
                         {/*    <i className="fa fa-file-export"></i>*/}
                         {/*</span>*/}
                         {/*    <span className="gjs-pn-btn" onClick={importJSON} title="Импорт JSON">*/}
                         {/*    <i className="fa fa-upload"></i>*/}
                         {/*</span>*/}
-                        {/*    <span className="gjs-pn-btn" onClick={printAllPages} title="Печать">*/}
-                        {/*    <i className="fa fa-print"></i>*/}
-                        {/*</span>*/}
+                        <span className="gjs-pn-btn" onClick={printAllPages} title="Печать">
+                        <i className="fa fa-print"></i>
+                    </span>
+                    </div>}
+
+                    <div className="flex justify-end text-center mr-2 w-1/3">
+
+                        {!isPreviewMode &&
+                            <>
+                            <span className="gjs-pn-btn" onClick={exportJSON} title="Экспорт шаблона JSON">
+                            <i className="fa fa-file-export"></i></span>
+                                <span className="gjs-pn-btn" onClick={importJSON} title="Импорт шаблона JSON">
+                            <i className="fa fa-upload"></i></span>
+                            </>
+                        }
+
                     </div>
 
                 </div>
@@ -1413,7 +1596,9 @@ const ReportEditor = () => {
                     }}>DataBandT2
                     </button>
                     <button onClick={addPageHeaderBand}>Заголовок стр.</button>
+                    <button onClick={addReportTitleBand}>Заголовок отчета</button>
                     <button onClick={addPageFooterBand}>Подвал стр.</button>
+                    <button onClick={addReportSummaryBand}>Подвал отчета</button>
 
                     {!isPreviewMode && <button onClick={enterPreviewMode}>Просмотр</button>}
                     {isPreviewMode && <button onClick={exitPreviewMode}>Редактор</button>}
