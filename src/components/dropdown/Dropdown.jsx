@@ -1,0 +1,35 @@
+import React, { useState } from 'react';
+import './Dropdown.css';
+
+const Dropdown = ({ options, onSelect }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+
+    const toggleDropdown = () => {
+        setIsOpen(!isOpen);
+    };
+
+    const handleSelect = (option) => {
+        onSelect(option); // Вызываем функцию при выборе опции
+        setIsOpen(false); // Закрываем выпадающий список
+    };
+
+    return (
+        <div className="dropdown">
+            <button onClick={toggleDropdown} className="text-xs font-medium">
+                Источник данных
+            </button>
+            {isOpen && (
+                <div className="dropdown-menu text-xs font-medium">
+                    {options.map((option, index) => (
+                        <div key={index} className="dropdown-item" onClick={() => handleSelect(option)}>
+                            {option.name}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default Dropdown;

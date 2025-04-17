@@ -2,6 +2,7 @@ import React, {forwardRef, useEffect, useRef, useState} from 'react';
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./../reportsConstruct/ReportEditor.css";
 
+
 import * as XLSX from "xlsx";
 import html2canvas from "html2canvas";
 import html2pdf from "html2pdf.js";
@@ -17,6 +18,9 @@ import htmlToPdfmake from "html-to-pdfmake"; // Импортируем html-to-p
 
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
+import {CustomStyle} from "../../data/styleForSelect";
+import Select from "react-select";
+import Dropdown from "../dropdown/Dropdown";
 
 
 // Добавляем шрифт Roboto в виртуальную файловую систему pdfmake
@@ -189,18 +193,13 @@ const ReportEditor = () => {
                 {
                     id: "Data Band", //пробуем Data бэнд
                     label: "Data Band",
-                    content: `
-                   <div data-band="true" style="border: 1px dashed #aaa; padding: 10px;">
-                       <p>Place fields here: {{fieldName}}</p>
-                   </div>
-                `,
                     category: "Bands",
-                    activate: true,
-                    // draggable: true,
-                    // droppable: true,
+                    select: true,
+                    draggable: false,
+                    droppable: false,
                     onClick: (() => {
                         setTimeout(() => {
-                            addDataBand(tables[0])
+                            addReportTitleBand()
                         }, 1000)
 
                     }),
@@ -1071,7 +1070,8 @@ const ReportEditor = () => {
                 model: {
                     defaults: {
                         tagName: 'div',
-                        draggable: true,
+                        draggable: false,
+                        droppable: true,
                         highlightable: true,
                         components: `
               <div data-band="true" id="${tableName}" style="height: 200px; width: 794px; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
@@ -1130,6 +1130,7 @@ const ReportEditor = () => {
             });
 
             const components = editorView.getComponents();
+            console.log(components)
             components.add('<div data-gjs-type="pageHeader-band-block"></div>', {at: 0}); // Добавляем первым элементом
 
             // editorView.addComponents('<div data-gjs-type="data-band-block"></div>');
@@ -1344,105 +1345,30 @@ const ReportEditor = () => {
             });
         }
 
-        function insertNodeListIgnoringStyleAndScript(tempContainer, band, indexInsert) { //вставка игнорируя эелменты типа style и script
 
-            if(tempContainer.childNodes.length === 0 ) {
-                tempContainer.append(band);
-                return;
-            }
+        function insertBand(tempContainer, bands, addReportTitle, addReportSummary) {
 
-            let count = 0;
-
-            for (let i = 0; i < tempContainer.childNodes.length; i++) {
-                console.log(tempContainer.childNodes[i].nodeName)
-                let node = tempContainer.childNodes[i];
-                if((node.nodeName === "STYLE") || (node.nodeName === "SCRIPT")) count++;
-
-                if(indexInsert === tempContainer.childNodes.length-1){
-                    console.log("конец")
-                    tempContainer.append(band);
-                    return;
-                }
-
-                if((i - count) === indexInsert){
-                    // console.log(indexInsert)
-                    // console.log(i)
-                    // console.log(count)
-                    tempContainer.insertBefore(band, tempContainer.childNodes[i])
-                    return;
-                }
-            }
-        }
-
-    function insertReversNodeListIgnoringStyleAndScript(tempContainer, band, indexInsert) { //вставка игнорируя эелменты типа style и script
-
-        for (let i = tempContainer.childNodes.length-1; i >= 0 ; i--) {
-            console.log(tempContainer.childNodes[i].nodeName)
-            let node = tempContainer.childNodes[i];
-            if((node.nodeName === "STYLE") || (node.nodeName === "SCRIPT")) indexInsert--;
-            console.log(i)
-            console.log(indexInsert)
-            if(i === indexInsert){
-                console.log("Условие")
-                tempContainer.insertBefore(band, tempContainer.childNodes[i])
-            }
-        }
-
-    }
-
-        function insertBands(tempContainer, bands) { //для страниц сделать переменную page и если она первая или последняя тогда добовлять бэнды нужные
-            // console.log(bands)
-
-            let isReportTitleInserted = false;
-            let isReportSummaryInserted = false;
-
-            console.log(tempContainer.childNodes)
             for (let i = 0; i < bands.length; i++) {
-                // console.log(bands[i].id)
 
                 switch (bands[i].id) {
                     case 'reportTitle': {
-                        // console.log(tempContainer.childNodes)
-                        // console.log(tempContainer.scrollHeight)
-                        console.log("reportTitle")
-                        // tempContainer.insertBefore(bands[i], tempContainer.childNodes[3])
-                        console.log(tempContainer.childNodes.length)
-                        insertNodeListIgnoringStyleAndScript(tempContainer, bands[i], 0)
-                        console.log("reportTitle: " + tempContainer.scrollHeight)
-                        isReportTitleInserted = true;
+                        if (addReportTitle) tempContainer.querySelector('#header-container').prepend(bands[i])
                         break;
                     }
                     case 'pageHeader': {
-                        console.log("pageHeader")
-                        let indexInsert;
-                        isReportTitleInserted? indexInsert = 1 : indexInsert = 0;
-                        insertNodeListIgnoringStyleAndScript(tempContainer, bands[i], indexInsert)
-                        console.log("pageHeader: " + tempContainer.scrollHeight)
+                        tempContainer.querySelector('#header-container').append(bands[i])
                         break;
                     }
                     case 'reportSummary': {
-                        console.log("reportSummary")
-                        tempContainer.append(bands[i])
-                        isReportSummaryInserted = true;
-                        console.log("reportSummary: " + tempContainer.scrollHeight)
+                        if (addReportSummary) tempContainer.querySelector('#footer-container').prepend(bands[i])
                         break;
                     }
                     case 'pageFooter': {
-                        console.log("pageFooter")
-                        if(isReportSummaryInserted) {
-                            insertReversNodeListIgnoringStyleAndScript(tempContainer, bands[i], tempContainer.childNodes.length-1)
-                        } else {
-                            tempContainer.append(bands[i])
-                        }
-                        console.log("pageFooter: " + tempContainer.scrollHeight)
-                        break; //Нужно доделать, т.к. при некоторых сценариях не отображается
+                        tempContainer.querySelector('#footer-container').append(bands[i])
+                        break;
                     }
                 }
             }
-
-            console.log(tempContainer.childNodes)
-
-
         }
 
         function removeStyle(htmlString) {
@@ -1450,32 +1376,43 @@ const ReportEditor = () => {
             return htmlString.replace(styleRegex, '');
         }
 
+        function createTempContainer() {
+            const tempDiv = document.createElement("div");
+
+            const headerContainer = document.createElement('div');
+            headerContainer.id = 'header-container';
+            tempDiv.appendChild(headerContainer);
+            const bodyContainer = document.createElement('div');
+            bodyContainer.id = 'body-container';
+            tempDiv.appendChild(bodyContainer);
+            const footerContainer = document.createElement('div');
+            footerContainer.id = 'footer-container';
+            tempDiv.appendChild(footerContainer);
+
+            return tempDiv;
+        }
+
 
         function splitIntoA4Pages(htmlString, css, bands) {
             return new Promise((resolve) => {
 
-                const tempContainer = document.createElement("div");
+                const tempContainer = createTempContainer();
                 tempContainer.style.position = "absolute";
                 // tempContainer.style.left = "-9999px";
                 tempContainer.style.width = "794px"; // Ширина A4
-                tempContainer.innerHTML = `<style>${css}</style>${htmlString}`;
+                tempContainer.querySelector('#body-container').innerHTML = `<style>${css}</style>${htmlString}`;
 
 
                 document.body.appendChild(tempContainer);
 
                 //Логика вставки бэндов в разметку
-                insertBands(tempContainer, bands);
-
+                insertBand(tempContainer, bands, true, true)
 
                 const contentHeight = tempContainer.scrollHeight;
 
                 const maxHeight = 1123; // Высота A4
 
-                // console.log(contentHeight)
-                // console.log(editorView.Canvas.getBody().scrollHeight)
-
                 let newHtml = removeStyle(tempContainer.innerHTML) //html с бэндами
-                // console.log(newHtml)
 
                 //  Если контент помещается, просто возвращаем его
                 if (contentHeight <= maxHeight) {
@@ -1488,42 +1425,121 @@ const ReportEditor = () => {
                 // Разбиваем контент на страницы
                 let firstPageHtml = "";
                 let currentHeight = 0;
-                let pageContent = "";
 
-                const childNodes = Array.from(tempContainer.childNodes);
+                const childNodes = Array.from(tempContainer.querySelector('#body-container').childNodes);
 
 
                 const pagesBuf = [
                     {id: 1, content: "", styles: ""}
                 ];
 
-                childNodes.forEach((node) => {
-                    // Создаём временный контейнер для измерения
-                    const tempDiv = document.createElement("div");
-                    tempDiv.appendChild(node.cloneNode(true));
-                    document.body.appendChild(tempDiv);
 
-                    const nodeHeight = tempDiv.scrollHeight;
+                const tempDiv = createTempContainer();
 
-                    document.body.removeChild(tempDiv);
 
+                // console.log(tempDiv)
+
+                console.log(childNodes)
+                for (let i = 0; i < childNodes.length; i++) {
+
+                    let isAddBand = false;
+                    let isNeedReportTitle = false;
+                    let isNeedReportSummary = false;
+
+
+                    let node = childNodes[i];
+                    tempDiv.querySelector('#body-container').appendChild(node.cloneNode(true))
+                    // tempDiv.appendChild(node.cloneNode(true));
+
+
+                    // headerContainer.appendChild()
+
+                    const nodeHeight = node.scrollHeight;
+
+
+                    if (pageId === 0) isNeedReportTitle = true;
+
+
+                    if (i === childNodes.length - 1) {
+                        isNeedReportSummary = true;
+                        console.log(isNeedReportTitle)
+                        insertBand(tempDiv, bands, isNeedReportTitle, isNeedReportSummary);
+                        pagesBuf[pageId].content = tempDiv.innerHTML;
+                        pagesBuf[pageId].styles = css;
+                        break;
+                    }
+
+                    if (!isAddBand) {
+                        insertBand(tempDiv, bands, isNeedReportTitle, isNeedReportSummary);
+                        isAddBand = true;
+                        isNeedReportTitle = false;
+                    }
                     if (pageId === 0) {
-                        firstPageHtml = pageContent;
+                        firstPageHtml = tempDiv.innerHTML;
                     }
 
                     // Если элемент не влезает - начинаем новую страницу
-                    if (currentHeight + nodeHeight > maxHeight) {
-                        pageContent = "";
-                        currentHeight = 0;
+                    if (tempDiv.scrollHeight + nodeHeight > maxHeight) {
+                        isAddBand = false;
+                        console.log(tempDiv.scrollHeight)
+
+
+                        // console.log("currentHeight: " + currentHeight)
+
+                        pagesBuf[pageId].content = tempDiv.innerHTML;
+                        pagesBuf[pageId].styles = css;
                         pageId++;
                         pagesBuf.push({id: pageId + 1, content: "", styles: ""});
+                        currentHeight = 0;
+
+                        console.log(tempDiv)
+                        tempDiv.querySelector('#body-container').innerHTML = "";
+                        tempDiv.querySelector('#header-container').innerHTML = "";
+                        tempDiv.querySelector('#footer-container').innerHTML = "";
+
                     }
 
-                    pageContent += node.outerHTML;
-                    currentHeight += nodeHeight;
-                    pagesBuf[pageId].content = pageContent;
-                    pagesBuf[pageId].styles = css;
-                });
+
+                    document.body.appendChild(tempDiv);
+                    currentHeight = tempDiv.scrollHeight;
+
+                    // pageContent += node.outerHTML;
+                    // currentHeight += nodeHeight;
+                    // pagesBuf[pageId].content = pageContent;
+                    // pagesBuf[pageId].styles = css;
+                }
+
+
+                document.body.removeChild(tempDiv);
+
+
+                // childNodes.forEach((node) => {
+                //     // Создаём временный контейнер для измерения
+                //     const tempDiv = document.createElement("div");
+                //     tempDiv.appendChild(node.cloneNode(true));
+                //     document.body.appendChild(tempDiv);
+                //
+                //     const nodeHeight = tempDiv.scrollHeight;
+                //
+                //     document.body.removeChild(tempDiv);
+                //
+                //     if (pageId === 0) {
+                //         firstPageHtml = pageContent;
+                //     }
+                //
+                //     // Если элемент не влезает - начинаем новую страницу
+                //     if (currentHeight + nodeHeight > maxHeight) {
+                //         pageContent = "";
+                //         currentHeight = 0;
+                //         pageId++;
+                //         pagesBuf.push({id: pageId + 1, content: "", styles: ""});
+                //     }
+                //
+                //     pageContent += node.outerHTML;
+                //     currentHeight += nodeHeight;
+                //     pagesBuf[pageId].content = pageContent;
+                //     pagesBuf[pageId].styles = css;
+                // });
 
                 setPages(pagesBuf);
 
@@ -1531,6 +1547,22 @@ const ReportEditor = () => {
                 resolve(firstPageHtml);
             });
         }
+
+        const options = [
+            {
+                name: "Table1",
+                value: 0
+            },
+            {
+                name: "Table2",
+                value: 1
+            }
+        ];
+
+        const handleSelect = (option) => {
+            console.log('Выбрана опция:', option);
+            addDataBand(tables[option.value])
+        };
 
 
         return (
@@ -1542,7 +1574,10 @@ const ReportEditor = () => {
                         <span className="gjs-pn-btn">
                         <i className="fa-solid fa-pencil"></i>
                         </span>
+                        {!isPreviewMode && <button onClick={enterPreviewMode}>Просмотр</button>}
+                        {isPreviewMode && <button onClick={exitPreviewMode}>Редактор</button>}
                     </div>
+
                     {isPreviewMode && <div className="flex justify-start text-center w-1/3">
                     <span className="gjs-pn-btn" onClick={() => switchPage(currentPage - 1)}
                           title="Пред. страница">
@@ -1586,25 +1621,59 @@ const ReportEditor = () => {
                     </div>
 
                 </div>
-                <div className=" gjs-two-color gjs-one-bg flex flex-row justify-start py-1 gjs-pn-commands gap-x-2">
-                    <button onClick={() => {
-                        addDataBand(tables[0])
-                    }}>DataBandT1
-                    </button>
-                    <button onClick={() => {
-                        addDataBand(tables[1])
-                    }}>DataBandT2
-                    </button>
-                    <button onClick={addPageHeaderBand}>Заголовок стр.</button>
-                    <button onClick={addReportTitleBand}>Заголовок отчета</button>
-                    <button onClick={addPageFooterBand}>Подвал стр.</button>
-                    <button onClick={addReportSummaryBand}>Подвал отчета</button>
+                {/*<div className=" gjs-two-color gjs-one-bg flex flex-row justify-start py-1 gjs-pn-commands gap-x-2">*/}
+                {/*    <button onClick={() => {*/}
+                {/*        addDataBand(tables[0])*/}
+                {/*    }}>DataBandT1*/}
+                {/*    </button>*/}
+                {/*    <button onClick={() => {*/}
+                {/*        addDataBand(tables[1])*/}
+                {/*    }}>DataBandT2*/}
+                {/*    </button>*/}
+                {/*    <button onClick={addPageHeaderBand}>Заголовок стр.</button>*/}
+                {/*    <button onClick={addReportTitleBand}>Заголовок отчета</button>*/}
+                {/*    <button onClick={addPageFooterBand}>Подвал стр.</button>*/}
+                {/*    <button onClick={addReportSummaryBand}>Подвал отчета</button>*/}
 
-                    {!isPreviewMode && <button onClick={enterPreviewMode}>Просмотр</button>}
-                    {isPreviewMode && <button onClick={exitPreviewMode}>Редактор</button>}
+                {/*    {!isPreviewMode && <button onClick={enterPreviewMode}>Просмотр</button>}*/}
+                {/*    {isPreviewMode && <button onClick={exitPreviewMode}>Редактор</button>}*/}
 
 
-                </div>
+                {/*</div>*/}
+                {!isPreviewMode &&
+                    <div className="pl-2 gjs-two-color gjs-one-bg flex flex-row justify-start py-1 gjs-pn-commands gap-x-2">
+                        <div>
+                            <button onClick={addReportTitleBand} className="flex-col justify-center justify-items-center">
+                                <img src="/icons/ReportTitle.png" className="icon-band" alt="Report title"/>
+                                <span className="text-xs font-medium">Заголовок отчета</span>
+                            </button>
+                        </div>
+                        <div>
+                            <button onClick={addPageHeaderBand} className="flex-col justify-center justify-items-center">
+                                <img src="/icons/PageHeader.png" className="icon-band" alt="Page header"/>
+                                <span className="text-xs font-medium">Заголовок страницы</span>
+                            </button>
+                        </div>
+                        <div>
+                            <button onClick={addReportSummaryBand} className="flex-col justify-center justify-items-center">
+                                <img src="/icons/ReportSummary.png" className="icon-band" alt="Report Summary"/>
+                                <span className="text-xs font-medium">Подвал отчета</span>
+                            </button>
+                        </div>
+                        <div>
+                            <button onClick={addPageFooterBand} className="flex-col justify-center justify-items-center">
+                                <img src="/icons/PageFooter.png" className="icon-band" alt="Page footer"/>
+                                <span className="text-xs font-medium">Подвал страницы</span>
+                            </button>
+                        </div>
+                        <div className="flex-col justify-center justify-items-center">
+                            <img src="/icons/DataBand.png" className="icon-band" alt="Data band"/>
+                            <Dropdown options={options} onSelect={handleSelect}/>
+                        </div>
+
+
+                    </div>}
+
                 <div id="editor" ref={editorRef}/>
             </div>
         );
