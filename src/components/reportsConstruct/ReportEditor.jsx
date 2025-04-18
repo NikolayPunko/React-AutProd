@@ -190,21 +190,6 @@ const ReportEditor = () => {
                     droppable: false,
                 },
 
-                {
-                    id: "Data Band", //пробуем Data бэнд
-                    label: "Data Band",
-                    category: "Bands",
-                    select: true,
-                    draggable: false,
-                    droppable: false,
-                    onClick: (() => {
-                        setTimeout(() => {
-                            addReportTitleBand()
-                        }, 1000)
-
-                    }),
-
-                },
 
             ];
 
@@ -435,12 +420,12 @@ const ReportEditor = () => {
                     id: 'zoom-',
                     className: 'fa fa-magnifying-glass-minus',
                     command: () => changeZoom(-10),
-                    attributes: {title: 'Уменьшить маштаб'},
+                    attributes: {title: 'Уменьшить масштаб'},
                 }, {
                     id: 'zoom+',
                     className: 'fa fa-magnifying-glass-plus',
                     command: () => changeZoom(10),
-                    attributes: {title: 'Увеличить маштаб'},
+                    attributes: {title: 'Увеличить масштаб'},
                 },
                 // {
                 //     id: 'export-excel',
@@ -1017,23 +1002,85 @@ const ReportEditor = () => {
         }
 
         function addBlocks(editor) {
-            editor.BlockManager.add("my-block", {
-                label: "Мой блок", content: "<div style='padding:10px; background:#f3f3f3;'>Hello!</div>",
-                draggable: true, // Это перетаскиваемый элемент
-                droppable: false, // Это не контейнер
-            });
+
             editor.BlockManager.add("h1", {
-                label: "Заголовок h1", // content: "<h1 style='padding:30px; '>Заголовок h1</h1>",
-                content: "<div style='padding:10px; font-size:32px; font-weight:bold '>Заголовок h1</div>",
+                label: "<i class=\"fa-solid fa-heading\"></i>1 Заголовок h1",
+                content: "<div style='padding:10px; font-size:2em; font-weight:bold '>Заголовок h1</div>",
+                category: "Заголовки",
             });
             editor.BlockManager.add("h2", {
-                label: "Заголовок h2", // content: "<h1 style='padding:30px; '>Заголовок h1</h1>",
-                content: "<div style='padding:10px; font-size:24px; font-weight:bold '>Заголовок h2</div>",
+                label: "<i class=\"fa-solid fa-heading\"></i>2 Заголовок h2",
+                content: "<div style='padding:10px; font-size:1.5em; font-weight:bold '>Заголовок h2</div>",
+                category: "Заголовки",
             });
             editor.BlockManager.add("h3", {
-                label: "Заголовок h3", // content: "<h1 style='padding:30px; '>Заголовок h1</h1>",
-                content: "<div style='padding:10px; font-size:19px; font-weight:bold '>Заголовок h3</div>",
+                label: "<i class=\"fa-solid fa-heading\"></i>3 Заголовок h3",
+                content: "<div style='padding:10px; font-size:1.17em; font-weight:bold '>Заголовок h3</div>",
+                category: "Заголовки",
             });
+            editor.BlockManager.add("h4", {
+                label: "<i class=\"fa-solid fa-heading\"></i>4 Заголовок h4",
+                content: "<div style='padding:10px; font-size:1em; font-weight:bold '>Заголовок h4</div>",
+                category: "Заголовки",
+            });
+            editor.BlockManager.add("h5", {
+                label: "<i class=\"fa-solid fa-heading\"></i>5 Заголовок h5",
+                content: "<div style='padding:10px; font-size:0.83em; font-weight:bold '>Заголовок h5</div>",
+                category: "Заголовки",
+            });
+            editor.BlockManager.add("h6", {
+                label: "<i class=\"fa-solid fa-heading\"></i>6 Заголовок h6",
+                content: "<div style='padding:10px; font-size:0.67em; font-weight:bold '>Заголовок h6</div>",
+                category: "Заголовки",
+            });
+
+            editor.Blocks.add('line-block', {
+                label: '<i class="fa-solid fa-window-minimize"></i> Горизонтальная линия',
+                content: {
+                    type: 'line',
+                    tagName: 'div',
+                    attributes: { class: 'line-block' },
+                    style: {
+                        'width': '100%',
+                        'height': '2px',
+                        'background-color': '#000',
+                        'margin': '10px 0'
+                    }
+                },
+                category: "Линии",
+            });
+
+            editor.Blocks.add('vertical-line-block', {
+                label: '<i class="fa-solid fa-window-minimize fa-rotate-90"></i> Вертикальная линия',
+                content: {
+                    type: 'line',
+                    tagName: 'div',
+                    attributes: { class: 'vertical-line-block' },
+                    style: {
+                        'width': '2px',
+                        'height': '100px',
+                        'background-color': '#000',
+                        'margin': '0 10px',
+                        'display': 'inline-block'
+                    }
+                },
+                category: "Линии",
+            });
+
+            editor.Blocks.add('icon-block', {
+                label: '<i class="fas fa-camera"></i> Иконка', // Иконка Font Awesome
+                content: {
+                    type: 'text', // Тип контента
+                    tagName: 'div',
+                    content: 'Это блок с иконкой',
+                    style: { 'padding': '10px', 'border': '1px solid #ccc' }
+                },
+                category: 'Мои блоки', // Категория блока
+                attributes: { class: 'gjs-fonts gjs-f-icon-block' }, // Атрибуты блока
+                icon: '<i class="fas fa-camera"></i>', // Используйте нужный HTML-код иконки
+            });
+
+
             editor.BlockManager.add("paragraph", {
                 label: "Абзац", content: "<p style=\"font-size: 14px;\">Введите текст отчета...</p>",
             });
@@ -1074,18 +1121,14 @@ const ReportEditor = () => {
                         droppable: true,
                         highlightable: true,
                         components: `
-              <div data-band="true" id="${tableName}" style="height: 200px; width: 794px; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
-                 <div class="data-band-table" style="
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    background: #3b82f6;
-                    color: white;
-                    padding: 2px 8px;
-                    border-radius: 4px;
-                    font-size: 12px;
-                    white-space: nowrap;
-                 ">${tableName}</div>
+              <div description-band="true" style="
+                   background: #f8b159;
+                   padding: 2px 8px;
+                   font-weight: bold;
+                   font-size: 14px;
+              ">DataBand: ${tableName}</div>
+              
+              <div data-band="true" id="${tableName}" style="height: 200px; width: 794px; background: #ffffff; position: relative; border: 0px dashed #f4f4f4; padding: 30px 10px 10px 10px; overflow: visible;">
                  <h2 style="position: absolute; margin-top: 10px">Record</h2>
                  <p class="data-band-field" style="position: absolute; margin-top: 50px">Select field: {{name}}</p>
                  <p class="data-band-field" style="position: absolute; margin-top: 80px">Age: {{age}}</p>
@@ -1117,7 +1160,14 @@ const ReportEditor = () => {
                         droppable: true,
                         highlightable: true,
                         components: `
-             <div band="true" id="pageHeader" style="height: 100px; width: 794px; position: relative;
+              <div description-band="true" style="
+                   background: #ededed;
+                   padding: 2px 8px;
+                   font-weight: bold;
+                   font-size: 14px;
+              ">Page header</div>
+              
+             <div band="true" id="pageHeader" style="height: 100px; width: 794px; background: #fbfbfb; position: relative;
               border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
             
                <h2 style="">Page header band</h2>
@@ -1145,7 +1195,14 @@ const ReportEditor = () => {
                         droppable: true,
                         highlightable: true,
                         components: `
-             <div band="true" id="reportTitle" style="height: 100px; width: 794px; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+            <div description-band="true" style="
+                   background: #ededed;
+                   padding: 2px 8px;
+                   font-weight: bold;
+                   font-size: 14px;
+            ">Report title</div>
+              
+            <div band="true" id="reportTitle" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
             
                <h2 style="">Report title band</h2>
               
@@ -1170,7 +1227,13 @@ const ReportEditor = () => {
                         draggable: true,
                         highlightable: true,
                         components: `
-             <div band="true" id="pageFooter" style="height: 100px; width: 794px; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+             <div description-band="true" style="
+                   background: #ededed;
+                   padding: 2px 8px;
+                   font-weight: bold;
+                   font-size: 14px;
+            ">Page footer</div>
+             <div band="true" id="pageFooter" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
             
                <h2 style="">Page footer band</h2>
               
@@ -1194,7 +1257,13 @@ const ReportEditor = () => {
                         draggable: true,
                         highlightable: true,
                         components: `
-             <div band="true" id="reportSummary" style="height: 100px; width: 794px; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+            <div description-band="true" style="
+                   background: #ededed;
+                   padding: 2px 8px;
+                   font-weight: bold;
+                   font-size: 14px;
+            ">Report summary</div>
+             <div band="true" id="reportSummary" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
             
                <h2 style="">Report summary band</h2>
               
@@ -1215,6 +1284,11 @@ const ReportEditor = () => {
             const doc = parser.parseFromString(htmlTemplate, 'text/html');
 
             const dataBands = doc.querySelectorAll('[data-band="true"]');
+
+            const descriptionBands = doc.querySelectorAll('[description-band="true"]');
+            descriptionBands.forEach( description => {
+                description.remove();
+            })
             // console.log(bands)
 
 
@@ -1579,31 +1653,31 @@ const ReportEditor = () => {
                     </div>
 
                     {isPreviewMode && <div className="flex justify-start text-center w-1/3">
-                    <span className="gjs-pn-btn" onClick={() => switchPage(currentPage - 1)}
+                    <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => switchPage(currentPage - 1)}
                           title="Пред. страница">
                         <i className="fa-solid fa-angle-left"></i>
-                    </span>
+                        </span>
                         <span className="gjs-pn-btn">
                        {currentPage} / {pages.length}
-                    </span>
-                        <span className="gjs-pn-btn" onClick={() => switchPage(currentPage + 1)}
+                        </span>
+                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => switchPage(currentPage + 1)}
                               title="След. страница">
                         <i className="fa-solid fa-angle-right"></i>
-                    </span>
-                        <span className="gjs-pn-btn" onClick={() => exportPDF(editorView)} title="Экспорт PDF">
+                        </span>
+                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => exportPDF(editorView)} title="Экспорт PDF">
                         <i className="fa fa-file-pdf"></i>
-                    </span>
-                        <span className="gjs-pn-btn" onClick={() => exportHtml(editorView)} title="Экспорт HTML">
+                        </span>
+                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => exportHtml(editorView)} title="Экспорт HTML">
                         <i className="fa fa-code"></i>
-                    </span>
-                        {/*    <span className="gjs-pn-btn" onClick={exportJSON} title="Экспорт JSON">*/}
-                        {/*    <i className="fa fa-file-export"></i>*/}
-                        {/*</span>*/}
-                        {/*    <span className="gjs-pn-btn" onClick={importJSON} title="Импорт JSON">*/}
-                        {/*    <i className="fa fa-upload"></i>*/}
-                        {/*</span>*/}
-                        <span className="gjs-pn-btn" onClick={printAllPages} title="Печать">
+                        </span>
+                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={printAllPages} title="Печать">
                         <i className="fa fa-print"></i>
+                        </span>
+                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => changeZoom(-10)} title="Уменьшить масштаб">
+                            <i className="fa fa-magnifying-glass-minus"></i>
+                        </span>
+                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => changeZoom(10)} title="Увеличить масштаб">
+                        <i className="fa fa-magnifying-glass-plus"></i>
                     </span>
                     </div>}
 
@@ -1611,9 +1685,9 @@ const ReportEditor = () => {
 
                         {!isPreviewMode &&
                             <>
-                            <span className="gjs-pn-btn" onClick={exportJSON} title="Экспорт шаблона JSON">
+                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={exportJSON} title="Экспорт шаблона JSON">
                             <i className="fa fa-file-export"></i></span>
-                                <span className="gjs-pn-btn" onClick={importJSON} title="Импорт шаблона JSON">
+                                <span className="gjs-pn-btn hover:bg-gray-200" onClick={importJSON} title="Импорт шаблона JSON">
                             <i className="fa fa-upload"></i></span>
                             </>
                         }
@@ -1642,31 +1716,31 @@ const ReportEditor = () => {
                 {/*</div>*/}
                 {!isPreviewMode &&
                     <div className="pl-2 gjs-two-color gjs-one-bg flex flex-row justify-start py-1 gjs-pn-commands gap-x-2">
-                        <div>
+                        <div className="p-1 hover:bg-gray-200">
                             <button onClick={addReportTitleBand} className="flex-col justify-center justify-items-center">
                                 <img src="/icons/ReportTitle.png" className="icon-band" alt="Report title"/>
                                 <span className="text-xs font-medium">Заголовок отчета</span>
                             </button>
                         </div>
-                        <div>
+                        <div className="p-1 hover:bg-gray-200">
                             <button onClick={addPageHeaderBand} className="flex-col justify-center justify-items-center">
                                 <img src="/icons/PageHeader.png" className="icon-band" alt="Page header"/>
                                 <span className="text-xs font-medium">Заголовок страницы</span>
                             </button>
                         </div>
-                        <div>
+                        <div className="p-1 hover:bg-gray-200">
                             <button onClick={addReportSummaryBand} className="flex-col justify-center justify-items-center">
                                 <img src="/icons/ReportSummary.png" className="icon-band" alt="Report Summary"/>
                                 <span className="text-xs font-medium">Подвал отчета</span>
                             </button>
                         </div>
-                        <div>
+                        <div className="p-1 hover:bg-gray-200">
                             <button onClick={addPageFooterBand} className="flex-col justify-center justify-items-center">
                                 <img src="/icons/PageFooter.png" className="icon-band" alt="Page footer"/>
                                 <span className="text-xs font-medium">Подвал страницы</span>
                             </button>
                         </div>
-                        <div className="flex-col justify-center justify-items-center">
+                        <div className="p-1 hover:bg-gray-200 flex-col justify-center justify-items-center">
                             <img src="/icons/DataBand.png" className="icon-band" alt="Data band"/>
                             <Dropdown options={options} onSelect={handleSelect}/>
                         </div>

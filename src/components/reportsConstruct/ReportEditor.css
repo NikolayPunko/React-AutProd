@@ -29,6 +29,12 @@
     box-shadow: 0 0 2px var(--gjs-main-dark-color) !important;
 }
 
+.gjs-block {
+    min-height: 30px !important; /* или нужное значение */
+    line-height: 40px !important;
+    padding: 5px !important;
+}
+
 .a4-page {
     width: 1123px; /* Ширина A4 */
     height: 1587px; /* Высота A4 */
