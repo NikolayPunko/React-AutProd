@@ -21,12 +21,13 @@ import pdfFonts from "pdfmake/build/vfs_fonts";
 import {CustomStyle} from "../../data/styleForSelect";
 import Select from "react-select";
 import Dropdown from "../dropdown/Dropdown";
+import {dataReportTest} from "../../data/dataReport";
 
 
 // Добавляем шрифт Roboto в виртуальную файловую систему pdfmake
 // pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
-const ReportEditor = () => {
+const ReportEditor = ({ previewMode }) => {
         const [zoom, setZoom] = useState(100);
         const [editorView, setEditorView] = useState(null);
 
@@ -38,13 +39,19 @@ const ReportEditor = () => {
         const [oldPages, setOldPage] = useState([]);
         const [currentPage, setCurrentPage] = useState(1); // Активная страница
 
-        const [tables, setTables] = useState(['table1', 'table2'])
+        const [tables, setTables] = useState(['table1', 'table2', 'table3'])
 
         const [isPreviewMode, setIsPreviewMode] = useState(false);
 
+        let usedBands = {
+            reportTitle: false,
+            headerPage: false,
+            footerPage: false,
+            reportSummary: false,
+        }
+
 
         pdfMake.addVirtualFileSystem(pdfFonts);
-
 
         useEffect(() => {
             // Инициализация GrapesJS
@@ -188,6 +195,7 @@ const ReportEditor = () => {
                     category: "Text",
                     draggable: true,
                     droppable: false,
+                    //Нужно разрешить перемещать только в элементы котиорые являются бэндами!
                 },
 
 
@@ -273,6 +281,27 @@ const ReportEditor = () => {
             // });
 
 
+            // editor.on('component:update', (component) => {
+            //     // handleStyleChange(component);
+            //     console.log('change style')
+            //     console.log(component)
+            //
+            // });
+
+            //для того чтобы сдвигать описание футера страницы при изменении высоты
+            editor.on('component:styleUpdate:height', (component) => {
+                if (component.getId() === 'pageFooter') {
+                    const newHeight = parseInt(component.getStyle()['height']);
+                    const targetComponent = editor.getWrapper().find('#lablePageFooter')[0];
+                    if (targetComponent) {
+                        targetComponent.addStyle({
+                            'bottom': `${newHeight}px`,
+                        });
+                    }
+                }
+            });
+
+
             editor.on('component:drag:end', model => {
 
 
@@ -306,14 +335,21 @@ const ReportEditor = () => {
                 if (target && target !== model.parent) {
                     const targetEl = target.view?.el;
 
+
                     if (targetEl) {
                         const targetRect = targetEl.getBoundingClientRect();
+                        // console.log(targetEl.getAttribute('data-band'))
 
                         // Сохраняем положение модели до вставки
                         const modelTopBefore = modelRectBefore.top + window.scrollY;
 
-                        // Вставляем модель внутрь нового родителя
-                        target.append(model.target);
+                        if((targetEl.getAttribute('data-band') === 'true') || (targetEl.getAttribute('band') === 'true')) {
+                            console.log('true')
+                            // Вставляем модель внутрь нового родителя
+                            target.append(model.target);
+                        }
+
+
 
                         //Компенсация отступа сверху при перетаскивании, потом включить и доработать
                         // // Ждём ререндер, чтобы получить новое положение
@@ -363,7 +399,7 @@ const ReportEditor = () => {
 
             // Событие начала перетаскивания компонента
             editor.on("component:drag:start", (model) => {
-                console.log("Началось перетаскивание компонента:", model);
+                // console.log("Началось перетаскивание компонента:", model);
                 // Убираем индикаторы с возможных контейнеров
                 editor.getComponents().forEach((comp) => {
                     comp.removeClass("droppable-hover");
@@ -617,6 +653,10 @@ const ReportEditor = () => {
             //     saveCurrentPage(editor)
             // });
             // editor.on("component:selected", (model) => console.log("Выбран компонент:", model));
+
+            if(previewMode) {
+                enterPreviewMode();
+            }
         }, []);
 
         useEffect(() => {
@@ -1039,12 +1079,12 @@ const ReportEditor = () => {
                 content: {
                     type: 'line',
                     tagName: 'div',
-                    attributes: { class: 'line-block' },
+                    attributes: {class: 'line-block'},
                     style: {
                         'width': '100%',
                         'height': '2px',
                         'background-color': '#000',
-                        'margin': '10px 0'
+                        'margin': '0px 0'
                     }
                 },
                 category: "Линии",
@@ -1055,12 +1095,12 @@ const ReportEditor = () => {
                 content: {
                     type: 'line',
                     tagName: 'div',
-                    attributes: { class: 'vertical-line-block' },
+                    attributes: {class: 'vertical-line-block'},
                     style: {
                         'width': '2px',
                         'height': '100px',
                         'background-color': '#000',
-                        'margin': '0 10px',
+                        'margin': '0 0px',
                         'display': 'inline-block'
                     }
                 },
@@ -1073,10 +1113,10 @@ const ReportEditor = () => {
                     type: 'text', // Тип контента
                     tagName: 'div',
                     content: 'Это блок с иконкой',
-                    style: { 'padding': '10px', 'border': '1px solid #ccc' }
+                    style: {'padding': '10px', 'border': '1px solid #ccc'}
                 },
                 category: 'Мои блоки', // Категория блока
-                attributes: { class: 'gjs-fonts gjs-f-icon-block' }, // Атрибуты блока
+                attributes: {class: 'gjs-fonts gjs-f-icon-block'}, // Атрибуты блока
                 icon: '<i class="fas fa-camera"></i>', // Используйте нужный HTML-код иконки
             });
 
@@ -1126,6 +1166,7 @@ const ReportEditor = () => {
                    padding: 2px 8px;
                    font-weight: bold;
                    font-size: 14px;
+                   pointer-events: none;
               ">DataBand: ${tableName}</div>
               
               <div data-band="true" id="${tableName}" style="height: 200px; width: 794px; background: #ffffff; position: relative; border: 0px dashed #f4f4f4; padding: 30px 10px 10px 10px; overflow: visible;">
@@ -1156,7 +1197,7 @@ const ReportEditor = () => {
                 model: {
                     defaults: {
                         tagName: 'div',
-                        draggable: true,
+                        draggable: false,
                         droppable: true,
                         highlightable: true,
                         components: `
@@ -1165,10 +1206,11 @@ const ReportEditor = () => {
                    padding: 2px 8px;
                    font-weight: bold;
                    font-size: 14px;
+                   pointer-events: none;
               ">Page header</div>
               
              <div band="true" id="pageHeader" style="height: 100px; width: 794px; background: #fbfbfb; position: relative;
-              border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+              border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
             
                <h2 style="">Page header band</h2>
               
@@ -1180,8 +1222,10 @@ const ReportEditor = () => {
             });
 
             const components = editorView.getComponents();
-            console.log(components)
-            components.add('<div data-gjs-type="pageHeader-band-block"></div>', {at: 0}); // Добавляем первым элементом
+            if(usedBands.reportSummary === false) {
+                components.add('<div data-gjs-type="pageHeader-band-block"></div>', {at: 0}); // Добавляем первым элементом
+                usedBands.headerPage = true;
+            }
 
             // editorView.addComponents('<div data-gjs-type="data-band-block"></div>');
         }
@@ -1200,9 +1244,10 @@ const ReportEditor = () => {
                    padding: 2px 8px;
                    font-weight: bold;
                    font-size: 14px;
+                   pointer-events: none;
             ">Report title</div>
               
-            <div band="true" id="reportTitle" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+            <div band="true" id="reportTitle" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
             
                <h2 style="">Report title band</h2>
               
@@ -1214,7 +1259,11 @@ const ReportEditor = () => {
             });
 
             const components = editorView.getComponents();
-            components.add('<div data-gjs-type="reportTitle-band-block"></div>', {at: 0}); // Добавляем первым элементом
+            if(usedBands.reportSummary === false) {
+                components.add('<div data-gjs-type="reportTitle-band-block"></div>', {at: 0}); // Добавляем первым элементом
+                usedBands.reportTitle = true
+                //доделать сценарий при удалении бэндов для повторного добавления
+            }
 
             // editorView.addComponents('<div data-gjs-type="data-band-block"></div>');
         }
@@ -1227,17 +1276,24 @@ const ReportEditor = () => {
                         draggable: true,
                         highlightable: true,
                         components: `
-             <div description-band="true" style="
+<!--<div style="position: absolute; bottom: 0">-->
+             <div description-band="true" id="lablePageFooter" style="
                    background: #ededed;
                    padding: 2px 8px;
                    font-weight: bold;
                    font-size: 14px;
+                   pointer-events: none;
+                   position: absolute;
+                   bottom: 100px;
+                   width: 794px;
             ">Page footer</div>
-             <div band="true" id="pageFooter" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+             <div band="true" id="pageFooter" style="height: 100px; width: 794px; position: absolute; bottom: 0;
+              background: #fbfbfb;  border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
             
                <h2 style="">Page footer band</h2>
               
             </div>
+<!--  </div>-->
             `,
 
                     },
@@ -1245,7 +1301,10 @@ const ReportEditor = () => {
             });
 
             const components = editorView.getComponents();
-            components.add('<div data-gjs-type="pageFooter-band-block"></div>', {at: components.length}); // Добавляем первым элементом
+            if(usedBands.footerPage === false) {
+                components.add('<div data-gjs-type="pageFooter-band-block"></div>', {at: components.length}); // Добавляем первым элементом
+                usedBands.footerPage = true;
+            }
 
         }
 
@@ -1262,8 +1321,9 @@ const ReportEditor = () => {
                    padding: 2px 8px;
                    font-weight: bold;
                    font-size: 14px;
+                   pointer-events: none;
             ">Report summary</div>
-             <div band="true" id="reportSummary" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 1px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+             <div band="true" id="reportSummary" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
             
                <h2 style="">Report summary band</h2>
               
@@ -1274,7 +1334,10 @@ const ReportEditor = () => {
             });
 
             const components = editorView.getComponents();
-            components.add('<div data-gjs-type="reportSummary-band-block"></div>', {at: components.length}); // Добавляем первым элементом
+            if(usedBands.reportSummary === false) {
+                components.add('<div data-gjs-type="reportSummary-band-block"></div>', {at: components.length}); // Добавляем первым элементом
+                usedBands.reportSummary = true;
+            }
         }
 
         function renderDataBand(htmlTemplate, dataArray, css) {
@@ -1286,7 +1349,7 @@ const ReportEditor = () => {
             const dataBands = doc.querySelectorAll('[data-band="true"]');
 
             const descriptionBands = doc.querySelectorAll('[description-band="true"]');
-            descriptionBands.forEach( description => {
+            descriptionBands.forEach(description => {
                 description.remove();
             })
             // console.log(bands)
@@ -1318,13 +1381,11 @@ const ReportEditor = () => {
             });
 
             const bands = doc.querySelectorAll('[band="true"]');
-            console.log(bands)
 
             bands.forEach(band => {
                 doc.body.removeChild(band.parentNode)
             })
 
-            //передать бэнды заголовков в разделение на страницы и распределить
 
             splitIntoA4Pages(doc.body.innerHTML, css, bands).then((pagedHtml) => {
                 editorView.setComponents(pagedHtml);
@@ -1349,56 +1410,23 @@ const ReportEditor = () => {
         }
 
         function enterPreviewMode() {
+            // switchPage(1)
             setIsPreviewMode(!isPreviewMode);
-            render();
+            render(dataReportTest);
             document.querySelector('.gjs-pn-panels').style.display = 'none';
             document.querySelector('.gjs-pn-views-container').style.display = 'none';
             editorView.getWrapper().view.$el.css('pointer-events', 'none');
         }
 
 
-        function render() {
+        function render(data) {
             const html = editorView.getHtml();
             let css = editorView.getCss();
 
             setOldPage([{id: 1, content: html, styles: css}])
 
             // console.log(css)
-            const data = {
-                globalVar: [
-                    {
-                        var1: "111",
-                    },
-                    {
-                        var2: "222",
-                    },
-                    {
-                        var3: "333",
-                    },
-                ],
-                tableData: [
-                    {
-                        tableName: "table1",
-                        data: [
-                            {name: 'John11', age: 31},
-                            {name: 'John12', age: 32},
-                            {name: 'John13', age: 33}
-                        ]
-                    },
-                    {
-                        tableName: "table2",
-                        data: [
-                            {name: 'John21', age: 32},
-                            {name: 'John22', age: 33},
-                            {name: 'John23', age: 34},
-                            {name: 'John24', age: 35},
-                            {name: 'John25', age: 36},
-                            {name: 'John26', age: 37},
-                            {name: 'John27', age: 38}
-                        ]
-                    },
-                ],
-            };
+
 
 
             css = transformIDs(css);
@@ -1466,13 +1494,22 @@ const ReportEditor = () => {
             return tempDiv;
         }
 
+        function getFooterBandHeight(){
+            if(usedBands.footerPage === true){
+                var footerPage = document.getElementById('pageFooter');
+                if(footerPage!=null) return footerPage.offsetHeight
+            } else {
+                return 0;
+            }
+        }
+
 
         function splitIntoA4Pages(htmlString, css, bands) {
             return new Promise((resolve) => {
 
                 const tempContainer = createTempContainer();
                 tempContainer.style.position = "absolute";
-                // tempContainer.style.left = "-9999px";
+                tempContainer.style.left = "-9999px";
                 tempContainer.style.width = "794px"; // Ширина A4
                 tempContainer.querySelector('#body-container').innerHTML = `<style>${css}</style>${htmlString}`;
 
@@ -1482,7 +1519,10 @@ const ReportEditor = () => {
                 //Логика вставки бэндов в разметку
                 insertBand(tempContainer, bands, true, true)
 
-                const contentHeight = tempContainer.scrollHeight;
+                let contentHeight = tempContainer.scrollHeight; //бэнды которые позиционируются абсолютно, не учитываются
+
+
+                contentHeight = contentHeight + getFooterBandHeight(); //т.к. footerBand имеет абсолютное позиционирование
 
                 const maxHeight = 1123; // Высота A4
 
@@ -1498,7 +1538,6 @@ const ReportEditor = () => {
 
                 // Разбиваем контент на страницы
                 let firstPageHtml = "";
-                let currentHeight = 0;
 
                 const childNodes = Array.from(tempContainer.querySelector('#body-container').childNodes);
 
@@ -1513,7 +1552,7 @@ const ReportEditor = () => {
 
                 // console.log(tempDiv)
 
-                console.log(childNodes)
+                // console.log(childNodes)
                 for (let i = 0; i < childNodes.length; i++) {
 
                     let isAddBand = false;
@@ -1536,7 +1575,7 @@ const ReportEditor = () => {
 
                     if (i === childNodes.length - 1) {
                         isNeedReportSummary = true;
-                        console.log(isNeedReportTitle)
+
                         insertBand(tempDiv, bands, isNeedReportTitle, isNeedReportSummary);
                         pagesBuf[pageId].content = tempDiv.innerHTML;
                         pagesBuf[pageId].styles = css;
@@ -1552,19 +1591,16 @@ const ReportEditor = () => {
                         firstPageHtml = tempDiv.innerHTML;
                     }
 
+                    let updateHeight = getFooterBandHeight() + tempDiv.scrollHeight;
+
                     // Если элемент не влезает - начинаем новую страницу
-                    if (tempDiv.scrollHeight + nodeHeight > maxHeight) {
+                    if (updateHeight + nodeHeight > maxHeight) {
                         isAddBand = false;
-                        console.log(tempDiv.scrollHeight)
-
-
-                        // console.log("currentHeight: " + currentHeight)
 
                         pagesBuf[pageId].content = tempDiv.innerHTML;
                         pagesBuf[pageId].styles = css;
                         pageId++;
                         pagesBuf.push({id: pageId + 1, content: "", styles: ""});
-                        currentHeight = 0;
 
                         console.log(tempDiv)
                         tempDiv.querySelector('#body-container').innerHTML = "";
@@ -1575,45 +1611,10 @@ const ReportEditor = () => {
 
 
                     document.body.appendChild(tempDiv);
-                    currentHeight = tempDiv.scrollHeight;
-
-                    // pageContent += node.outerHTML;
-                    // currentHeight += nodeHeight;
-                    // pagesBuf[pageId].content = pageContent;
-                    // pagesBuf[pageId].styles = css;
                 }
 
 
                 document.body.removeChild(tempDiv);
-
-
-                // childNodes.forEach((node) => {
-                //     // Создаём временный контейнер для измерения
-                //     const tempDiv = document.createElement("div");
-                //     tempDiv.appendChild(node.cloneNode(true));
-                //     document.body.appendChild(tempDiv);
-                //
-                //     const nodeHeight = tempDiv.scrollHeight;
-                //
-                //     document.body.removeChild(tempDiv);
-                //
-                //     if (pageId === 0) {
-                //         firstPageHtml = pageContent;
-                //     }
-                //
-                //     // Если элемент не влезает - начинаем новую страницу
-                //     if (currentHeight + nodeHeight > maxHeight) {
-                //         pageContent = "";
-                //         currentHeight = 0;
-                //         pageId++;
-                //         pagesBuf.push({id: pageId + 1, content: "", styles: ""});
-                //     }
-                //
-                //     pageContent += node.outerHTML;
-                //     currentHeight += nodeHeight;
-                //     pagesBuf[pageId].content = pageContent;
-                //     pagesBuf[pageId].styles = css;
-                // });
 
                 setPages(pagesBuf);
 
@@ -1630,6 +1631,10 @@ const ReportEditor = () => {
             {
                 name: "Table2",
                 value: 1
+            },
+            {
+                name: "Table3",
+                value: 2
             }
         ];
 
@@ -1644,12 +1649,25 @@ const ReportEditor = () => {
 
                 <div className=" gjs-two-color gjs-one-bg flex flex-row justify-between py-1 gjs-pn-commands">
                     <div className="flex justify-start text-center ml-2 w-1/3">
-                        <span className="gjs-pn-btn font-medium">Конструктор отчетов</span>
-                        <span className="gjs-pn-btn">
-                        <i className="fa-solid fa-pencil"></i>
-                        </span>
+                        {!isPreviewMode &&
+                            <>
+                                <span className="gjs-pn-btn font-medium">Конструктор отчетов</span>
+                                <span className="gjs-pn-btn">
+                            <i className="fa-solid fa-pencil"></i>
+                            </span>
+                            </>
+                        }
+                        {isPreviewMode &&
+                            <>
+                                <span className="gjs-pn-btn font-medium">Просмотр отчетов</span>
+                                <span className="gjs-pn-btn">
+                           <i className="fa-solid fa-eye"></i>
+                            </span>
+                            </>
+                        }
+
                         {!isPreviewMode && <button onClick={enterPreviewMode}>Просмотр</button>}
-                        {isPreviewMode && <button onClick={exitPreviewMode}>Редактор</button>}
+                        {isPreviewMode && <button onClick={exitPreviewMode}>Конструктор</button>}
                     </div>
 
                     {isPreviewMode && <div className="flex justify-start text-center w-1/3">
@@ -1664,19 +1682,23 @@ const ReportEditor = () => {
                               title="След. страница">
                         <i className="fa-solid fa-angle-right"></i>
                         </span>
-                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => exportPDF(editorView)} title="Экспорт PDF">
+                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => exportPDF(editorView)}
+                              title="Экспорт PDF">
                         <i className="fa fa-file-pdf"></i>
                         </span>
-                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => exportHtml(editorView)} title="Экспорт HTML">
+                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => exportHtml(editorView)}
+                              title="Экспорт HTML">
                         <i className="fa fa-code"></i>
                         </span>
                         <span className="gjs-pn-btn hover:bg-gray-200" onClick={printAllPages} title="Печать">
                         <i className="fa fa-print"></i>
                         </span>
-                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => changeZoom(-10)} title="Уменьшить масштаб">
+                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => changeZoom(-10)}
+                              title="Уменьшить масштаб">
                             <i className="fa fa-magnifying-glass-minus"></i>
                         </span>
-                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => changeZoom(10)} title="Увеличить масштаб">
+                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => changeZoom(10)}
+                              title="Увеличить масштаб">
                         <i className="fa fa-magnifying-glass-plus"></i>
                     </span>
                     </div>}
@@ -1685,9 +1707,11 @@ const ReportEditor = () => {
 
                         {!isPreviewMode &&
                             <>
-                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={exportJSON} title="Экспорт шаблона JSON">
+                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={exportJSON}
+                                  title="Экспорт шаблона JSON">
                             <i className="fa fa-file-export"></i></span>
-                                <span className="gjs-pn-btn hover:bg-gray-200" onClick={importJSON} title="Импорт шаблона JSON">
+                                <span className="gjs-pn-btn hover:bg-gray-200" onClick={importJSON}
+                                      title="Импорт шаблона JSON">
                             <i className="fa fa-upload"></i></span>
                             </>
                         }

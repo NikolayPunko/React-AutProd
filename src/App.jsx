@@ -1,11 +1,12 @@
 import React, {useContext, useEffect, useState} from "react";
 import TaskSchedulerPage from "./pages/TaskSchedulerPage";
 import {Route, Routes} from 'react-router-dom';
-import ReportsPage from "./pages/ReportsPage";
+import ReportDesignerPage from "./pages/ReportDesignerPage";
 import Authorization from "./pages/Authorization";
 import {Context} from "./index";
 import PrivateRoute from "./components/PrivateRoute";
 import NotFound from "./pages/NotFound";
+import ReportsPage from "./pages/ReportsPage";
 
 
 function App() {
@@ -30,11 +31,10 @@ function App() {
 
                     <Route path="/" element={<ReportsPage/>}/>
                     <Route path="/scheduler" element={<TaskSchedulerPage/>}/>
+                    <Route path="/designer" element={<ReportDesignerPage/>}/>
                     <Route path="/" element={<PrivateRoute  />}>
 
                     </Route>
-
-
 
 
 
