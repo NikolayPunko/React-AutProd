@@ -3,7 +3,7 @@
 }
 
  .gjs-one-bg {
-    background-color: #f6f6f6 !important; /* Устанавливаем желаемый цвет фона */
+    background-color: #ffffff !important; /* Устанавливаем желаемый цвет фона */
 }
 
 #editor .gjs-four-color-h:hover {
@@ -15,7 +15,7 @@
 }
 
 .gjs-two-color {
-    color: #858585 !important;
+    color: #616161 !important;
 }
 
 .gjs-cv-canvas {

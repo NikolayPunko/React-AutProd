@@ -1,4 +1,4 @@
-import React, {forwardRef, useEffect, useRef, useState} from 'react';
+import React, {forwardRef, useEffect, useImperativeHandle, useRef, useState} from 'react';
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./../reportsConstruct/ReportEditor.css";
 
@@ -22,12 +22,16 @@ import {CustomStyle} from "../../data/styleForSelect";
 import Select from "react-select";
 import Dropdown from "../dropdown/Dropdown";
 import {dataReportTest} from "../../data/dataReport";
+import {ModalInput} from "../modal/ModalInput";
+import ReportService from "../../services/ReportService";
+import {ModalNotify} from "../modal/ModalNotify";
+import {ModalSelect} from "../modal/ModalSelect";
 
 
 // Добавляем шрифт Roboto в виртуальную файловую систему pdfmake
 // pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
-const ReportEditor = ({ previewMode }) => {
+const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseReport}, ref) => {
         const [zoom, setZoom] = useState(100);
         const [editorView, setEditorView] = useState(null);
 
@@ -42,6 +46,15 @@ const ReportEditor = ({ previewMode }) => {
         const [tables, setTables] = useState(['table1', 'table2', 'table3'])
 
         const [isPreviewMode, setIsPreviewMode] = useState(false);
+
+
+        const [isModalSaveReport, setIsModalSaveReport] = useState(false);
+        const [isModalNotify, setIsModalNotif] = useState(false);
+        const [isModalDownloadReport, setIsModalDownloadReport] = useState(false);
+        const [modalMsg, setModalMsg] = useState('');
+
+        const [optReportsName, setOptReportsName] = useState([]);
+
 
         let usedBands = {
             reportTitle: false,
@@ -142,7 +155,7 @@ const ReportEditor = ({ previewMode }) => {
             editor.setComponents(pages[0].content);
 
             editor.setStyle({
-                'background-color': '#bf13d9', // Цвет фона
+                'background-color': '#ad4bbc', // Цвет фона
             });
 
             // editor.setComponents(`<span style="text-align:center; padding: 10px; width:300px; left: 60px;
@@ -343,12 +356,11 @@ const ReportEditor = ({ previewMode }) => {
                         // Сохраняем положение модели до вставки
                         const modelTopBefore = modelRectBefore.top + window.scrollY;
 
-                        if((targetEl.getAttribute('data-band') === 'true') || (targetEl.getAttribute('band') === 'true')) {
+                        if ((targetEl.getAttribute('data-band') === 'true') || (targetEl.getAttribute('band') === 'true')) {
                             console.log('true')
                             // Вставляем модель внутрь нового родителя
                             target.append(model.target);
                         }
-
 
 
                         //Компенсация отступа сверху при перетаскивании, потом включить и доработать
@@ -463,40 +475,6 @@ const ReportEditor = ({ previewMode }) => {
                     command: () => changeZoom(10),
                     attributes: {title: 'Увеличить масштаб'},
                 },
-                // {
-                //     id: 'export-excel',
-                //     className: 'fa fa-file-excel',
-                //     command: () => exportExcel(editor),
-                //     attributes: {title: 'Экспорт Exel'},
-                // }, {
-                //     id: 'export-html',
-                //     className: 'fa fa-code',
-                //     command: () => exportHtml(editor),
-                //     attributes: {title: 'Экспорт HTML'},
-                // }, {
-                //     id: 'export-pdf',
-                //     className: 'fa fa-file-pdf',
-                //     command: () => exportPDF(editor),
-                //     attributes: {title: 'Экспорт PDF'},
-                // },
-                //
-                //     {
-                //         id: 'export-json',
-                //         className: 'fa fa-file-export',
-                //         command: () => exportToJSON(editor),
-                //         attributes: {title: 'Экспорт JSON'},
-                //     }, {
-                //         id: 'import-json',
-                //         className: 'fa fa-upload',
-                //         command: () => handleImportJSON(editor),
-                //         attributes: {title: 'Импорт JSON'},
-                //     }, {
-                //         id: 'print',
-                //         className: 'fa fa-print',
-                //         command: () => handlePrintReport(editor),
-                //         attributes: {title: 'Печать'},
-                //     },
-
             ]);
 
             addDeviceManager(editor);
@@ -634,30 +612,16 @@ const ReportEditor = ({ previewMode }) => {
             ])
 
 
-            // editorRef.current = editor;
             setEditorView(editor);
 
-            // editor.on("components:update", () => {
-            //     console.log("style:update");
-            //     saveCurrentPage(editor);
-            // });
 
-            // editor.on("component:add", (model) => console.log("Добавлен компонент:", model));
-            // editor.on("component:remove", (model) => console.log("Удален компонент:", model));
-            // editor.on("component:drag:end", (model) => console.log("Компонент перемещен:", model));
-            // editor.on("components:update", () => console.log("Изменена структура всех компонентов!"));
-            // editor.on("component:change:content", (model) => console.log("Изменен текст:", model));
-            // editor.on("style:update", (model) => console.log("Обновлены стили компонента:", model));
-            // editor.on("change", (model) => {
-            //     console.log("Обновлены атрибуты компонента:", model)
-            //     saveCurrentPage(editor)
-            // });
-            // editor.on("component:selected", (model) => console.log("Выбран компонент:", model));
-
-            if(previewMode) {
-                enterPreviewMode();
+            if (previewMode) {
+                setIsPreviewMode(false)
             }
+
+
         }, []);
+
 
         useEffect(() => {
             if (editorView) {
@@ -671,6 +635,13 @@ const ReportEditor = ({ previewMode }) => {
         useEffect(() => {
 
         }, [editorView])
+
+        // Определяем методы, которые будут доступны родителю
+        useImperativeHandle(ref, () => ({
+            customMethod(data, html, css) {
+                enterViewMode(data, html, css);
+            },
+        }));
 
         const switchPage = (id) => {
             const editor = editorView
@@ -874,6 +845,8 @@ const ReportEditor = ({ previewMode }) => {
               display: flex;
               flex-direction: column;
               align-items: center;
+              -webkit-print-color-adjust: exact; /* Для Chrome и Safari */
+              print-color-adjust: exact; /* Для Firefox */
             }
             .print-page {
               width: 100%;
@@ -978,6 +951,8 @@ const ReportEditor = ({ previewMode }) => {
               display: flex;
               flex-direction: column;
               align-items: center;
+              -webkit-print-color-adjust: exact; /* Для Chrome и Safari */
+              print-color-adjust: exact; /* Для Firefox */
             }
             .print-page {
               width: 100%;
@@ -1222,7 +1197,7 @@ const ReportEditor = ({ previewMode }) => {
             });
 
             const components = editorView.getComponents();
-            if(usedBands.reportSummary === false) {
+            if (usedBands.reportSummary === false) {
                 components.add('<div data-gjs-type="pageHeader-band-block"></div>', {at: 0}); // Добавляем первым элементом
                 usedBands.headerPage = true;
             }
@@ -1259,7 +1234,7 @@ const ReportEditor = ({ previewMode }) => {
             });
 
             const components = editorView.getComponents();
-            if(usedBands.reportSummary === false) {
+            if (usedBands.reportSummary === false) {
                 components.add('<div data-gjs-type="reportTitle-band-block"></div>', {at: 0}); // Добавляем первым элементом
                 usedBands.reportTitle = true
                 //доделать сценарий при удалении бэндов для повторного добавления
@@ -1301,7 +1276,7 @@ const ReportEditor = ({ previewMode }) => {
             });
 
             const components = editorView.getComponents();
-            if(usedBands.footerPage === false) {
+            if (usedBands.footerPage === false) {
                 components.add('<div data-gjs-type="pageFooter-band-block"></div>', {at: components.length}); // Добавляем первым элементом
                 usedBands.footerPage = true;
             }
@@ -1334,14 +1309,13 @@ const ReportEditor = ({ previewMode }) => {
             });
 
             const components = editorView.getComponents();
-            if(usedBands.reportSummary === false) {
+            if (usedBands.reportSummary === false) {
                 components.add('<div data-gjs-type="reportSummary-band-block"></div>', {at: components.length}); // Добавляем первым элементом
                 usedBands.reportSummary = true;
             }
         }
 
         function renderDataBand(htmlTemplate, dataArray, css) {
-
 
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlTemplate, 'text/html');
@@ -1412,21 +1386,28 @@ const ReportEditor = ({ previewMode }) => {
         function enterPreviewMode() {
             // switchPage(1)
             setIsPreviewMode(!isPreviewMode);
-            render(dataReportTest);
+            render(dataReportTest, editorView.getHtml(), editorView.getCss());
+            document.querySelector('.gjs-pn-panels').style.display = 'none';
+            document.querySelector('.gjs-pn-views-container').style.display = 'none';
+            editorView.getWrapper().view.$el.css('pointer-events', 'none');
+        }
+
+        function enterViewMode(data, html, css) {
+// console.log(html)
+// console.log(css)
+            setIsPreviewMode(!isPreviewMode);
+            render(data, html, css);
             document.querySelector('.gjs-pn-panels').style.display = 'none';
             document.querySelector('.gjs-pn-views-container').style.display = 'none';
             editorView.getWrapper().view.$el.css('pointer-events', 'none');
         }
 
 
-        function render(data) {
-            const html = editorView.getHtml();
-            let css = editorView.getCss();
+        function render(data, html, css) {
 
             setOldPage([{id: 1, content: html, styles: css}])
 
             // console.log(css)
-
 
 
             css = transformIDs(css);
@@ -1442,6 +1423,7 @@ const ReportEditor = ({ previewMode }) => {
 
 
         function transformIDs(css) { //т.к. нужно применять ко всем дубликатам бэнда
+            // console.log(css)
             return css.replace(/(?<!:)\#([a-zA-Z_][\w-]+)/g, (match, id) => {
                 return `[id^='${id}']`; // заменяем #id на [id^='id']
             });
@@ -1494,10 +1476,10 @@ const ReportEditor = ({ previewMode }) => {
             return tempDiv;
         }
 
-        function getFooterBandHeight(){
-            if(usedBands.footerPage === true){
+        function getFooterBandHeight() {
+            if (usedBands.footerPage === true) {
                 var footerPage = document.getElementById('pageFooter');
-                if(footerPage!=null) return footerPage.offsetHeight
+                if (footerPage != null) return footerPage.offsetHeight
             } else {
                 return 0;
             }
@@ -1643,6 +1625,58 @@ const ReportEditor = ({ previewMode }) => {
             addDataBand(tables[option.value])
         };
 
+        function showModalSaveReport() {
+            setIsModalSaveReport(!isModalSaveReport)
+        }
+
+        function showModalNotif() {
+            setIsModalNotif(!isModalNotify)
+        }
+
+        function showModalDownloadReport() {
+            setIsModalDownloadReport(!isModalDownloadReport)
+        }
+
+        async function saveReport(reportName) {
+            showModalSaveReport();
+
+            saveCurrentPage(editorView).then(async (updatedPages) => {
+                try {
+                    await ReportService.createReportTemplate(reportName, updatedPages[0].content, updatedPages[0].styles);
+                    setModalMsg("Документ успешно отправлен!");
+
+                } catch (error) {
+                    setModalMsg("Ошибка сохранения отчета на сервер! Попробуйте еще раз.")
+                } finally {
+                    showModalNotif();
+                }
+            })
+        }
+
+        async function downloadReport(reportName) {
+            try {
+                const response = await ReportService.getReportTemplateByReportName(reportName);
+                editorView.setComponents(response.data.content);
+                editorView.setStyle(response.data.styles);
+            } catch (error) {
+                setModalMsg("Ошибка сохранения отчета на сервер! Попробуйте еще раз.")
+                showModalNotif();
+            } finally {
+                showModalDownloadReport();
+            }
+        }
+
+        async function downloadReportsName() {
+            try {
+                const response = await ReportService.getReportsName();
+                setOptReportsName(ReportService.convertReportsNameToSelectOpt(response.data));
+                showModalDownloadReport();
+            } catch (error) {
+                setModalMsg("Ошибка загрузки доступных отчетов! Попробуйте позже.")
+                showModalNotif();
+            }
+        }
+
 
         return (
             <div>
@@ -1666,8 +1700,10 @@ const ReportEditor = ({ previewMode }) => {
                             </>
                         }
 
-                        {!isPreviewMode && <button onClick={enterPreviewMode}>Просмотр</button>}
-                        {isPreviewMode && <button onClick={exitPreviewMode}>Конструктор</button>}
+                        {!isPreviewMode && !previewMode && <button onClick={enterPreviewMode}>Просмотр</button>}
+                        {isPreviewMode && !previewMode && <button onClick={exitPreviewMode}>Конструктор</button>}
+
+                        {previewMode && <button onClick={onCloseReport}>Закрыть отчет</button>}
                     </div>
 
                     {isPreviewMode && <div className="flex justify-start text-center w-1/3">
@@ -1713,6 +1749,15 @@ const ReportEditor = ({ previewMode }) => {
                                 <span className="gjs-pn-btn hover:bg-gray-200" onClick={importJSON}
                                       title="Импорт шаблона JSON">
                             <i className="fa fa-upload"></i></span>
+
+                                <span className="gjs-pn-btn hover:bg-gray-200" onClick={showModalSaveReport}
+                                      title="Сохранить шаблон на сервер">
+                            <i className="fa-solid fa-sd-card"></i></span>
+                                <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => {
+                                    downloadReportsName();
+                                }}
+                                      title="Загрузить шаблон с сервера">
+                           <i className="fa-solid fa-cloud-arrow-down"></i></span>
                             </>
                         }
 
@@ -1773,9 +1818,24 @@ const ReportEditor = ({ previewMode }) => {
                     </div>}
 
                 <div id="editor" ref={editorRef}/>
+
+
+                {isModalSaveReport &&
+                    <ModalInput title={"Сохранение отчета на сервер"} message={"modalMsg"} onClose={showModalSaveReport}
+                                onAgreement={saveReport}/>
+                }
+
+                {isModalNotify && <ModalNotify title={"Результат операции"} message={modalMsg} onClose={showModalNotif}/>}
+
+                {isModalDownloadReport &&
+                    <ModalSelect title={"Загрузка отчета с сервера"} message={"modalMsg"} onClose={showModalDownloadReport}
+                                 onAgreement={downloadReport} options={optReportsName}/>
+                }
+
+
             </div>
         );
-    }
+    })
 ;
 
 export default ReportEditor;

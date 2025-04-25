@@ -8,7 +8,7 @@ export const CustomStyle = {
         height: "auto",
         // whiteSpace: "nowrap",
         zIndex: '100',
-        fontSize: '10px', lineHeight: '12px'
+        fontSize: '12px', lineHeight: '12px'
 
     }),
     control: (base, state) => ({

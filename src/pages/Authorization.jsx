@@ -104,7 +104,7 @@ function Authorization() {
                 <div className="flex flex-col pt-8 items-center">
 
                     <button
-                        className="w-[140px] h-[40px] bg-blue-800 text-white rounded shadow-inner hover:bg-blue-700"
+                        className="w-[140px] h-[40px] text-white rounded shadow-inner bg-blue-800 hover:bg-blue-700"
                         onClick={login}>
                         Войти
                     </button>
