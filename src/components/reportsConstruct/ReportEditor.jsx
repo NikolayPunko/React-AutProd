@@ -26,6 +26,9 @@ import {ModalInput} from "../modal/ModalInput";
 import ReportService from "../../services/ReportService";
 import {ModalNotify} from "../modal/ModalNotify";
 import {ModalSelect} from "../modal/ModalSelect";
+import {ModalSettingDB} from "./ModalSettingDB";
+import {ModalSQL} from "./ModalSQL";
+import {Parser} from "node-sql-parser";
 
 
 // Добавляем шрифт Roboto в виртуальную файловую систему pdfmake
@@ -43,7 +46,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         const [oldPages, setOldPage] = useState([]);
         const [currentPage, setCurrentPage] = useState(1); // Активная страница
 
-        const [tables, setTables] = useState(['table1', 'table2', 'table3'])
+        const [tablesOpt, setTablesOpt] = useState([])
 
         const [isPreviewMode, setIsPreviewMode] = useState(false);
 
@@ -51,10 +54,20 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         const [isModalSaveReport, setIsModalSaveReport] = useState(false);
         const [isModalNotify, setIsModalNotif] = useState(false);
         const [isModalDownloadReport, setIsModalDownloadReport] = useState(false);
+        const [isModalSettingDB, setIsModalSettingDB] = useState(false);
+        const [isModalSQL, setIsModalSQL] = useState(false);
         const [modalMsg, setModalMsg] = useState('');
 
         const [optReportsName, setOptReportsName] = useState([]);
 
+        const [settingDB, setSettingDB] = useState({
+            url: 'https://example.com',
+            username: '',
+            password: '',
+            driverClassName: '',
+        });
+        const [sql, setSql] = useState("sql");
+        const [isValidSql, setIsValidSql] = useState(true);
 
         let usedBands = {
             reportTitle: false,
@@ -204,7 +217,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 {
                     id: "text-block",
                     label: "Text Block",
-                    content: '<div class="band-content">This is some text.</div>',
+                    content: '<div class="band-content" style="word-wrap: break-word;">This is some text.</div>',
                     category: "Text",
                     draggable: true,
                     droppable: false,
@@ -477,6 +490,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 },
             ]);
 
+
             addDeviceManager(editor);
 
             addBlocks(editor);
@@ -514,6 +528,12 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             editor.on("component:drag:end", (event => {
                 restrictDragToCanvas(event.target);
             }));
+
+            console.log(editor.Panels.getPanel('options'))
+
+
+            editor.Panels.removeButton('options', 'preview');
+            editor.Panels.removeButton('options', 'gjs-open-import-webpage');
 
 
             setEditorView(editor);
@@ -555,70 +575,12 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             document.querySelector('.gjs-pn-devices-c').querySelector('.gjs-pn-buttons').innerHTML = "" // удаляем дефолтный div с девайсами
 
-
-            editor.Panels.addButton('devices-c', [// {
-                //     id: 'prevPage',
-                //     className: 'fa-solid fa-angle-left',
-                //     command: () => switchPage(1),
-                //     attributes: {title: 'Пред. страница'},
-                // },
-                // {
-                //     id: 'currentPage',
-                //     className: 'custom-page-display',
-                //     attributes: {
-                //         title: 'Текущая страница',
-                //     },
-                //     label: `${currentPage} / ${pages.length}`
-                // },
-                // {
-                //     id: 'nextPage',
-                //     className: 'fa-solid fa-angle-right',
-                //     command: () => switchPage(2),
-                //     attributes: {title: 'След. страница'},
-                // },
-                //     {
-                //     id: 'export-excel',
-                //     className: 'fa fa-file-excel',
-                //     command: () => exportExcel(editor),
-                //     attributes: {title: 'Экспорт Exel'},
-                // }, {
-                //     id: 'export-html',
-                //     className: 'fa fa-code',
-                //     command: () => exportHtml(editor),
-                //     attributes: {title: 'Экспорт HTML'},
-                // }, {
-                //     id: 'export-pdf',
-                //     className: 'fa fa-file-pdf',
-                //     command: () => exportPDF(editor),
-                //     attributes: {title: 'Экспорт PDF'},
-                // },
-                //
-                //     {
-                //         id: 'export-json',
-                //         className: 'fa fa-file-export',
-                //         command: () => exportToJSON(editor),
-                //         attributes: {title: 'Экспорт JSON'},
-                //     }, {
-                //         id: 'import-json',
-                //         className: 'fa fa-upload',
-                //         command: () => handleImportJSON(editor),
-                //         attributes: {title: 'Импорт JSON'},
-                //     }, {
-                //         id: 'print',
-                //         className: 'fa fa-print',
-                //         command: () => handlePrintReport(editor),
-                //         attributes: {title: 'Печать'},
-                //     },
-            ])
-
-
             setEditorView(editor);
 
 
             if (previewMode) {
                 setIsPreviewMode(false)
             }
-
 
         }, []);
 
@@ -687,9 +649,20 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
         const exportJSON = async () => {
             saveCurrentPage(editorView).then((updatedPages) => {
+
+                let result = {
+                    dbUrl: settingDB.url,
+                    dbUsername: settingDB.username,
+                    dbPassword: settingDB.password,
+                    dbDriver: settingDB.driverClassName,
+                    sql,
+                    content: updatedPages[0].content,
+                    styles: updatedPages[0].styles,
+                }
+
                 try {
                     // const updatedPages = await saveCurrentPage();
-                    const json = JSON.stringify(updatedPages, null, 2);
+                    const json = JSON.stringify(result, null, 2);
                     const blob = new Blob([json], {type: "application/json"});
                     const link = document.createElement("a");
                     link.href = URL.createObjectURL(blob);
@@ -717,7 +690,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             fileInput.addEventListener("change", (event) => {
 
-
                 const file = event.target.files[0];
                 if (!file) return;
 
@@ -729,8 +701,15 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         setPages(importedPages);
                         setCurrentPage(importedPages[0]?.id || 1);
 
-                        editorView.setComponents(importedPages[0].content);
-                        editorView.setStyle(importedPages[0].styles);
+                        setSettingDB({
+                            url: importedPages.dbUrl,
+                            username: importedPages.dbUsername,
+                            password: importedPages.dbPassword,
+                            driverClassName: importedPages.dbDriver
+                        });
+                        setSql(importedPages.sql);
+                        editorView.setComponents(importedPages.content);
+                        editorView.setStyle(importedPages.styles);
 
                     };
                 } catch (error) {
@@ -743,7 +722,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             document.body.appendChild(fileInput);
             fileInput.click();
             document.body.removeChild(fileInput);
-
 
         };
 
@@ -760,8 +738,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
         const changeZoom = (value) => {
             setZoom((prevZoom) => {
-                const newZoom = Math.min(Math.max(prevZoom + value, 50), 100);
-                return newZoom;
+                return Math.min(Math.max(prevZoom + value, 50), 120);
             });
         };
 
@@ -1335,7 +1312,10 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 const bandId = band.getAttribute('id');
 
                 dataArray.forEach(item => {
-                    if (bandId.startsWith(item.tableName)) {
+                    console.log(bandId)
+                    console.log(item.tableName)
+                    if (bandId.toLowerCase().startsWith(item.tableName.toLowerCase())) {
+                        console.log("sdf")
                         item.data.forEach(tableData => {
                             let instanceHtml = bandHtml;
 
@@ -1405,6 +1385,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
         function render(data, html, css) {
 
+            defineBands(html);
             setOldPage([{id: 1, content: html, styles: css}])
 
             // console.log(css)
@@ -1485,6 +1466,18 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             }
         }
 
+        function defineBands(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            doc.getElementById('pageHeader') ? usedBands.headerPage = true : usedBands.headerPage = false
+            doc.getElementById('reportTitle') ? usedBands.reportTitle = true : usedBands.reportTitle = false
+            doc.getElementById('reportSummary') ? usedBands.reportSummary = true : usedBands.reportSummary = false
+            doc.getElementById('pageFooter') ? usedBands.footerPage = true : usedBands.footerPage = false
+
+            // console.log(usedBands)
+        }
+
 
         function splitIntoA4Pages(htmlString, css, bands) {
             return new Promise((resolve) => {
@@ -1502,7 +1495,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 insertBand(tempContainer, bands, true, true)
 
                 let contentHeight = tempContainer.scrollHeight; //бэнды которые позиционируются абсолютно, не учитываются
-
 
                 contentHeight = contentHeight + getFooterBandHeight(); //т.к. footerBand имеет абсолютное позиционирование
 
@@ -1574,6 +1566,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                     }
 
                     let updateHeight = getFooterBandHeight() + tempDiv.scrollHeight;
+                    console.log(getFooterBandHeight())
 
                     // Если элемент не влезает - начинаем новую страницу
                     if (updateHeight + nodeHeight > maxHeight) {
@@ -1584,7 +1577,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         pageId++;
                         pagesBuf.push({id: pageId + 1, content: "", styles: ""});
 
-                        console.log(tempDiv)
                         tempDiv.querySelector('#body-container').innerHTML = "";
                         tempDiv.querySelector('#header-container').innerHTML = "";
                         tempDiv.querySelector('#footer-container').innerHTML = "";
@@ -1605,24 +1597,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             });
         }
 
-        const options = [
-            {
-                name: "Table1",
-                value: 0
-            },
-            {
-                name: "Table2",
-                value: 1
-            },
-            {
-                name: "Table3",
-                value: 2
-            }
-        ];
-
-        const handleSelect = (option) => {
-            console.log('Выбрана опция:', option);
-            addDataBand(tables[option.value])
+        const handleSelectTableBand = (option) => {
+            addDataBand(option);
         };
 
         function showModalSaveReport() {
@@ -1637,12 +1613,26 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             setIsModalDownloadReport(!isModalDownloadReport)
         }
 
+        function showModalSettingDB() {
+            setIsModalSettingDB(!isModalSettingDB)
+        }
+
+        function showModalSQL() {
+            setIsModalSQL(!isModalSQL)
+        }
+
+        function showModalDownloadReport() {
+            setIsModalDownloadReport(!isModalDownloadReport)
+        }
+
         async function saveReport(reportName) {
             showModalSaveReport();
 
             saveCurrentPage(editorView).then(async (updatedPages) => {
                 try {
-                    await ReportService.createReportTemplate(reportName, updatedPages[0].content, updatedPages[0].styles);
+                    await ReportService.createReportTemplate(reportName,
+                        settingDB.url, settingDB.username, settingDB.password, settingDB.driverClassName, sql,
+                        updatedPages[0].content, updatedPages[0].styles);
                     setModalMsg("Документ успешно отправлен!");
 
                 } catch (error) {
@@ -1658,6 +1648,13 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 const response = await ReportService.getReportTemplateByReportName(reportName);
                 editorView.setComponents(response.data.content);
                 editorView.setStyle(response.data.styles);
+                setSettingDB({
+                    url: response.data.dbUrl,
+                    username: response.data.dbUsername,
+                    password: response.data.dbPassword,
+                    driverClassName: response.data.dbDriver
+                });
+                setSql(response.data.sql);
             } catch (error) {
                 setModalMsg("Ошибка сохранения отчета на сервер! Попробуйте еще раз.")
                 showModalNotif();
@@ -1676,6 +1673,48 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 showModalNotif();
             }
         }
+
+        const handleChangeSettingDB = (field, value) => {
+            console.log(`field changed: ${field} = ${value}`);
+            setSettingDB((prev) => ({
+                ...prev,
+                [field]: value,
+            }));
+        };
+
+        const extractTablesAndCheckSQL = () => {
+            console.log(tablesOpt)
+            const tableRegex = /(?:FROM|JOIN|UPDATE|INTO)\s+([\w.]+)(?:\s|$|;|\))/gi;
+            const foundTables = new Set();
+
+            try {
+                const parser = new Parser();
+                sql.split(';').forEach(query => {
+                    // const ast = parser.astify(query); //На валидность запроса
+                    let match;
+                    while ((match = tableRegex.exec(query)) !== null) {
+                        const tableName = match[1]
+                            .replace(/["'`]/g, '') // Удаляем кавычки
+                            .split(/\s+/)[0]; // Удаляем алиасы
+
+                        if (tableName) {
+                            foundTables.add(tableName);
+                        }
+                    }
+                });
+                setTablesOpt(Array.from(foundTables).sort());
+                setIsValidSql(true);
+            } catch (e) {
+                setTablesOpt([]);
+                // setIsValidSql(false);
+            }
+
+        };
+
+
+        useEffect(() => {
+            extractTablesAndCheckSQL();
+        }, [sql]);
 
 
         return (
@@ -1784,34 +1823,63 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
                 {/*</div>*/}
                 {!isPreviewMode &&
-                    <div className="pl-2 gjs-two-color gjs-one-bg flex flex-row justify-start py-1 gjs-pn-commands gap-x-2">
-                        <div className="p-1 hover:bg-gray-200">
-                            <button onClick={addReportTitleBand} className="flex-col justify-center justify-items-center">
-                                <img src="/icons/ReportTitle.png" className="icon-band" alt="Report title"/>
-                                <span className="text-xs font-medium">Заголовок отчета</span>
-                            </button>
+                    <div
+                        className="pl-2 gjs-two-color gjs-one-bg flex flex-row justify-between py-1 gjs-pn-commands ">
+                        <div className="flex flex-row gap-x-2">
+                            <div className="p-1 hover:bg-gray-200">
+                                <button onClick={addReportTitleBand}
+                                        className="flex-col justify-center justify-items-center">
+                                    <img src="/icons/ReportTitle.png" className="icon-band" alt="Report title"/>
+                                    <span className="text-xs font-medium">Заголовок отчета</span>
+                                </button>
+                            </div>
+                            <div className="p-1 hover:bg-gray-200">
+                                <button onClick={addPageHeaderBand}
+                                        className="flex-col justify-center justify-items-center">
+                                    <img src="/icons/PageHeader.png" className="icon-band" alt="Page header"/>
+                                    <span className="text-xs font-medium">Заголовок страницы</span>
+                                </button>
+                            </div>
+                            <div className="p-1 hover:bg-gray-200">
+                                <button onClick={addReportSummaryBand}
+                                        className="flex-col justify-center justify-items-center">
+                                    <img src="/icons/ReportSummary.png" className="icon-band" alt="Report Summary"/>
+                                    <span className="text-xs font-medium">Подвал отчета</span>
+                                </button>
+                            </div>
+                            <div className="p-1 hover:bg-gray-200">
+                                <button onClick={addPageFooterBand}
+                                        className="flex-col justify-center justify-items-center">
+                                    <img src="/icons/PageFooter.png" className="icon-band" alt="Page footer"/>
+                                    <span className="text-xs font-medium">Подвал страницы</span>
+                                </button>
+                            </div>
+                            <div className="p-1 hover:bg-gray-200 flex-col justify-center justify-items-center">
+                                <img src="/icons/DataBand.png" className="icon-band" alt="Data band"/>
+                                <Dropdown options={tablesOpt} onSelect={handleSelectTableBand}/>
+                            </div>
                         </div>
-                        <div className="p-1 hover:bg-gray-200">
-                            <button onClick={addPageHeaderBand} className="flex-col justify-center justify-items-center">
-                                <img src="/icons/PageHeader.png" className="icon-band" alt="Page header"/>
-                                <span className="text-xs font-medium">Заголовок страницы</span>
-                            </button>
+                        <div className="flex flex-row gap-x-2 pr-2">
+                            <div className="hover:bg-gray-200 flex-col justify-center justify-items-center">
+                                <button onClick={showModalSettingDB}
+                                        className="flex flex-col justify-between justify-items-center">
+                                <span className="gjs-pn-btn hover:bg-gray-200 flex justify-center ">
+                                        <i className="fa-lg fa-solid fa-server pt-3"></i>
+                                </span>
+                                    <span className="text-xs font-medium px-1">Конфигурация БД</span>
+                                </button>
+                            </div>
+                            <div className="hover:bg-gray-200 flex-col justify-center justify-items-center">
+                                <button onClick={showModalSQL}
+                                        className="flex flex-col justify-between justify-items-center">
+                                <span className="gjs-pn-btn hover:bg-gray-200 flex justify-center ">
+                                        <i className="fa-lg fa-solid fa-database pt-3"></i>
+                                </span>
+                                    <span className="text-xs font-medium px-1">SQL запрос</span>
+                                </button>
+                            </div>
                         </div>
-                        <div className="p-1 hover:bg-gray-200">
-                            <button onClick={addReportSummaryBand} className="flex-col justify-center justify-items-center">
-                                <img src="/icons/ReportSummary.png" className="icon-band" alt="Report Summary"/>
-                                <span className="text-xs font-medium">Подвал отчета</span>
-                            </button>
-                        </div>
-                        <div className="p-1 hover:bg-gray-200">
-                            <button onClick={addPageFooterBand} className="flex-col justify-center justify-items-center">
-                                <img src="/icons/PageFooter.png" className="icon-band" alt="Page footer"/>
-                                <span className="text-xs font-medium">Подвал страницы</span>
-                            </button>
-                        </div>
-                        <div className="p-1 hover:bg-gray-200 flex-col justify-center justify-items-center">
-                            <img src="/icons/DataBand.png" className="icon-band" alt="Data band"/>
-                            <Dropdown options={options} onSelect={handleSelect}/>
+                        <div className="flex flex-row gap-x-2 pr-2">
                         </div>
 
 
@@ -1825,11 +1893,26 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                                 onAgreement={saveReport}/>
                 }
 
-                {isModalNotify && <ModalNotify title={"Результат операции"} message={modalMsg} onClose={showModalNotif}/>}
+                {isModalNotify &&
+                    <ModalNotify title={"Результат операции"} message={modalMsg} onClose={showModalNotif}/>}
 
                 {isModalDownloadReport &&
-                    <ModalSelect title={"Загрузка отчета с сервера"} message={"modalMsg"} onClose={showModalDownloadReport}
+                    <ModalSelect title={"Загрузка отчета с сервера"} message={"modalMsg"}
+                                 onClose={showModalDownloadReport}
                                  onAgreement={downloadReport} options={optReportsName}/>
+                }
+
+                {isModalSettingDB &&
+                    <ModalSettingDB url={settingDB.url} username={settingDB.username}
+                                    password={settingDB.password} driverClassName={settingDB.driverClassName}
+                                    onChangeField={handleChangeSettingDB}
+                                    onClose={showModalSettingDB}/>
+                }
+
+                {isModalSQL &&
+                    <ModalSQL value={sql} isValid={isValidSql}
+                              onChange={(e) => setSql(e.target.value)}
+                              onClose={showModalSQL}/>
                 }
 
 

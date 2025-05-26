@@ -10,8 +10,9 @@ export default class ReportService {
         return $api.get(`${API_URL}/api/report/` + reportName)
     }
 
-    static async createReportTemplate(reportName, content, styles) {
-        return $api.post(`${API_URL}/api/report/create`, {reportName, content, styles})
+    static async createReportTemplate(reportName, dbUrl, dbUsername, dbPassword, dbDriver, sql, content, styles) {
+        return $api.post(`${API_URL}/api/report/create`, {reportName, dbUrl, dbUsername,
+            dbPassword, dbDriver, sql, content, styles})
     }
 
     static async getReportsName() {
@@ -20,7 +21,7 @@ export default class ReportService {
 
 
     static async getDataForReport(dataName) {
-        return $api.get(`${API_URL}/api/report/` + dataName)
+        return $api.get(`${API_URL}/api/report/data/` + dataName)
     }
 
 

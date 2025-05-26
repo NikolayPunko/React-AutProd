@@ -1,7 +1,7 @@
 import {Navigation} from "../components/Navigation";
 import {LeftNavigation} from "../components/leftNavigation/LeftNavigation";
 import ReportEditor from "../components/reportsConstruct/ReportEditor";
-import {useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import ReportService from "../services/ReportService";
 import Loading from "../components/loading/Loading";
 
@@ -19,6 +19,8 @@ function ReportsPage() {
     const [reportTemplate, setReportTemplate] = useState(null);
 
     const [reportData, setReportData] = useState(null);
+
+    const [reportsName, setReportsName] = useState([]);
 
     const templateData = [
         {
@@ -45,13 +47,13 @@ function ReportsPage() {
         }
     ]
 
-    async function fetchReportTemplate() {
+    async function fetchReportTemplate(reportName) {
         try {
             // const ID = Number(params.id);
 
             // setError('');
 
-            const response = await ReportService.getReportTemplateByReportName("LuMoveDay");
+            const response = await ReportService.getReportTemplateByReportName(reportName);
             setReportTemplate(response.data);
 
             // console.log(response.data)
@@ -63,18 +65,16 @@ function ReportsPage() {
         }
     }
 
-    async function fetchReportData() {
+    async function fetchReportData(reportName) {
         try {
             // const ID = Number(params.id);
 
             // setError('');
 
-            const response = await ReportService.getDataForReport("lumoveday");
+            const response = await ReportService.getDataForReport(reportName);
 
 
-            dataTest.tableData[0].data = response.data;
-
-            setReportData(dataTest);
+            setReportData(response.data);
 
             // console.log(response.data)
 
@@ -84,6 +84,25 @@ function ReportsPage() {
             // setError(error.message)
         }
     }
+
+    async function fetchReportsName() {
+        try {
+            const response = await ReportService.getReportsName();
+
+            setReportsName(response.data);
+
+        } catch (e) {
+            const error = e;
+        }
+    }
+
+    useEffect(() => {
+        fetchReportsName();
+    }, []);
+
+    useEffect(() => {
+        console.log(reportsName)
+    }, [reportsName]);
 
     let dataTest = {
         globalVar: [
@@ -137,10 +156,10 @@ function ReportsPage() {
 
     }, [reportTemplate, reportData]);
 
-    async function handleReportClick(i) {
+    async function handleReportClick(reportName) {
         setIsLoading(true)
-        await fetchReportTemplate();
-        await fetchReportData();
+        await fetchReportTemplate(reportName);
+        await fetchReportData(reportName);
 
         setIsShowReport(true)
 
@@ -176,14 +195,14 @@ function ReportsPage() {
                                         className="my-1 mx-3 px-2 text-left rounded text-blue-800  hover:bg-blue-50">За
                                     текущие сутки
                                 </button>
-                                <button
-                                    className="my-1 mx-3 px-2 text-left rounded text-blue-800  hover:bg-blue-50 disabled:bg-gray-100"
-                                    disabled={true}>С выбором даты
-                                </button>
-                                <button
-                                    className="my-1 mx-3 px-2 text-left rounded text-blue-800  hover:bg-blue-50 disabled:bg-gray-100"
-                                    disabled={true}>С расширенными настройками
-                                </button>
+
+
+                                {reportsName.map((option, index) => (
+                                    <button key={index} onClick={() => handleReportClick(option)}
+                                            className="my-1 mx-3 px-2 text-left rounded text-blue-800  hover:bg-blue-50">
+                                        {option}
+                                    </button>
+                                ))}
                             </div>
 
 

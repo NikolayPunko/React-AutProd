@@ -16,14 +16,14 @@ const Dropdown = ({ options, onSelect }) => {
 
     return (
         <div className="dropdown">
-            <button onClick={toggleDropdown} className="text-xs font-medium">
-                Источник данных
+            <button onClick={toggleDropdown} className="text-xs font-medium w-24">
+                Бэнды
             </button>
             {isOpen && (
                 <div className="dropdown-menu text-xs font-medium">
                     {options.map((option, index) => (
                         <div key={index} className="dropdown-item" onClick={() => handleSelect(option)}>
-                            {option.name}
+                            {option}
                         </div>
                     ))}
                 </div>

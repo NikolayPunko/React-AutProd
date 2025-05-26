@@ -66,3 +66,8 @@
     max-height: 20px;
 }
 
+.gjs-pn-btn[title="Preview"],
+.gjs-pn-btn[title="Import"] {
+    display: none;
+}
+
