@@ -1,14 +1,7 @@
 import React, {useState} from 'react'
 import {styleInput, styleLabelInput} from "../../data/styles";
 
-export function ModalInput({title, message, onClose, onAgreement}) {
-
-    const [inputValue, setInputValue] = useState("");
-
-
-    const handleChangeInput = (e) => {
-        setInputValue(e.target.value);
-    };
+export function ModalInput({title, message, onClose, onAgreement, name, onChangeName, category, onChangeCategory }) {
 
     return (
         <>
@@ -21,12 +14,20 @@ export function ModalInput({title, message, onClose, onAgreement}) {
             >
                 <h1 className="text-2xl font-medium text-start mb-6">{title}</h1>
                 <div className="flex flex-col">
+                    <div className="flex flex-col mb-2">
+                        <span className={styleLabelInput}>Категория отчета</span>
+                        <input
+                            className={styleInput}
+                            value={category}
+                            onChange={onChangeCategory}
+                        />
+                    </div>
                     <div className="flex flex-col">
                         <span className={styleLabelInput}>Уникальное имя отчета</span>
                         <input
                             className={styleInput}
-                            onChange={handleChangeInput}
-                            value={inputValue}
+                            value={name}
+                            onChange={onChangeName}
                         />
                     </div>
                     <div className="flex flex-row justify-end mt-4">
@@ -35,7 +36,9 @@ export function ModalInput({title, message, onClose, onAgreement}) {
                                     className="min-w-[50px] px-2 mx-2 h-7 rounded text-xs font-medium shadow-sm border border-slate-400 hover:bg-gray-200">
                                 Отмена
                             </button>
-                            <button onClick={() => {onAgreement(inputValue)}}
+                            <button onClick={() => {
+                                onAgreement(name, category)
+                            }}
                                     className="min-w-[50px] text-xs h-7 font-medium px-2 py-1 rounded text-white bg-blue-800 hover:bg-blue-700">
                                 Сохранить
                             </button>

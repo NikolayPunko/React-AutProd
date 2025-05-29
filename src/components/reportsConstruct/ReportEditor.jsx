@@ -29,12 +29,18 @@ import {ModalSelect} from "../modal/ModalSelect";
 import {ModalSettingDB} from "./ModalSettingDB";
 import {ModalSQL} from "./ModalSQL";
 import {Parser} from "node-sql-parser";
+import Loading from "../loading/Loading";
+import {decryptData, encryptData} from "../../utils/Сrypto";
 
 
 // Добавляем шрифт Roboto в виртуальную файловую систему pdfmake
 // pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseReport}, ref) => {
+
+        const [isLoading, setIsLoading] = useState(true);
+        const [error, setError] = useState(null);
+
         const [zoom, setZoom] = useState(100);
         const [editorView, setEditorView] = useState(null);
 
@@ -53,6 +59,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
         const [isModalSaveReport, setIsModalSaveReport] = useState(false);
         const [isModalNotify, setIsModalNotif] = useState(false);
+        const [isModalError, setIsModalError] = useState(false);
         const [isModalDownloadReport, setIsModalDownloadReport] = useState(false);
         const [isModalSettingDB, setIsModalSettingDB] = useState(false);
         const [isModalSQL, setIsModalSQL] = useState(false);
@@ -60,13 +67,15 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
         const [optReportsName, setOptReportsName] = useState([]);
 
+        const [reportName, setReportName] = useState("");
+        const [reportCategory, setReportCategory] = useState("");
         const [settingDB, setSettingDB] = useState({
-            url: 'https://example.com',
+            url: '',
             username: '',
             password: '',
             driverClassName: '',
         });
-        const [sql, setSql] = useState("sql");
+        const [sql, setSql] = useState("");
         const [isValidSql, setIsValidSql] = useState(true);
 
         let usedBands = {
@@ -582,6 +591,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 setIsPreviewMode(false)
             }
 
+            setIsLoading(false);
+            console.log("useEffect")
         }, []);
 
 
@@ -595,7 +606,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         }, [pages, currentPage]);
 
         useEffect(() => {
-
+            console.log("useEffect - editorView")
         }, [editorView])
 
         // Определяем методы, которые будут доступны родителю
@@ -1128,14 +1139,14 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                  <p class="data-band-field" style="position: absolute; margin-top: 110px">Band</p>
               </div>
       `,
-                        script: function () {
-                            this.querySelector('.data-band-field').addEventListener('click', function () {
-                                alert('Будущее окно выбора поля из БД');
-                            });
-                            this.querySelector('.data-band-table').addEventListener('click', function () {
-                                alert('Будущее окно выбора таблицы из БД');
-                            });
-                        },
+                        // script: function () {
+                        //     this.querySelector('.data-band-field').addEventListener('click', function () {
+                        //         alert('Будущее окно выбора поля из БД');
+                        //     });
+                        //     this.querySelector('.data-band-table').addEventListener('click', function () {
+                        //         alert('Будущее окно выбора таблицы из БД');
+                        //     });
+                        // },
                     },
                 },
             });
@@ -1312,8 +1323,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 const bandId = band.getAttribute('id');
 
                 dataArray.forEach(item => {
-                    console.log(bandId)
-                    console.log(item.tableName)
                     if (bandId.toLowerCase().startsWith(item.tableName.toLowerCase())) {
                         console.log("sdf")
                         item.data.forEach(tableData => {
@@ -1349,6 +1358,19 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             return doc.body.innerHTML;
         }
 
+        async function fetchReportData(reportName, dbUrl, dbUsername, dbPassword, dbDriver, sql, content, styles) {
+            try {
+                setIsLoading(true);
+                const response = await ReportService.getDataForReport(reportName, dbUrl, dbUsername, encryptData(dbPassword), dbDriver, sql, content, styles);
+                return response.data;
+            } catch (e) {
+                setError(e.response.data.message)
+                setIsModalError(true);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
 
         function exitPreviewMode() {
             setIsPreviewMode(!isPreviewMode);
@@ -1363,10 +1385,16 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             editorView.getWrapper().view.$el.css('pointer-events', '');
         }
 
-        function enterPreviewMode() {
+        async function enterPreviewMode() {
             // switchPage(1)
             setIsPreviewMode(!isPreviewMode);
-            render(dataReportTest, editorView.getHtml(), editorView.getCss());
+            const data = await fetchReportData("", settingDB.url, settingDB.username, settingDB.password, settingDB.driverClassName, sql, "", "")
+            if (!data) {
+                setIsPreviewMode(false);
+                return
+            }
+
+            render(data, editorView.getHtml(), editorView.getCss());
             document.querySelector('.gjs-pn-panels').style.display = 'none';
             document.querySelector('.gjs-pn-views-container').style.display = 'none';
             editorView.getWrapper().view.$el.css('pointer-events', 'none');
@@ -1375,7 +1403,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         function enterViewMode(data, html, css) {
 // console.log(html)
 // console.log(css)
-            setIsPreviewMode(!isPreviewMode);
+            setIsPreviewMode(true);
             render(data, html, css);
             document.querySelector('.gjs-pn-panels').style.display = 'none';
             document.querySelector('.gjs-pn-views-container').style.display = 'none';
@@ -1388,16 +1416,12 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             defineBands(html);
             setOldPage([{id: 1, content: html, styles: css}])
 
-            // console.log(css)
-
-
             css = transformIDs(css);
             setTimeout(() => {
                 // editorView.setComponents(renderedHtml);
                 editorView.setStyle(css);
             }, 100); // Небольшая задержка для обновления состояния
 
-            // console.log(css);
             let renderedHtml = renderDataBand(html, data.tableData, css);
 
         }
@@ -1482,6 +1506,12 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         function splitIntoA4Pages(htmlString, css, bands) {
             return new Promise((resolve) => {
 
+                const pagesBuf = [
+                    {id: 1, content: "", styles: ""}
+                ];
+                setPages(pagesBuf);
+                setCurrentPage(1);
+
                 const tempContainer = createTempContainer();
                 tempContainer.style.position = "absolute";
                 tempContainer.style.left = "-9999px";
@@ -1516,9 +1546,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 const childNodes = Array.from(tempContainer.querySelector('#body-container').childNodes);
 
 
-                const pagesBuf = [
-                    {id: 1, content: "", styles: ""}
-                ];
+
 
 
                 const tempDiv = createTempContainer();
@@ -1630,8 +1658,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             saveCurrentPage(editorView).then(async (updatedPages) => {
                 try {
-                    await ReportService.createReportTemplate(reportName,
-                        settingDB.url, settingDB.username, settingDB.password, settingDB.driverClassName, sql,
+                    await ReportService.createReportTemplate(reportName, reportCategory,
+                        settingDB.url, settingDB.username, encryptData(settingDB.password), settingDB.driverClassName, sql,
                         updatedPages[0].content, updatedPages[0].styles);
                     setModalMsg("Документ успешно отправлен!");
 
@@ -1648,15 +1676,17 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 const response = await ReportService.getReportTemplateByReportName(reportName);
                 editorView.setComponents(response.data.content);
                 editorView.setStyle(response.data.styles);
+                setReportName(response.data.reportName);
+                setReportCategory(response.data.reportCategory)
                 setSettingDB({
                     url: response.data.dbUrl,
                     username: response.data.dbUsername,
-                    password: response.data.dbPassword,
+                    password: decryptData(response.data.dbPassword),
                     driverClassName: response.data.dbDriver
                 });
                 setSql(response.data.sql);
             } catch (error) {
-                setModalMsg("Ошибка сохранения отчета на сервер! Попробуйте еще раз.")
+                setModalMsg("Ошибка загрузки отчета с сервера! Попробуйте еще раз.")
                 showModalNotif();
             } finally {
                 showModalDownloadReport();
@@ -1683,7 +1713,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         };
 
         const extractTablesAndCheckSQL = () => {
-            console.log(tablesOpt)
+            // console.log(tablesOpt)
             const tableRegex = /(?:FROM|JOIN|UPDATE|INTO)\s+([\w.]+)(?:\s|$|;|\))/gi;
             const foundTables = new Set();
 
@@ -1719,90 +1749,92 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
         return (
             <div>
+                {isLoading && <Loading/>}
 
-                <div className=" gjs-two-color gjs-one-bg flex flex-row justify-between py-1 gjs-pn-commands">
-                    <div className="flex justify-start text-center ml-2 w-1/3">
-                        {!isPreviewMode &&
-                            <>
-                                <span className="gjs-pn-btn font-medium">Конструктор отчетов</span>
-                                <span className="gjs-pn-btn">
+                {!isLoading &&
+                    <div className=" gjs-two-color gjs-one-bg flex flex-row justify-between py-1 gjs-pn-commands">
+                        <div className="flex justify-start text-center ml-2 w-1/3">
+                            {!isPreviewMode &&
+                                <>
+                                    <span className="gjs-pn-btn font-medium">Конструктор отчетов</span>
+                                    <span className="gjs-pn-btn">
                             <i className="fa-solid fa-pencil"></i>
                             </span>
-                            </>
-                        }
-                        {isPreviewMode &&
-                            <>
-                                <span className="gjs-pn-btn font-medium">Просмотр отчетов</span>
-                                <span className="gjs-pn-btn">
+                                </>
+                            }
+                            {isPreviewMode &&
+                                <>
+                                    <span className="gjs-pn-btn font-medium">Просмотр отчетов</span>
+                                    <span className="gjs-pn-btn">
                            <i className="fa-solid fa-eye"></i>
                             </span>
-                            </>
-                        }
+                                </>
+                            }
 
-                        {!isPreviewMode && !previewMode && <button onClick={enterPreviewMode}>Просмотр</button>}
-                        {isPreviewMode && !previewMode && <button onClick={exitPreviewMode}>Конструктор</button>}
+                            {!isPreviewMode && !previewMode && <button onClick={enterPreviewMode}>Просмотр</button>}
+                            {isPreviewMode && !previewMode && <button onClick={exitPreviewMode}>Конструктор</button>}
 
-                        {previewMode && <button onClick={onCloseReport}>Закрыть отчет</button>}
-                    </div>
+                            {previewMode && <button onClick={onCloseReport}>Закрыть отчет</button>}
+                        </div>
 
-                    {isPreviewMode && <div className="flex justify-start text-center w-1/3">
+                        {isPreviewMode && <div className="flex justify-start text-center w-1/3">
                     <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => switchPage(currentPage - 1)}
                           title="Пред. страница">
                         <i className="fa-solid fa-angle-left"></i>
                         </span>
-                        <span className="gjs-pn-btn">
+                            <span className="gjs-pn-btn">
                        {currentPage} / {pages.length}
                         </span>
-                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => switchPage(currentPage + 1)}
-                              title="След. страница">
+                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => switchPage(currentPage + 1)}
+                                  title="След. страница">
                         <i className="fa-solid fa-angle-right"></i>
                         </span>
-                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => exportPDF(editorView)}
-                              title="Экспорт PDF">
+                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => exportPDF(editorView)}
+                                  title="Экспорт PDF">
                         <i className="fa fa-file-pdf"></i>
                         </span>
-                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => exportHtml(editorView)}
-                              title="Экспорт HTML">
+                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => exportHtml(editorView)}
+                                  title="Экспорт HTML">
                         <i className="fa fa-code"></i>
                         </span>
-                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={printAllPages} title="Печать">
+                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={printAllPages} title="Печать">
                         <i className="fa fa-print"></i>
                         </span>
-                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => changeZoom(-10)}
-                              title="Уменьшить масштаб">
+                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => changeZoom(-10)}
+                                  title="Уменьшить масштаб">
                             <i className="fa fa-magnifying-glass-minus"></i>
                         </span>
-                        <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => changeZoom(10)}
-                              title="Увеличить масштаб">
+                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => changeZoom(10)}
+                                  title="Увеличить масштаб">
                         <i className="fa fa-magnifying-glass-plus"></i>
                     </span>
-                    </div>}
+                        </div>}
 
-                    <div className="flex justify-end text-center mr-2 w-1/3">
+                        <div className="flex justify-end text-center mr-2 w-1/3">
 
-                        {!isPreviewMode &&
-                            <>
+                            {!isPreviewMode &&
+                                <>
                             <span className="gjs-pn-btn hover:bg-gray-200" onClick={exportJSON}
                                   title="Экспорт шаблона JSON">
                             <i className="fa fa-file-export"></i></span>
-                                <span className="gjs-pn-btn hover:bg-gray-200" onClick={importJSON}
-                                      title="Импорт шаблона JSON">
+                                    <span className="gjs-pn-btn hover:bg-gray-200" onClick={importJSON}
+                                          title="Импорт шаблона JSON">
                             <i className="fa fa-upload"></i></span>
 
-                                <span className="gjs-pn-btn hover:bg-gray-200" onClick={showModalSaveReport}
-                                      title="Сохранить шаблон на сервер">
+                                    <span className="gjs-pn-btn hover:bg-gray-200" onClick={showModalSaveReport}
+                                          title="Сохранить шаблон на сервер">
                             <i className="fa-solid fa-sd-card"></i></span>
-                                <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => {
-                                    downloadReportsName();
-                                }}
-                                      title="Загрузить шаблон с сервера">
+                                    <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => {
+                                        downloadReportsName();
+                                    }}
+                                          title="Загрузить шаблон с сервера">
                            <i className="fa-solid fa-cloud-arrow-down"></i></span>
-                            </>
-                        }
+                                </>
+                            }
 
-                    </div>
+                        </div>
 
-                </div>
+                    </div>}
                 {/*<div className=" gjs-two-color gjs-one-bg flex flex-row justify-start py-1 gjs-pn-commands gap-x-2">*/}
                 {/*    <button onClick={() => {*/}
                 {/*        addDataBand(tables[0])*/}
@@ -1890,11 +1922,16 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
                 {isModalSaveReport &&
                     <ModalInput title={"Сохранение отчета на сервер"} message={"modalMsg"} onClose={showModalSaveReport}
-                                onAgreement={saveReport}/>
+                                onAgreement={saveReport} name={reportName} onChangeName={(e) => setReportName(e.target.value)}
+                                category={reportCategory} onChangeCategory={(e)=>setReportCategory(e.target.value)}
+                    />
                 }
 
                 {isModalNotify &&
                     <ModalNotify title={"Результат операции"} message={modalMsg} onClose={showModalNotif}/>}
+
+                {isModalError &&
+                    <ModalNotify title={"Ошибка"} message={error} onClose={() => setIsModalError(false)}/>}
 
                 {isModalDownloadReport &&
                     <ModalSelect title={"Загрузка отчета с сервера"} message={"modalMsg"}

@@ -21,7 +21,7 @@ export function ModalSQL({ value, isValid, onChange, onClose }) {
                     <div className="flex flex-col ">
                         <span className={styleLabelInput}>SQL</span>
                         <textarea
-                            className={styleInput + " min-h-[200px]"}
+                            className={styleInput + " min-h-[200px] text-orange-700 font-medium"}
                             value={value}
                             onChange={onChange}
                         />
