@@ -1358,10 +1358,10 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             return doc.body.innerHTML;
         }
 
-        async function fetchReportData(reportName, dbUrl, dbUsername, dbPassword, dbDriver, sql, content, styles) {
+        async function fetchReportData(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, content, styles) {
             try {
                 setIsLoading(true);
-                const response = await ReportService.getDataForReport(reportName, dbUrl, dbUsername, encryptData(dbPassword), dbDriver, sql, content, styles);
+                const response = await ReportService.getDataForReport(reportName, reportCategory, dbUrl, dbUsername, encryptData(dbPassword), dbDriver, sql, content, styles);
                 return response.data;
             } catch (e) {
                 setError(e.response.data.message)
@@ -1388,7 +1388,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         async function enterPreviewMode() {
             // switchPage(1)
             setIsPreviewMode(!isPreviewMode);
-            const data = await fetchReportData("", settingDB.url, settingDB.username, settingDB.password, settingDB.driverClassName, sql, "", "")
+            const data = await fetchReportData("","", settingDB.url, settingDB.username, settingDB.password, settingDB.driverClassName, sql, "", "")
             if (!data) {
                 setIsPreviewMode(false);
                 return
