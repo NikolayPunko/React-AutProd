@@ -9,9 +9,13 @@ export default class ReportService {
         return $api.get(`${API_URL}/api/report/` + reportName)
     }
 
-    static async createReportTemplate(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, content, styles) {
+    static async getParametersMetaByReportName(reportName) {
+        return $api.get(`${API_URL}/api/report/` + reportName + `/parameters`)
+    }
+
+    static async createReportTemplate(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, parametersMeta, content, styles) {
         return $api.post(`${API_URL}/api/report/create`, {reportName, reportCategory, dbUrl, dbUsername,
-            dbPassword, dbDriver, sql, content, styles})
+            dbPassword, dbDriver, sql, parameters: JSON.stringify(parametersMeta), content, styles})
     }
 
     static async getReportsName() {
@@ -22,13 +26,30 @@ export default class ReportService {
         return $api.get(`${API_URL}/api/report/categories`)
     }
 
-    static async getDataByReportName(reportName) {
-        return $api.get(`${API_URL}/api/report/data/` + reportName)
+    static async getDataByReportName(reportName, parameters) {
+        return $api.post(`${API_URL}/api/report/data/` + reportName, {parameters})
     }
 
-    static async getDataForReport(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, content, styles) {
+    static async getDataForReport(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, content, styles, parameters) {
+        return $api.post(`${API_URL}/api/report/data`,  {
+            reportTemplateDTO: {
+                reportName,
+                reportCategory,
+                dbUrl,
+                dbUsername,
+                dbPassword,
+                dbDriver,
+                sql,
+                content,
+                styles
+            },
+            parameters: parameters
+        });
+    }
+
+    static async getDataForReport2(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, parameters, content, styles) {
         return $api.post(`${API_URL}/api/report/data`, {reportName, reportCategory, dbUrl, dbUsername,
-            dbPassword, dbDriver, sql, content, styles})
+            dbPassword, dbDriver, sql, parameters, content, styles})
     }
 
 

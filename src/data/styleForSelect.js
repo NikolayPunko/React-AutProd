@@ -1,4 +1,4 @@
-const targetHeight = 29;
+const targetHeight = 28;
 
 export const CustomStyle = {
     option: (base, state) => ({
@@ -33,8 +33,8 @@ export const CustomStyle = {
     }),
     noOptionsMessage: (base, state) => ({
         ...base,
-        height: "25px",
-        lineHeight: '10px',
+        height: "20px",
+        lineHeight: '12px',
         fontSize: '12px',
     }),
     loadingMessage: (base, state) => ({

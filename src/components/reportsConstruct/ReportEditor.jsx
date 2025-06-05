@@ -31,6 +31,7 @@ import {ModalSQL} from "./ModalSQL";
 import {Parser} from "node-sql-parser";
 import Loading from "../loading/Loading";
 import {decryptData, encryptData} from "../../utils/Сrypto";
+import {ModalParameter} from "./ModalParameter";
 
 
 // Добавляем шрифт Roboto в виртуальную файловую систему pdfmake
@@ -57,6 +58,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         const [isPreviewMode, setIsPreviewMode] = useState(false);
 
 
+        const [isModalParameter, setIsModalParameter] = useState(false);
         const [isModalSaveReport, setIsModalSaveReport] = useState(false);
         const [isModalNotify, setIsModalNotif] = useState(false);
         const [isModalError, setIsModalError] = useState(false);
@@ -69,6 +71,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
         const [reportName, setReportName] = useState("");
         const [reportCategory, setReportCategory] = useState("");
+        const [parameters, setParameters] = useState([]);
         const [settingDB, setSettingDB] = useState({
             url: '',
             username: '',
@@ -77,6 +80,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         });
         const [sql, setSql] = useState("");
         const [isValidSql, setIsValidSql] = useState(true);
+
+        const [parametersMeta, setParametersMeta] = useState([]);
 
         let usedBands = {
             reportTitle: false,
@@ -592,7 +597,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             }
 
             setIsLoading(false);
-            console.log("useEffect")
         }, []);
 
 
@@ -608,6 +612,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         useEffect(() => {
             console.log("useEffect - editorView")
         }, [editorView])
+
+
 
         // Определяем методы, которые будут доступны родителю
         useImperativeHandle(ref, () => ({
@@ -896,7 +902,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             XLSX.writeFile(wb, "report.xlsx");
         };
 
-        const printAllPages = () => {
+        const printAllPages2 = () => {
 
             saveCurrentPage(editorView).then((updatedPages) => {
 
@@ -988,6 +994,107 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             });
 
+        };
+
+        const printAllPages = async () => {
+            // 1. Создаем отдельное окно вместо iframe (лучше для больших документов)
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            if (!printWindow) {
+                alert('Пожалуйста, разрешите всплывающие окна для печати');
+                return;
+            }
+
+            try {
+                // 2. Получаем данные страниц
+                const updatedPages = await saveCurrentPage(editorView);
+                if (!updatedPages.length) {
+                    printWindow.close();
+                    return;
+                }
+
+                // 3. Создаем базовую структуру документа
+                printWindow.document.open();
+                printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Печать</title>
+        <style>
+          @page {
+            size: A4;
+            margin: 0;
+          }
+          body {
+            margin: 0;
+            padding: 0;
+            width: 210mm;
+            overflow-x: hidden;
+          }
+          .print-page {
+            width: 210mm;
+            height: 297mm;
+            page-break-after: always;
+            position: relative;
+            overflow: hidden;
+          }
+          .print-page:last-child {
+            page-break-after: auto;
+          }
+        </style>
+      </head>
+      <body>
+    `);
+
+                // 4. Используем DocumentFragment для пакетной вставки
+                const fragment = printWindow.document.createDocumentFragment();
+                const container = printWindow.document.createElement('div');
+                fragment.appendChild(container);
+
+                // 5. Создаем страницы с использованием createElement (быстрее чем innerHTML)
+                for (let i = 0; i < updatedPages.length; i++) {
+                    const page = updatedPages[i];
+                    const pageDiv = printWindow.document.createElement('div');
+                    pageDiv.className = 'print-page';
+
+                    if (page.styles) {
+                        pageDiv.setAttribute('style', page.styles);
+                    }
+
+                    // Используем innerHTML только для контента страницы
+                    pageDiv.innerHTML = page.content;
+                    container.appendChild(pageDiv);
+
+                    // Даем браузеру "передохнуть" каждые 10 страниц
+                    if (i % 10 === 0) {
+                        await new Promise(resolve => setTimeout(resolve, 0));
+                    }
+                }
+
+                // 6. Вставляем все страницы одним действием
+                printWindow.document.body.appendChild(fragment);
+                printWindow.document.write('</body></html>');
+                printWindow.document.close();
+
+                // 7. Оптимизированная печать с задержкой для рендеринга
+                setTimeout(() => {
+                    const originalTitle = document.title;
+                    document.title = "Report";
+
+                    printWindow.focus();
+                    printWindow.print();
+
+                    // Восстановление состояния после печати
+                    setTimeout(() => {
+                        document.title = originalTitle;
+                        printWindow.close();
+                    }, 1000);
+                }, 500);
+
+            } catch (error) {
+                console.error('Print error:', error);
+                if (printWindow) printWindow.close();
+            }
         };
 
 
@@ -1132,11 +1239,11 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                    pointer-events: none;
               ">DataBand: ${tableName}</div>
               
-              <div data-band="true" id="${tableName}" style="height: 200px; width: 794px; background: #ffffff; position: relative; border: 0px dashed #f4f4f4; padding: 30px 10px 10px 10px; overflow: visible;">
-                 <h2 style="position: absolute; margin-top: 10px">Record</h2>
-                 <p class="data-band-field" style="position: absolute; margin-top: 50px">Select field: {{name}}</p>
-                 <p class="data-band-field" style="position: absolute; margin-top: 80px">Age: {{age}}</p>
-                 <p class="data-band-field" style="position: absolute; margin-top: 110px">Band</p>
+              <div data-band="true" id="${tableName}" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
+                 <h2 style="position: absolute; top: 20px; left: 20px; margin: 0px">Начни создание отчета</h2>
+                 <p class="data-band-field" style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажи поле из запроса в двойных скобках: {{field_1}}</p>
+                 <p class="data-band-field" style="position: absolute; top: 60px; left: 500px; margin: 0px">Повтори действие: {{field_2}}</p>
+              
               </div>
       `,
                         // script: function () {
@@ -1358,16 +1465,20 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             return doc.body.innerHTML;
         }
 
-        async function fetchReportData(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, content, styles) {
+        async function fetchReportData(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, content, styles, parameters) {
             try {
                 setIsLoading(true);
-                const response = await ReportService.getDataForReport(reportName, reportCategory, dbUrl, dbUsername, encryptData(dbPassword), dbDriver, sql, content, styles);
+                const response = await ReportService.getDataForReport(reportName, reportCategory, dbUrl, dbUsername,
+                    encryptData(dbPassword), dbDriver, sql, content, styles, parameters);
                 return response.data;
             } catch (e) {
                 setError(e.response.data.message)
                 setIsModalError(true);
             } finally {
-                setIsLoading(false);
+                setTimeout(() => {
+                    setIsLoading(false);
+                }, 500);
+
             }
         }
 
@@ -1385,10 +1496,22 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             editorView.getWrapper().view.$el.css('pointer-events', '');
         }
 
-        async function enterPreviewMode() {
+        async function clickEnterPreviewMode(parameters) {
+            // setIsModalParameter(false);
+            // setIsLoading(true);
+            // await fetchReportTemplate(selectName);
+            // console.log(parameters)
+            // await fetchReportData(selectName, parameters);
+
+            setIsModalParameter(true);
+        }
+
+        async function enterPreviewMode(parameters) {
+            setIsModalParameter(false);
             // switchPage(1)
             setIsPreviewMode(!isPreviewMode);
-            const data = await fetchReportData("","", settingDB.url, settingDB.username, settingDB.password, settingDB.driverClassName, sql, "", "")
+            const data = await fetchReportData("", "", settingDB.url, settingDB.username,
+                settingDB.password, settingDB.driverClassName, sql, "", "", parameters)
             if (!data) {
                 setIsPreviewMode(false);
                 return
@@ -1399,6 +1522,21 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             document.querySelector('.gjs-pn-views-container').style.display = 'none';
             editorView.getWrapper().view.$el.css('pointer-events', 'none');
         }
+
+        // async function enterPreviewMode() {
+        //     // switchPage(1)
+        //     setIsPreviewMode(!isPreviewMode);
+        //     const data = await fetchReportData("","", settingDB.url, settingDB.username, settingDB.password, settingDB.driverClassName, sql, "", "")
+        //     if (!data) {
+        //         setIsPreviewMode(false);
+        //         return
+        //     }
+        //
+        //     render(data, editorView.getHtml(), editorView.getCss());
+        //     document.querySelector('.gjs-pn-panels').style.display = 'none';
+        //     document.querySelector('.gjs-pn-views-container').style.display = 'none';
+        //     editorView.getWrapper().view.$el.css('pointer-events', 'none');
+        // }
 
         function enterViewMode(data, html, css) {
 // console.log(html)
@@ -1546,9 +1684,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 const childNodes = Array.from(tempContainer.querySelector('#body-container').childNodes);
 
 
-
-
-
                 const tempDiv = createTempContainer();
 
 
@@ -1660,6 +1795,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 try {
                     await ReportService.createReportTemplate(reportName, reportCategory,
                         settingDB.url, settingDB.username, encryptData(settingDB.password), settingDB.driverClassName, sql,
+                        parameters,
                         updatedPages[0].content, updatedPages[0].styles);
                     setModalMsg("Документ успешно отправлен!");
 
@@ -1685,6 +1821,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                     driverClassName: response.data.dbDriver
                 });
                 setSql(response.data.sql);
+                setParameters(JSON.parse(response.data.parameters));
             } catch (error) {
                 setModalMsg("Ошибка загрузки отчета с сервера! Попробуйте еще раз.")
                 showModalNotif();
@@ -1705,7 +1842,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         }
 
         const handleChangeSettingDB = (field, value) => {
-            console.log(`field changed: ${field} = ${value}`);
             setSettingDB((prev) => ({
                 ...prev,
                 [field]: value,
@@ -1771,7 +1907,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                                 </>
                             }
 
-                            {!isPreviewMode && !previewMode && <button onClick={enterPreviewMode}>Просмотр</button>}
+                            {!isPreviewMode && !previewMode && <button onClick={clickEnterPreviewMode}>Просмотр</button>}
                             {isPreviewMode && !previewMode && <button onClick={exitPreviewMode}>Конструктор</button>}
 
                             {previewMode && <button onClick={onCloseReport}>Закрыть отчет</button>}
@@ -1922,8 +2058,9 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
                 {isModalSaveReport &&
                     <ModalInput title={"Сохранение отчета на сервер"} message={"modalMsg"} onClose={showModalSaveReport}
-                                onAgreement={saveReport} name={reportName} onChangeName={(e) => setReportName(e.target.value)}
-                                category={reportCategory} onChangeCategory={(e)=>setReportCategory(e.target.value)}
+                                onAgreement={saveReport} name={reportName}
+                                onChangeName={(e) => setReportName(e.target.value)}
+                                category={reportCategory} onChangeCategory={(e) => setReportCategory(e.target.value)}
                     />
                 }
 
@@ -1947,10 +2084,17 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 }
 
                 {isModalSQL &&
-                    <ModalSQL value={sql} isValid={isValidSql}
+                    <ModalSQL value={sql} isValid={isValidSql} parameters={parameters} setParameters={setParameters}
                               onChange={(e) => setSql(e.target.value)}
                               onClose={showModalSQL}/>
                 }
+
+                {isModalParameter && <ModalParameter parameters={parameters || []}
+                                                     onSubmit={enterPreviewMode}
+                                                     onClose={() => {
+                                                         setIsModalParameter(false)
+                                                     }}
+                />}
 
 
             </div>
