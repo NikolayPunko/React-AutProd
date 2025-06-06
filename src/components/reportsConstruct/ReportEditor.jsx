@@ -342,92 +342,139 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             });
 
 
+            //событие при перетаскивании с панели компонентов
+            editor.on('block:drag:stop', (block) => {
+                setTimeout(() => {
+                    moveComponentToTarget(block, true);
+                }, 0);
+            });
+
+            //событие при перетаскивании компонентов
             editor.on('component:drag:end', model => {
-
-
                 const el = model.target.view?.el;
                 const ready = el instanceof Element && typeof el.getBoundingClientRect === 'function';
 
                 if (ready) {
-                    moveComponentToTarget(model);
+                    moveComponentToTarget(model, false);
                 } else {
-                    // Ждём пока DOM появится
                     model.once('view:render', () => {
-                        moveComponentToTarget(model);
+                        moveComponentToTarget(model, false);
                     });
                 }
             });
 
-            function moveComponentToTarget(model) {
-                const modelEl = model.target.view?.el;
+            function moveComponentToTarget(param, isTarget) {
+                let model;
+                if(isTarget) {
+                    model = param;
+                } else {
+                    model = param.target;
+                }
+
+                const modelEl = model.view?.el;
                 if (!(modelEl instanceof Element)) {
                     console.warn('Нет DOM-элемента у перетаскиваемого компонента');
                     return;
                 }
+
+                const parentEl = modelEl.parentElement;
+                const parentRect = parentEl.getBoundingClientRect();
+                const modelRect = modelEl.getBoundingClientRect();
+
+                const initialTop = modelRect.top - parentRect.top;
+                console.log("")
+                console.log("initialTop " + initialTop)
 
                 const modelRectBefore = modelEl.getBoundingClientRect();
 
                 const x = modelRectBefore.left + modelRectBefore.width / 2;
                 const y = modelRectBefore.top + modelRectBefore.height / 2;
 
+                console.log("modelRectBefore.top " + modelRectBefore.top)
+
                 const target = findTargetComponentAtPoint(editor.DomComponents.getComponents(), x, y, modelEl);
 
-                if (target && target !== model.parent) {
+
+                if (target && target !== param.parent) {
                     const targetEl = target.view?.el;
 
-
                     if (targetEl) {
-                        const targetRect = targetEl.getBoundingClientRect();
-                        // console.log(targetEl.getAttribute('data-band'))
-
-                        // Сохраняем положение модели до вставки
-                        const modelTopBefore = modelRectBefore.top + window.scrollY;
+                        const modelTopBefore = modelRectBefore.top;
+                        const modelLeftBefore = modelRectBefore.left;
 
                         if ((targetEl.getAttribute('data-band') === 'true') || (targetEl.getAttribute('band') === 'true')) {
-                            console.log('true')
                             // Вставляем модель внутрь нового родителя
-                            target.append(model.target);
+                            target.append(model);
+
+                            //Компенсация отступа сверху при перетаскивании
+                            requestAnimationFrame(() => {
+                                const modelElAfter = model.view?.el;
+                                if (!modelElAfter) return;
+
+                                const modelRectAfter = modelElAfter.getBoundingClientRect();
+                                const modelTopAfter = modelRectAfter.top;
+                                const modelLeftAfter = modelRectAfter.left;
+
+                                // Вычисляем разницу между старым и новым положением
+                                const deltaY = modelTopBefore - (modelTopAfter);
+                                const deltaX = modelLeftBefore - (modelLeftAfter);
+
+                                // // Применяем компенсацию через CSS-трансформацию (менее затратно, чем top/left)
+                                // model.target.addStyle({
+                                //     transform: `translate(${deltaX}px, ${deltaY}px)`,
+                                // });
+
+                                console.log("modelTopBefore: " + modelTopBefore)
+                                console.log("modelTopAfter: " + modelTopAfter)
+                                console.log("deltaY: " + deltaY)
+                                model.addStyle({
+                                    // position: 'relative',
+                                    // top: `${deltaY}px`
+                                    top: `20%`
+                                });
+
+                                // Через 1 кадр убираем компенсацию (после завершения анимации)
+                                requestAnimationFrame(() => {
+                                    model.addStyle({
+                                        transform: 'none',
+                                    });
+                                });
+
+                                console.log(`Компенсировано смещение: X=${deltaX}px, Y=${deltaY}px`);
+                            });
                         }
-
-
-                        //Компенсация отступа сверху при перетаскивании, потом включить и доработать
-                        // // Ждём ререндер, чтобы получить новое положение
-                        // requestAnimationFrame(() => { // компенсируем смещение при вложенности
-                        //     const modelElAfter = model.target.view?.el;
-                        //     if (!modelElAfter) return;
-                        //
-                        //     const modelRectAfter = modelElAfter.getBoundingClientRect();
-                        //     const modelTopAfter = modelRectAfter.top + window.scrollY;
-                        //
-                        //     const delta = modelTopBefore - modelTopAfter;
-                        //
-                        //
-                        //     model.target.addStyle({
-                        //         // position: 'relative',
-                        //         top: `${delta}px`
-                        //     });
-                        //
-                        //     console.log(`Компенсировали смещение: ${delta}px`);
-                        // });
                     }
                 }
             }
+
 
             function findTargetComponentAtPoint(components, x, y, ignoreEl) {
                 let target = null;
 
                 components.each(comp => {
-                    const el = comp.view?.el;
-                    if (!(el instanceof Element) || el === ignoreEl) return;
+                    if (!comp.view || !comp.view.el) return;
+                    const el = comp.view.el;
+                    if (el === ignoreEl || !(el instanceof HTMLElement)) return;
+                    let rect;
+                    try {
+                        rect = el.getBoundingClientRect();
+                    } catch (e) {
+                        console.warn('Ошибка получения bounding rect:', e);
+                        return;
+                    }
 
-                    const rect = el.getBoundingClientRect();
-                    if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-                        target = comp;
-                        const nested = findTargetComponentAtPoint(comp.components(), x, y, ignoreEl);
-                        if (nested) target = nested;
+                    const isInside = x >= rect.left && x <= rect.right &&
+                        y >= rect.top && y <= rect.bottom;
+
+                    if (isInside) {
+                        if (el.hasAttribute('data-band') || el.hasAttribute('band')) {
+                            target = comp;
+                        } else if (comp.components && !target) {
+                            const nestedTarget = findTargetComponentAtPoint(comp.components(), x, y, ignoreEl);
+                            if (nestedTarget) target = nestedTarget;
+                        }
                     }
                 });
-
                 return target;
             }
 
@@ -613,7 +660,9 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             console.log("useEffect - editorView")
         }, [editorView])
 
-
+        useEffect(() => {
+            setSql("from table1"); //временно для разработки
+        }, []);
 
         // Определяем методы, которые будут доступны родителю
         useImperativeHandle(ref, () => ({
@@ -1115,32 +1164,32 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             editor.BlockManager.add("h1", {
                 label: "<i class=\"fa-solid fa-heading\"></i>1 Заголовок h1",
-                content: "<div style='padding:10px; font-size:2em; font-weight:bold '>Заголовок h1</div>",
+                content: "<div style='padding:10px; font-size:2em; font-weight:bold; z-index:100 '>Заголовок h1</div>",
                 category: "Заголовки",
             });
             editor.BlockManager.add("h2", {
                 label: "<i class=\"fa-solid fa-heading\"></i>2 Заголовок h2",
-                content: "<div style='padding:10px; font-size:1.5em; font-weight:bold '>Заголовок h2</div>",
+                content: "<div style='padding:10px; font-size:1.5em; font-weight:bold; z-index:100 '>Заголовок h2</div>",
                 category: "Заголовки",
             });
             editor.BlockManager.add("h3", {
                 label: "<i class=\"fa-solid fa-heading\"></i>3 Заголовок h3",
-                content: "<div style='padding:10px; font-size:1.17em; font-weight:bold '>Заголовок h3</div>",
+                content: "<div style='padding:10px; font-size:1.17em; font-weight:bold; z-index:100 '>Заголовок h3</div>",
                 category: "Заголовки",
             });
             editor.BlockManager.add("h4", {
                 label: "<i class=\"fa-solid fa-heading\"></i>4 Заголовок h4",
-                content: "<div style='padding:10px; font-size:1em; font-weight:bold '>Заголовок h4</div>",
+                content: "<div style='padding:10px; font-size:1em; font-weight:bold; z-index:100 '>Заголовок h4</div>",
                 category: "Заголовки",
             });
             editor.BlockManager.add("h5", {
                 label: "<i class=\"fa-solid fa-heading\"></i>5 Заголовок h5",
-                content: "<div style='padding:10px; font-size:0.83em; font-weight:bold '>Заголовок h5</div>",
+                content: "<div style='padding:10px; font-size:0.83em; font-weight:bold; z-index:100 '>Заголовок h5</div>",
                 category: "Заголовки",
             });
             editor.BlockManager.add("h6", {
                 label: "<i class=\"fa-solid fa-heading\"></i>6 Заголовок h6",
-                content: "<div style='padding:10px; font-size:0.67em; font-weight:bold '>Заголовок h6</div>",
+                content: "<div style='padding:10px; font-size:0.67em; font-weight:bold; z-index:100 '>Заголовок h6</div>",
                 category: "Заголовки",
             });
 
@@ -1154,6 +1203,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         'width': '100%',
                         'height': '2px',
                         'background-color': '#000',
+                        'z-index': '99',
                         'margin': '0px 0'
                     }
                 },
@@ -1170,6 +1220,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         'width': '2px',
                         'height': '100px',
                         'background-color': '#000',
+                        'z-index': '99',
                         'margin': '0 0px',
                         'display': 'inline-block'
                     }
@@ -1192,7 +1243,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
 
             editor.BlockManager.add("paragraph", {
-                label: "Абзац", content: "<p style=\"font-size: 14px;\">Введите текст отчета...</p>",
+                label: "Абзац", content: "<p style=\"font-size: 14px; z-index:100\">Введите текст отчета...</p>",
             });
             editor.BlockManager.add("table", {
                 label: "Таблица",
@@ -1216,9 +1267,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 draggable: false,
                 droppable: false,
             });
-            editor.BlockManager.add("my-block", {
-                label: "Мой блок", content: "<div style='padding:10px; background:#f3f3f3;'>Hello!</div>",
-            });
+
         }
 
         function addDataBand(tableName) {
@@ -1240,9 +1289,9 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
               ">DataBand: ${tableName}</div>
               
               <div data-band="true" id="${tableName}" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
-                 <h2 style="position: absolute; top: 20px; left: 20px; margin: 0px">Начни создание отчета</h2>
-                 <p class="data-band-field" style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажи поле из запроса в двойных скобках: {{field_1}}</p>
-                 <p class="data-band-field" style="position: absolute; top: 60px; left: 500px; margin: 0px">Повтори действие: {{field_2}}</p>
+<!--                 <h2 style="position: absolute; top: 20px; left: 20px; margin: 0px">Начни создание отчета</h2>-->
+<!--                 <p class="data-band-field" style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажи поле из запроса в двойных скобках: {{field_1}}</p>-->
+<!--                 <p class="data-band-field" style="position: absolute; top: 60px; left: 500px; margin: 0px">Повтори действие: {{field_2}}</p>-->
               
               </div>
       `,
