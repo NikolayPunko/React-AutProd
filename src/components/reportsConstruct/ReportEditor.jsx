@@ -32,6 +32,7 @@ import {Parser} from "node-sql-parser";
 import Loading from "../loading/Loading";
 import {decryptData, encryptData} from "../../utils/Сrypto";
 import {ModalParameter} from "./ModalParameter";
+import {API_URL} from "../../http";
 
 
 // Добавляем шрифт Roboto в виртуальную файловую систему pdfmake
@@ -365,7 +366,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             function moveComponentToTarget(param, isTarget) {
                 let model;
-                if(isTarget) {
+                if (isTarget) {
                     model = param;
                 } else {
                     model = param.target;
@@ -890,6 +891,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
               align-items: center;
               -webkit-print-color-adjust: exact; /* Для Chrome и Safari */
               print-color-adjust: exact; /* Для Firefox */
+              box-sizing: border-box;
             }
             .print-page {
               width: 100%;
@@ -1100,6 +1102,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 const container = printWindow.document.createElement('div');
                 fragment.appendChild(container);
 
+                console.log(updatedPages)
+
                 // 5. Создаем страницы с использованием createElement (быстрее чем innerHTML)
                 for (let i = 0; i < updatedPages.length; i++) {
                     const page = updatedPages[i];
@@ -1145,6 +1149,61 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 if (printWindow) printWindow.close();
             }
         };
+
+        const printReport = async () => {
+            const updatedPages = await saveCurrentPage(editorView);
+            try {
+                const response = await fetch(`${API_URL}/api/pdf/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedPages),
+                });
+
+                const pdfBlob = await response.blob();
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = pdfUrl;
+                document.body.appendChild(iframe);
+
+                iframe.onload = () => {
+                    try {
+                        setTimeout(() => {
+                            iframe.contentWindow?.print();
+                        }, 500);
+                    } catch (e) {
+                        console.error('Print error:', e);
+                        document.body.removeChild(iframe);
+                        URL.revokeObjectURL(pdfUrl);
+                        alert('Ошибка при печати. Попробуйте снова или проверьте настройки печати.');
+                    }
+                };
+
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        }
+
+        const generatePdf = async () => {
+            const updatedPages = await saveCurrentPage(editorView);
+            try {
+                const response = await fetch(`${API_URL}/api/pdf/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedPages),
+                });
+//нужно доделать чтобы отображались русские символы и линия чтобы была до края при 100%
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'report.pdf';
+                link.click();
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        }
 
 
         function addDeviceManager(editor) {
@@ -1203,8 +1262,9 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         'width': '100%',
                         'height': '2px',
                         'background-color': '#000',
-                        'z-index': '99',
-                        'margin': '0px 0'
+                        'z-index': '100',
+                        'margin': '0px 0',
+
                     }
                 },
                 category: "Линии",
@@ -1222,7 +1282,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         'background-color': '#000',
                         'z-index': '99',
                         'margin': '0 0px',
-                        'display': 'inline-block'
+                        'display': 'inline-block',
+
                     }
                 },
                 category: "Линии",
@@ -1480,7 +1541,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
                 dataArray.forEach(item => {
                     if (bandId.toLowerCase().startsWith(item.tableName.toLowerCase())) {
-                        console.log("sdf")
+
                         item.data.forEach(tableData => {
                             let instanceHtml = bandHtml;
 
@@ -1974,7 +2035,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                                   title="След. страница">
                         <i className="fa-solid fa-angle-right"></i>
                         </span>
-                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => exportPDF(editorView)}
+                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => generatePdf(editorView)}
                                   title="Экспорт PDF">
                         <i className="fa fa-file-pdf"></i>
                         </span>
@@ -1982,7 +2043,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                                   title="Экспорт HTML">
                         <i className="fa fa-code"></i>
                         </span>
-                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={printAllPages} title="Печать">
+                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={printReport} title="Печать">
                         <i className="fa fa-print"></i>
                         </span>
                             <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => changeZoom(-10)}
