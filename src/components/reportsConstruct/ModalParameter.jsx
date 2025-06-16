@@ -1,7 +1,5 @@
 import React, {useEffect, useState} from "react";
 import {styleInput, styleLabelInput} from "../../data/styles";
-import Select from "react-select";
-import {CustomStyle} from "../../data/styleForSelect";
 
 
 export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
@@ -9,7 +7,6 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
     const [values, setValues] = useState({});
 
     const handleChange = (key, value) => {
-        console.log(key, value)
         setValues(prev => ({...prev, [key]: value}));
     };
 
@@ -23,13 +20,25 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
         //     alert(`Заполните обязательные поля: ${missing.join(', ')}`);
         //     return;
         // }
-        console.log(values)
+        // console.log(values)
         onSubmit(values);
     };
 
     useEffect(() => {
-    parameters.filter(param => param.type === "BOOLEAN").map(param => (handleChange(param.key, false)));
-    }, [parameters]);
+        console.log(parameters)
+        for (let i = 0; i < parameters.length; i++) {
+            if(parameters[i].default !== null){
+                setValues(prev=> ({...prev, [parameters[i].key]: parameters[i].default}))
+            } else if(parameters[i].type === "BOOLEAN") {
+                handleChange(parameters[i].key, false);
+            }
+
+        }
+    }, [])
+
+    // useEffect(() => {
+    // parameters.filter(param => param.type === "BOOLEAN").map(param => (handleChange(param.key, false)));
+    // }, [parameters]);
 
     return (
 

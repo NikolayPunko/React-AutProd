@@ -1661,6 +1661,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
         function render(data, html, css) {
 
+            console.log("Начало рендера " + new Date())
+
             defineBands(html);
             setOldPage([{id: 1, content: html, styles: css}])
 
@@ -1672,6 +1674,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             let renderedHtml = renderDataBand(html, data.tableData, css);
 
+            console.log("Конец рендера " + new Date())
         }
 
 

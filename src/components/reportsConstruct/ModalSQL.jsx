@@ -1,15 +1,13 @@
-import {styleInput, styleLabelInput} from "../../data/styles";
+import {styleInput, styleInputWithoutRounded, styleLabelInput} from "../../data/styles";
 import Select from "react-select";
-import {CustomStyle} from "../../data/styleForSelect";
+import {CustomStyle, CustomStyleWithoutRounded} from "../../data/styleForSelect";
 import React, {useEffect, useState} from "react";
 
-export function ModalSQL({ value, parameters, isValid, onChange, onClose, setParameters }) {
-
-
+export function ModalSQL({value, parameters, isValid, onChange, onClose, setParameters}) {
 
 
     const updateParameter = (key, field, value) => {
-        if(field === "type"){
+        if (field === "type") {
             setParameters(parameters.map(p =>
                 p.key === key ? {...p, [field]: value.value} : p
             ));
@@ -25,7 +23,8 @@ export function ModalSQL({ value, parameters, isValid, onChange, onClose, setPar
         setParameters([...parameters, {
             name: '',
             key: key,
-            type: 'TEXT'
+            type: 'TEXT',
+            default: ''
         }]);
     };
 
@@ -47,16 +46,10 @@ export function ModalSQL({ value, parameters, isValid, onChange, onClose, setPar
         );
     };
 
-    useEffect(() => {
-
-    }, [])
-
-
     function onChangeSql(e) {
         onChange(e);
         findAndAddParameters(e.target.value);
         removeUnusedParameters(e.target.value);
-
     }
 
     const options = [
@@ -85,7 +78,7 @@ export function ModalSQL({ value, parameters, isValid, onChange, onClose, setPar
                 onClick={onClose}
             />
             <div
-                className="w-full max-w-[700px] lg:w-[700px] p-5 z-30 rounded bg-white absolute top-1/4 left-1/2 -translate-x-1/2 px-8">
+                className="w-full max-w-[700px] lg:w-[700px] p-5 z-30 rounded bg-white absolute top-[15%] left-1/2 -translate-x-1/2 px-8">
                 <h1 className="text-2xl font-medium text-start mb-5">Запрос SQL для данных отчета</h1>
                 <div className="flex flex-col">
                     <span className="text-xs font-medium text-gray-500 mb-2">Можно вводить несколько SQL запросов, отделенных точкой с запятой. Далее запрашиваемые данные могут быть использованы в отчете.
@@ -103,33 +96,85 @@ export function ModalSQL({ value, parameters, isValid, onChange, onClose, setPar
 
 
                 </div>
-                <h1 className="text-2xl font-medium text-start mt-2 mb-5">Параметры запроса</h1>
-                {parameters.map(param => (
-                    <div key={param.key} className="flex flex-row py-2">
-                        <input className={styleInput + " font-medium mr-2 w-1/3"}
-                               value={param.name}
-                               onChange={(e) => {
-                                   updateParameter(param.key, 'name', e.target.value);
-                                   console.log("name: "+ param.name + "=" + e.target.value)
-                               }}
-                               placeholder="Название параметра"
-                        />
-                        <input className={styleInput + " font-medium w-1/3"}
-                               value={param.key}
-                               onChange={(e) => updateParameter(param.key, 'key', e.target.value)}
-                               placeholder="Ключ для SQL (:key)"
-                        />
+                <h1 className="text-2xl font-medium text-start mt-2 mb-3">Параметры запроса</h1>
 
-                        <Select className="text-sm font-medium w-1/3 ml-2"
-                                placeholder={"Тип параметра"}
-                                value={{value: param.type, label: options.find(option => option.value === param.type)?.label || null }}
-                                onChange={(e) => updateParameter(param.key, 'type', e)}
-                                styles={CustomStyle}
-                                options={options}
-                                isClearable={false} isSearchable={false}/>
+                <div className="flex flex-row mb-1">
+                    <span className="text-sm text-center font-medium w-1/4">Название параметра</span>
+                    <span className="text-sm text-center font-medium w-1/4">Параметр</span>
+                    <span className="text-sm text-center font-medium w-1/4">Тип</span>
+                    <span className="text-sm text-center font-medium w-1/4">Знач. по умолчанию</span>
+                </div>
 
-                    </div>
-                ))}
+                <div className="max-h-36 overflow-auto">
+                    {parameters.map(param => (
+                        <div key={param.key} className="flex flex-row py-0">
+                            <input className={styleInputWithoutRounded + " font-medium mr-0 w-1/4"}
+                                   value={param.name}
+                                   onChange={(e) => {
+                                       updateParameter(param.key, 'name', e.target.value);
+                                   }}
+                                   placeholder="Название параметра"
+                            />
+                            <input className={styleInputWithoutRounded + " font-medium mr-0 w-1/4"}
+                                   value={param.key}
+                                   onChange={(e) => updateParameter(param.key, 'key', e.target.value)}
+                                   placeholder="Параметр (:param)"
+                            />
+
+                            <Select className="text-sm font-medium w-1/4 mr-0"
+                                    placeholder={"Тип параметра"}
+                                    value={{
+                                        value: param.type,
+                                        label: options.find(option => option.value === param.type)?.label || null
+                                    }}
+                                    onChange={(e) => updateParameter(param.key, 'type', e)}
+                                    styles={CustomStyleWithoutRounded}
+                                    options={options}
+                                    isClearable={false} isSearchable={false}/>
+
+
+                            {param.type === "TEXT" &&
+                                <input
+                                    className={styleInputWithoutRounded + " font-medium w-1/4"}
+                                    type="text"
+                                    value={param.default}
+                                    onChange={(e) => updateParameter(param.key, 'default', e.target.value)}
+                                />
+                            }
+
+                            {param.type === "NUMBER" &&
+                                <input
+                                    className={styleInputWithoutRounded + " font-medium w-1/4"}
+                                    type="number"
+                                    value={param.default}
+                                    onChange={(e) => updateParameter(param.key, 'default', e.target.value)}
+                                />
+                            }
+
+                            {param.type === "DATE" &&
+                                <input
+                                    className={styleInputWithoutRounded + " font-medium w-1/4"}
+                                    type="date"
+                                    value={param.default}
+                                    onChange={(e) => updateParameter(param.key, 'default', e.target.value)}
+                                />
+                            }
+
+                            {param.type === "BOOLEAN" &&
+                                <div className=" font-medium w-1/4 text-center">
+                                    <input
+                                        className={styleInputWithoutRounded + " w-[20px] justify-center"}
+                                        type="checkbox"
+                                        checked={param.default}
+                                        onChange={(e) => updateParameter(param.key, 'default', e.target.checked)}
+                                    />
+                                </div>
+                            }
+
+                        </div>
+                    ))}
+                </div>
+
                 <div className="flex flex-row justify-end mt-4">
                     <div className="flex flex-row w-full justify-between items-center bg-white my-2 ">
                         <div>
