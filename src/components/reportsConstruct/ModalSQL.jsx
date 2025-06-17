@@ -78,7 +78,7 @@ export function ModalSQL({value, parameters, isValid, onChange, onClose, setPara
                 onClick={onClose}
             />
             <div
-                className="w-full max-w-[700px] lg:w-[700px] p-5 z-30 rounded bg-white absolute top-[15%] left-1/2 -translate-x-1/2 px-8">
+                className="w-full max-w-[900px] lg:w-[900px] p-5 z-30 rounded bg-white absolute top-[15%] left-1/2 -translate-x-1/2 px-8">
                 <h1 className="text-2xl font-medium text-start mb-5">Запрос SQL для данных отчета</h1>
                 <div className="flex flex-col">
                     <span className="text-xs font-medium text-gray-500 mb-2">Можно вводить несколько SQL запросов, отделенных точкой с запятой. Далее запрашиваемые данные могут быть использованы в отчете.
@@ -130,6 +130,7 @@ export function ModalSQL({value, parameters, isValid, onChange, onClose, setPara
                                     onChange={(e) => updateParameter(param.key, 'type', e)}
                                     styles={CustomStyleWithoutRounded}
                                     options={options}
+                                    menuPortalTarget={document.body}
                                     isClearable={false} isSearchable={false}/>
 
 
@@ -152,23 +153,43 @@ export function ModalSQL({value, parameters, isValid, onChange, onClose, setPara
                             }
 
                             {param.type === "DATE" &&
-                                <input
-                                    className={styleInputWithoutRounded + " font-medium w-1/4"}
-                                    type="date"
-                                    value={param.default}
-                                    onChange={(e) => updateParameter(param.key, 'default', e.target.value)}
-                                />
+                                <div style={{display: 'flex', alignItems: 'center'}} className="font-medium w-1/4">
+                                    <input className={styleInputWithoutRounded + " w-[100%]"}
+                                           type="date"
+                                           value={param.default === true ? "" : param.default || ""}
+                                           onChange={(e) => updateParameter(param.key, 'default', e.target.value || "")}
+                                           style={{
+                                               paddingRight: '50%',
+                                           }}
+                                    />
+                                    <span className="text-xs" style={{
+                                        marginLeft: '-70px',
+                                        cursor: 'pointer',
+                                    }}>
+                                        Текущая
+                                    </span>
+                                    <input className={styleInputWithoutRounded}
+                                           type="checkbox"
+                                           checked={param.default === true}
+                                           onChange={(e) => updateParameter(param.key, 'default', e.target.checked || "")}
+                                           style={{
+                                               marginLeft: '5px',
+                                               cursor: 'pointer',
+                                           }}
+                                    />
+
+                                </div>
                             }
 
-                            {param.type === "BOOLEAN" &&
-                                <div className=" font-medium w-1/4 text-center">
-                                    <input
-                                        className={styleInputWithoutRounded + " w-[20px] justify-center"}
-                                        type="checkbox"
-                                        checked={param.default}
-                                        onChange={(e) => updateParameter(param.key, 'default', e.target.checked)}
-                                    />
-                                </div>
+                    {param.type === "BOOLEAN" &&
+                        <div className=" w-1/4 text-center border border-slate-400">
+                            <input
+                                className="h-full w-[16px] cursor-pointer"
+                                type="checkbox"
+                                checked={param.default}
+                                onChange={(e) => updateParameter(param.key, 'default', e.target.checked)}
+                            />
+                        </div>
                             }
 
                         </div>

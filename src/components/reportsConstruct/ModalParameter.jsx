@@ -93,7 +93,7 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
                                     <input
                                         className={styleInput}
                                         type="date"
-                                        value={values[param.key] || param.defaultValue || ''}
+                                        value={(param.default === true ? new Date().toISOString().split('T')[0] : param.default) || ''}
                                         onChange={(e) => handleChange(param.key, e.target.value)}
                                     />
                                 </div>

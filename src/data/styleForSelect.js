@@ -124,5 +124,16 @@ export const CustomStyleWithoutRounded = {
         padding: `${(targetHeight - 20 - 1 - 1) / 2}px`,
     }),
 
+    menu: (base) => ({
+        ...base,
+        zIndex: 9999, // Очень высокий z-index
+        marginTop: '0px', // Убираем отступ
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    }),
+
+    menuPortal: (base) => ({
+        ...base,
+        zIndex: 9999,
+    }),
 
 }
