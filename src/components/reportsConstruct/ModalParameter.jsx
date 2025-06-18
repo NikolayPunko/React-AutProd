@@ -25,20 +25,33 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
     };
 
     useEffect(() => {
-        console.log(parameters)
+        // console.log(parameters)
+        // console.log(values)
         for (let i = 0; i < parameters.length; i++) {
             if(parameters[i].default !== null){
                 setValues(prev=> ({...prev, [parameters[i].key]: parameters[i].default}))
             } else if(parameters[i].type === "BOOLEAN") {
                 handleChange(parameters[i].key, false);
             }
-
         }
     }, [])
 
+    useEffect(() => {
+        const initialValues = {};
+       parameters
+            .filter(param => param.type === "DATE")
+            .forEach(param => {
+                initialValues[param.key] = param.default === true
+                    ? new Date().toISOString().split('T')[0]
+                    : param.default || '';
+            });
+        setValues(prevState => ({...prevState,...initialValues}));
+    }, []);
+
+
     // useEffect(() => {
-    // parameters.filter(param => param.type === "BOOLEAN").map(param => (handleChange(param.key, false)));
-    // }, [parameters]);
+    //     console.log(values)
+    // }, [values]);
 
     return (
 
@@ -73,7 +86,6 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-2">
                             {parameters.filter(param => param.type === "NUMBER").map(param => (
-                                // <div key={param.key} className="border rounded-lg p-2 flex flex-col">
                                 <div key={param.key} className=" rounded-lg p-2 flex flex-col">
                                     <label className={styleLabelInput}>{param.name}</label>
                                     <input
@@ -87,13 +99,12 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-2">
                             {parameters.filter(param => param.type === "DATE").map(param => (
-                                // <div key={param.key} className="border rounded-lg p-2 flex flex-col">
-                                <div key={param.key} className=" rounded-lg p-2 flex flex-col">
+                                <div key={param.key} className="rounded-lg p-2 flex flex-col">
                                     <label className={styleLabelInput}>{param.name}</label>
                                     <input
                                         className={styleInput}
                                         type="date"
-                                        value={(param.default === true ? new Date().toISOString().split('T')[0] : param.default) || ''}
+                                        value={values[param.key] || ''}
                                         onChange={(e) => handleChange(param.key, e.target.value)}
                                     />
                                 </div>

@@ -181,15 +181,15 @@ export function ModalSQL({value, parameters, isValid, onChange, onClose, setPara
                                 </div>
                             }
 
-                    {param.type === "BOOLEAN" &&
-                        <div className=" w-1/4 text-center border border-slate-400">
-                            <input
-                                className="h-full w-[16px] cursor-pointer"
-                                type="checkbox"
-                                checked={param.default}
-                                onChange={(e) => updateParameter(param.key, 'default', e.target.checked)}
-                            />
-                        </div>
+                            {param.type === "BOOLEAN" &&
+                                <div className=" w-1/4 text-center border border-slate-400">
+                                    <input
+                                        className="h-full w-[16px] cursor-pointer"
+                                        type="checkbox"
+                                        checked={param.default}
+                                        onChange={(e) => updateParameter(param.key, 'default', e.target.checked)}
+                                    />
+                                </div>
                             }
 
                         </div>
