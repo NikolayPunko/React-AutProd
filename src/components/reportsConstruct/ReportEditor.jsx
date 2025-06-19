@@ -696,7 +696,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             if (!editor) {
                 return;
             }
-            console.log("saveCurrentPage")
+
             const html = editor.getHtml();
             const css = editor.getCss();
 
@@ -1263,7 +1263,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         'height': '2px',
                         'background-color': '#000',
                         'z-index': '100',
-                        'margin': '0px 0',
+                        'margin': '0',
 
                     }
                 },
@@ -1281,7 +1281,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         'height': '100px',
                         'background-color': '#000',
                         'z-index': '99',
-                        'margin': '0 0px',
+                        'margin': '0',
                         'display': 'inline-block',
 
                     }
@@ -1661,7 +1661,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
         function render(data, html, css) {
 
-            console.log("Начало рендера " + new Date())
+            let startTime = performance.now();
+
 
             defineBands(html);
             setOldPage([{id: 1, content: html, styles: css}])
@@ -1674,7 +1675,10 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             let renderedHtml = renderDataBand(html, data.tableData, css);
 
-            console.log("Конец рендера " + new Date())
+            let endTime = performance.now();
+            const seconds = (endTime - startTime) / 1000; // Преобразуем миллисекунды в секунды
+            console.log("Рендер: " + seconds.toFixed(3))
+
         }
 
 
@@ -1718,6 +1722,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
         function createTempContainer() {
             const tempDiv = document.createElement("div");
+            tempDiv.style.position = 'relative';
+                tempDiv.style.height = "297mm"
 
             const headerContainer = document.createElement('div');
             headerContainer.id = 'header-container';
@@ -1726,6 +1732,9 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             bodyContainer.id = 'body-container';
             tempDiv.appendChild(bodyContainer);
             const footerContainer = document.createElement('div');
+            // footerContainer.style.position = 'absolute';
+            // footerContainer.style.bottom = '0';
+            // footerContainer.style.left = '0';
             footerContainer.id = 'footer-container';
             tempDiv.appendChild(footerContainer);
 
@@ -1755,6 +1764,373 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
 
         function splitIntoA4Pages(htmlString, css, bands) {
+
+
+
+            return new Promise((resolve) => {
+                const startTime = performance.now();
+
+                const tempContainer = createTempContainer();
+                tempContainer.style.cssText = `
+            position: absolute;
+            left: -9999px;
+            width: 794px;
+            visibility: hidden;
+        `;
+
+                const bodyContainer = tempContainer.querySelector('#body-container');
+                bodyContainer.innerHTML = `<style>${css}</style>${htmlString}`;
+                document.body.appendChild(tempContainer);
+
+                const bandHeights = {
+                    header: getBandHeight(bands, 'pageHeader'),
+                    footer: getBandHeight(bands, 'pageFooter'),
+                    reportHeader: getBandHeight(bands, 'reportTitle'),
+                    reportFooter: getBandHeight(bands, 'reportSummary')
+                };
+
+
+
+                const measureDiv = createTempContainer();
+                measureDiv.style.cssText = `
+            position: absolute;
+            visibility: hidden;
+            width: 794px;
+        `;
+                document.body.appendChild(measureDiv);
+
+                try {
+                    insertBand(tempContainer, bands, true, true);
+
+                    const maxHeight = 1123; // Высота A4
+                    const initialHeight = tempContainer.scrollHeight;
+
+                    if (initialHeight <= maxHeight) {
+                        const result = removeStyle(tempContainer.innerHTML);
+                        resolve(result);
+                        return;
+                    }
+
+                    // 6. Разбиение на страницы
+                    const pages = [];
+                    let currentPage = createPageTemplate(1, css);
+                    let currentPageHeight = 0;
+                    const childNodes = Array.from(bodyContainer.childNodes);
+
+                    for (let i = 0; i < childNodes.length; i++) {
+
+                        const node = childNodes[i];
+                        const isLastNode = i === childNodes.length - 1;
+
+                        // Измеряем высоту узла
+                        measureDiv.innerHTML = '';
+                        measureDiv.appendChild(node.cloneNode(true));
+                        const nodeHeight = measureDiv.offsetHeight;
+
+
+                        // Рассчитываем высоту с учетом бэндов
+                        const isFirstPage = currentPage.id === 1;
+                        const currentBandsHeight = calculateCurrentBandsHeight(isFirstPage, isLastNode, bandHeights);
+                        // console.log("BandsHeight" + currentBandsHeight)
+                        // console.log("PageHeight" + currentPageHeight)
+                        // console.log("nodeHeight" + nodeHeight)
+                        // const totalHeight = currentPageHeight + nodeHeight + currentBandsHeight;
+                        const totalHeight = currentPageHeight + nodeHeight + currentBandsHeight;
+
+                        // Если не помещается - сохраняем текущую страницу
+                        if (totalHeight > maxHeight) {
+                            finalizePage(currentPage, pages, bands, false, false);
+
+                            currentPage = createPageTemplate(pages.length + 1, css);
+                            currentPageHeight = 0;
+
+                            insertBand(currentPage.container, bands, false, false);
+                        }
+
+                        // Добавляем узел на страницу
+                        currentPage.container.querySelector('#body-container').appendChild(node.cloneNode(true));
+                        currentPageHeight += nodeHeight;
+
+                        // Если это последний узел - добавляем report footer
+                        if (isLastNode) {
+                            insertBand(currentPage.container, bands, false, true);
+                            currentPageHeight += bandHeights.reportFooter;
+                        }
+                    }
+
+                    // Финализируем последнюю страницу
+                    if (currentPage.container.querySelector('#body-container').childNodes.length > 0) {
+                        finalizePage(currentPage, pages, bands, false, false);
+                    }
+
+                    // 7. Сохраняем результат
+                    setPages(pages);
+                    setCurrentPage(1);
+                    resolve(pages[0]?.content || '');
+
+                } finally {
+                    // 8. Очистка
+                    safeRemove(tempContainer);
+                    safeRemove(measureDiv);
+                    const duration = (performance.now() - startTime) / 1000;
+                    console.log(`Разбиение выполнено за ${duration.toFixed(3)} сек`);
+                }
+            });
+        }
+
+
+        function getBandHeight(bands, type) {
+
+            let band;
+            bands.forEach(node => {
+                if (node.id === type) {
+                    band = node;
+                }
+            });
+
+            if (!band) return 0;
+            const temp = document.createElement('div');
+            temp.style.position = 'absolute';
+            temp.style.visibility = 'hidden';
+            temp.appendChild(band)
+            document.body.appendChild(temp);
+            let height;
+            if(type === 'pageFooter'){
+                height = getFooterBandHeight()
+            } else {
+                height = temp.offsetHeight;
+            }
+
+            document.body.removeChild(temp);
+            return height;
+        }
+
+
+        function createPageTemplate(id, css) {
+            const container = createTempContainer();
+            return {
+                id,
+                content: "",
+                styles: css,
+                container
+            };
+        }
+
+        function calculateCurrentBandsHeight(isFirstPage, isLastNode, bandHeights) {
+            let height = 0;
+
+            if (isFirstPage) {
+                height += bandHeights.reportHeader;
+            }
+
+            height += bandHeights.header;
+            height += bandHeights.footer;
+
+            if (isLastNode) {
+                height += bandHeights.reportFooter;
+            }
+
+            return height;
+        }
+
+        function finalizePage(page, pages, bands, showReportHeader, showReportFooter) {
+            if(pages.length === 0) {
+                insertBand(page.container, bands, true, showReportFooter);
+            } else {
+                insertBand(page.container, bands, showReportHeader, showReportFooter);
+            }
+
+            page.content = page.container.innerHTML;
+            pages.push(page);
+            safeRemove(page.container);
+        }
+
+        function safeRemove(element) {
+            try {
+                if (element?.parentNode) {
+                    element.parentNode.removeChild(element);
+                }
+            } catch (error) {
+                console.warn('Ошибка при удалении элемента:', error);
+            }
+        }
+
+
+
+//работать пробовать с этим методом
+
+//         function splitIntoA4Pages(htmlString, css, bands) {
+//             return new Promise((resolve) => {
+//                 const startTime = performance.now();
+//
+//                 // 1. Создаем и настраиваем контейнеры
+//                 const tempContainer = createTempContainer();
+//                 tempContainer.style.cssText = `
+//             position: absolute;
+//             left: -9999px;
+//             width: 794px;
+//             visibility: hidden;
+//         `;
+//
+//                 const bodyContainer = tempContainer.querySelector('#body-container');
+//                 bodyContainer.innerHTML = `<style>${css}</style>${htmlString}`;
+//                 document.body.appendChild(tempContainer);
+//
+//                 // 2. Предварительно вычисляем высоты всех бэндов
+//                 const bandHeights = {
+//                     header: getBandHeight(bands, 'header'),
+//                     footer: getBandHeight(bands, 'footer'),
+//                     reportHeader: getBandHeight(bands, 'report-header'),
+//                     reportFooter: getBandHeight(bands, 'report-footer')
+//                 };
+//
+//                 // 3. Создаем контейнер для измерений
+//                 const measureDiv = createTempContainer();
+//                 measureDiv.style.cssText = `
+//             position: absolute;
+//             visibility: hidden;
+//             width: 794px;
+//         `;
+//                 document.body.appendChild(measureDiv);
+//
+//                 try {
+//                     // 4. Первоначальная вставка бэндов для измерения
+//                     insertBand(tempContainer, bands, true, true);
+//
+//                     // 5. Проверка на одну страницу
+//                     const maxHeight = 1123; // Высота A4
+//                     const initialHeight = tempContainer.scrollHeight;
+//
+//                     if (initialHeight <= maxHeight) {
+//                         const result = removeStyle(tempContainer.innerHTML);
+//                         resolve(result);
+//                         return;
+//                     }
+//
+//                     // 6. Разбиение на страницы
+//                     const pages = [];
+//                     let currentPage = createPageTemplate(1, css);
+//                     let currentPageHeight = 0;
+//                     const childNodes = Array.from(bodyContainer.childNodes);
+//
+//                     for (let i = 0; i < childNodes.length; i++) {
+//                         const node = childNodes[i];
+//                         const isLastNode = i === childNodes.length - 1;
+//
+//                         // Измеряем высоту узла
+//                         measureDiv.innerHTML = '';
+//                         measureDiv.appendChild(node.cloneNode(true));
+//                         const nodeHeight = measureDiv.scrollHeight;
+//
+//                         // Рассчитываем высоту с учетом бэндов
+//                         const isFirstPage = currentPage.id === 1;
+//                         const currentBandsHeight = calculateCurrentBandsHeight(isFirstPage, isLastNode, bandHeights);
+//                         const totalHeight = currentPageHeight + nodeHeight + currentBandsHeight;
+//
+//                         // Если не помещается - сохраняем текущую страницу
+//                         if (totalHeight > maxHeight) {
+//                             finalizePage(currentPage, pages, bands, false, false);
+//
+//                             // Создаем новую страницу
+//                             currentPage = createPageTemplate(pages.length + 1, css);
+//                             currentPageHeight = 0;
+//
+//                             // Добавляем обычный header (не report header)
+//                             insertBand(currentPage.container, bands, false, false);
+//                             currentPageHeight += bandHeights.header;
+//                         }
+//
+//                         // Добавляем узел на страницу
+//                         currentPage.container.querySelector('#body-container').appendChild(node.cloneNode(true));
+//                         currentPageHeight += nodeHeight;
+//
+//                         // Если это последний узел - добавляем report footer
+//                         if (isLastNode) {
+//                             insertBand(currentPage.container, bands, false, true);
+//                             currentPageHeight += bandHeights.reportFooter;
+//                         }
+//                     }
+//
+//                     // Финализируем последнюю страницу
+//                     if (currentPage.container.querySelector('#body-container').childNodes.length > 0) {
+//                         finalizePage(currentPage, pages, bands, false, false);
+//                     }
+//
+//                     // 7. Сохраняем результат
+//                     setPages(pages);
+//                     setCurrentPage(1);
+//                     resolve(pages[0]?.content || '');
+//
+//                 } finally {
+//                     // 8. Очистка
+//                     safeRemove(tempContainer);
+//                     safeRemove(measureDiv);
+//                     const duration = (performance.now() - startTime) / 1000;
+//                     console.log(`Разбиение выполнено за ${duration.toFixed(3)} сек`);
+//                 }
+//             });
+//         }
+//
+// // Вспомогательные функции
+//         function getBandHeight(bands, type) {
+//             const band = Array.isArray(bands) ? bands.find(b => b.type === type) : null;
+//             if (!band) return 0;
+//
+//             const temp = document.createElement('div');
+//             temp.innerHTML = band.html;
+//             temp.style.position = 'absolute';
+//             temp.style.visibility = 'hidden';
+//             document.body.appendChild(temp);
+//             const height = temp.offsetHeight;
+//             document.body.removeChild(temp);
+//             return height;
+//         }
+//
+//         function createPageTemplate(id, css) {
+//             const container = createTempContainer();
+//             return {
+//                 id,
+//                 content: "",
+//                 styles: css,
+//                 container
+//             };
+//         }
+//
+//         function calculateCurrentBandsHeight(isFirstPage, isLastNode, bandHeights) {
+//             let height = 0;
+//
+//             if (isFirstPage) {
+//                 height += bandHeights.reportHeader; // Заголовок отчета
+//             }
+//
+//             height += bandHeights.header; // Обычный заголовок страницы
+//
+//             if (isLastNode) {
+//                 height += bandHeights.reportFooter; // Футер отчета
+//             }
+//
+//             return height;
+//         }
+//
+//         function finalizePage(page, pages, bands, showReportHeader, showReportFooter) {
+//             insertBand(page.container, bands, showReportHeader, showReportFooter);
+//             page.content = page.container.innerHTML;
+//             pages.push(page);
+//             safeRemove(page.container);
+//         }
+//
+//         function safeRemove(element) {
+//             try {
+//                 if (element?.parentNode) {
+//                     element.parentNode.removeChild(element);
+//                 }
+//             } catch (error) {
+//                 console.warn('Ошибка при удалении элемента:', error);
+//             }
+//         }
+
+
+        function splitIntoA4Pages2(htmlString, css, bands) {
             return new Promise((resolve) => {
 
                 const pagesBuf = [
@@ -1803,6 +2179,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 // console.log(tempDiv)
 
                 // console.log(childNodes)
+
+                const start = performance.now(); // Начало замера
                 for (let i = 0; i < childNodes.length; i++) {
 
                     let isAddBand = false;
@@ -1862,7 +2240,10 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
                     document.body.appendChild(tempDiv);
                 }
+                const end = performance.now(); // Конец замера
+                const seconds = (end - start) / 1000; // Преобразуем миллисекунды в секунды
 
+                console.log(`Метод выполнился за ${seconds.toFixed(3)} секунд`);
 
                 document.body.removeChild(tempDiv);
 
@@ -2023,7 +2404,10 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                             {!isPreviewMode && !previewMode && <button onClick={clickEnterPreviewMode}>Просмотр</button>}
                             {isPreviewMode && !previewMode && <button onClick={exitPreviewMode}>Конструктор</button>}
 
-                            {previewMode && <button onClick={onCloseReport}>Закрыть отчет</button>}
+                            {previewMode && <button onClick={() => {
+                                onCloseReport();
+                                setPages([])
+                            }}>Закрыть отчет</button>}
                         </div>
 
                         {isPreviewMode && <div className="flex justify-start text-center w-1/3">
