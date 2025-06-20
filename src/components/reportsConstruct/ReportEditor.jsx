@@ -84,12 +84,12 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
         const [parametersMeta, setParametersMeta] = useState([]);
 
-        let usedBands = {
+        const [usedBands, setUsedBands] = useState({
             reportTitle: false,
             headerPage: false,
             footerPage: false,
             reportSummary: false,
-        }
+        });
 
 
         pdfMake.addVirtualFileSystem(pdfFonts);
@@ -479,6 +479,54 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 return target;
             }
 
+
+            // const updateBandsState = () => {
+            //     const components = editor.getComponents();
+            //     setUsedBands({
+            //         reportTitle: components.some(c => c.get('type') === 'reportTitle-band-block'),
+            //         headerPage: components.some(c => c.get('type') === 'pageHeader-band-block'),
+            //         footerPage: components.some(c => c.get('type') === 'pageFooter-band-block'),
+            //         reportSummary: components.some(c => c.get('type') === 'reportSummary-band-block')
+            //     });
+            // };
+
+//             editor.on('component:add component:remove ', updateBandsState);
+
+            //парно удялем бэнд и его описание
+            editor.on('component:remove', (component) => {
+
+
+
+                if (component.attributes?.band === 'true' ||
+                    component.getAttributes?.()?.band === 'true' || component.attributes?.['data-band'] === 'true' || component.getAttributes?.()?.['data-band'] === 'true') {
+                    const parent = component.parent();
+                    if (parent) {
+                        // Ищем description-band в том же родителе
+                        const description = parent.components().models.find(
+                            c => c.attributes?.['description-band'] !== undefined || c.getAttributes?.()?.['description-band'] !== undefined
+                        );
+                        if (description) {
+                            parent.remove();
+                        }
+                    }
+                    defineBands(editor.getHtml())
+                }
+
+                if (component.attributes?.['description-band'] !== undefined ||
+                    component.getAttributes?.()?.['description-band'] !== undefined) {
+                    const parent = component.parent();
+                    if (parent) {
+                        const bandContent = parent.components().models.find(
+                            c => c.attributes?.band === 'true' || c.getAttributes?.()?.band === 'true'
+                        );
+                        if (bandContent) {
+                            parent.remove();
+                        }
+                    }
+                    defineBands(editor.getHtml())
+                }
+            });
+
             // // Событие добавления компонента
             // editor.on("component:add", (model) => {
             //     // console.log("Компонент добавлен:", model);
@@ -658,10 +706,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         }, [pages, currentPage]);
 
         useEffect(() => {
-            console.log("useEffect - editorView")
-        }, [editorView])
-
-        useEffect(() => {
             setSql("from table1"); //временно для разработки
         }, []);
 
@@ -681,7 +725,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             setTimeout(() => {
 
-                console.log(pages)
+
 
                 const page = pages.find((p) => p.id === id);
                 if (page) {
@@ -1368,7 +1412,15 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 },
             });
 
-            editorView.addComponents('<div data-gjs-type="data-band-block"></div>');
+            const components = editorView.getComponents();
+            if(usedBands.reportSummary && usedBands.footerPage){
+                components.add('<div data-gjs-type="data-band-block"></div>', {at: components.length-2});
+            } else if(usedBands.reportSummary) {
+                components.add('<div data-gjs-type="data-band-block"></div>', {at: components.length-1});
+            } else {
+                components.add('<div data-gjs-type="data-band-block"></div>');
+            }
+
 
         }
 
@@ -1402,12 +1454,14 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             });
 
             const components = editorView.getComponents();
-            if (usedBands.reportSummary === false) {
-                components.add('<div data-gjs-type="pageHeader-band-block"></div>', {at: 0}); // Добавляем первым элементом
-                usedBands.headerPage = true;
+            if (usedBands.headerPage === false) {
+                if(usedBands.reportTitle){
+                    components.add('<div data-gjs-type="pageHeader-band-block"></div>', {at: 1}); // Добавляем вторым элементом
+                } else {
+                    components.add('<div data-gjs-type="pageHeader-band-block"></div>', {at: 0}); // Добавляем первым элементом
+                }
+                setUsedBands(prevState => ({...prevState, headerPage: true}))
             }
-
-            // editorView.addComponents('<div data-gjs-type="data-band-block"></div>');
         }
 
         function addReportTitleBand() {
@@ -1439,10 +1493,9 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             });
 
             const components = editorView.getComponents();
-            if (usedBands.reportSummary === false) {
+            if (usedBands.reportTitle === false) {
                 components.add('<div data-gjs-type="reportTitle-band-block"></div>', {at: 0}); // Добавляем первым элементом
-                usedBands.reportTitle = true
-                //доделать сценарий при удалении бэндов для повторного добавления
+                setUsedBands(prevState => ({...prevState, reportTitle: true}))
             }
 
             // editorView.addComponents('<div data-gjs-type="data-band-block"></div>');
@@ -1482,8 +1535,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             const components = editorView.getComponents();
             if (usedBands.footerPage === false) {
-                components.add('<div data-gjs-type="pageFooter-band-block"></div>', {at: components.length}); // Добавляем первым элементом
-                usedBands.footerPage = true;
+                components.add('<div data-gjs-type="pageFooter-band-block"></div>', {at: components.length});
+                setUsedBands(prevState => ({...prevState, footerPage: true}))
             }
 
         }
@@ -1515,8 +1568,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             const components = editorView.getComponents();
             if (usedBands.reportSummary === false) {
-                components.add('<div data-gjs-type="reportSummary-band-block"></div>', {at: components.length}); // Добавляем первым элементом
-                usedBands.reportSummary = true;
+                components.add('<div data-gjs-type="reportSummary-band-block"></div>', {at: components.length});
+                setUsedBands(prevState => ({...prevState, reportSummary: true}))
             }
         }
 
@@ -1753,15 +1806,17 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         function defineBands(html) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-
-            doc.getElementById('pageHeader') ? usedBands.headerPage = true : usedBands.headerPage = false
-            doc.getElementById('reportTitle') ? usedBands.reportTitle = true : usedBands.reportTitle = false
-            doc.getElementById('reportSummary') ? usedBands.reportSummary = true : usedBands.reportSummary = false
-            doc.getElementById('pageFooter') ? usedBands.footerPage = true : usedBands.footerPage = false
-
-            // console.log(usedBands)
+console.log("defineBands")
+            doc.getElementById('pageHeader') ? setUsedBands(prevState => ({...prevState, headerPage: true})) : setUsedBands(prevState => ({...prevState, headerPage: false}))
+            doc.getElementById('reportTitle') ? setUsedBands(prevState => ({...prevState, reportTitle: true})) : setUsedBands(prevState => ({...prevState, reportTitle: false}))
+            doc.getElementById('reportSummary') ? setUsedBands(prevState => ({...prevState, reportSummary: true})) : setUsedBands(prevState => ({...prevState, reportSummary: false}))
+            doc.getElementById('pageFooter') ? setUsedBands(prevState => ({...prevState, footerPage: true})) : setUsedBands(prevState => ({...prevState, footerPage: false}))
         }
 
+        useEffect(() => {
+            console.log("usedBands")
+            console.log(usedBands)
+        }, [usedBands])
 
         function splitIntoA4Pages(htmlString, css, bands) {
 
@@ -2316,6 +2371,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 });
                 setSql(response.data.sql);
                 setParameters(JSON.parse(response.data.parameters));
+                defineBands(response.data.content);
             } catch (error) {
                 setModalMsg("Ошибка загрузки отчета с сервера! Попробуйте еще раз.")
                 showModalNotif();

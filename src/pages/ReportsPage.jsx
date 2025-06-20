@@ -111,7 +111,6 @@ function ReportsPage() {
         setIsModalParameter(false);
         setIsLoading(true);
         await fetchReportTemplate(selectName);
-        console.log(parameters)
         await fetchReportData(selectName, parameters);
     }
 
