@@ -29,7 +29,7 @@ export function ModalSQL({value, parameters, isValid, onChange, onClose, setPara
     };
 
     const findAndAddParameters = (inputString) => {
-        const wordsStartingWithColon = inputString.match(/:\w+/g) || [];
+        const wordsStartingWithColon = inputString.match(/(?<=\s|^):\w+/g) || [];
         const keys = wordsStartingWithColon.map(word => word.substring(1));
         keys.forEach(key => {
             const keyExists = parameters.some(param => param.key === key);
@@ -40,7 +40,7 @@ export function ModalSQL({value, parameters, isValid, onChange, onClose, setPara
     };
 
     const removeUnusedParameters = (sqlString) => {
-        const usedKeys = (sqlString.match(/:\w+/g) || []).map(word => word.substring(1));
+        const usedKeys = (sqlString.match(/(?<=\s|^):\w+/g) || []).map(word => word.substring(1));
         setParameters(prevParams =>
             prevParams.filter(param => usedKeys.includes(param.key))
         );

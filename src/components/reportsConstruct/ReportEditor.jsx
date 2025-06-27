@@ -82,8 +82,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         const [sql, setSql] = useState("");
         const [isValidSql, setIsValidSql] = useState(true);
 
-        const [parametersMeta, setParametersMeta] = useState([]);
-
         const [usedBands, setUsedBands] = useState({
             reportTitle: false,
             headerPage: false,
@@ -118,18 +116,24 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 pluginsOpts: {
                     blocks: [],
                 },
+                style: [`  .gjs-selected {
+    outline: none !important;
+    outline-offset: -1px;
+}`],
                 canvas: {
                     styles: [`
           body {
-            overflow: hidden; /* 🔥 Запрещаем выход элементов за пределы */
+            overflow: hidden; 
           }
           .gjs-cv-canvas {
-            width: 210mm;  /* 🔥 Устанавливаем фиксированную ширину (A4) */
-            height: 297mm; /* 🔥 Устанавливаем фиксированную высоту */
+            width: 210mm;  
+            height: 297mm; 
             margin: auto;
            
-            overflow: hidden; /* 🔥 Запрещаем вылет элементов за границы */
+            overflow: hidden; 
           }
+          
+        
           
         `]
                 },
@@ -146,6 +150,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
 
             });
+
 
 
             setTimeout(() => {
@@ -480,21 +485,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             }
 
 
-            // const updateBandsState = () => {
-            //     const components = editor.getComponents();
-            //     setUsedBands({
-            //         reportTitle: components.some(c => c.get('type') === 'reportTitle-band-block'),
-            //         headerPage: components.some(c => c.get('type') === 'pageHeader-band-block'),
-            //         footerPage: components.some(c => c.get('type') === 'pageFooter-band-block'),
-            //         reportSummary: components.some(c => c.get('type') === 'reportSummary-band-block')
-            //     });
-            // };
-
-//             editor.on('component:add component:remove ', updateBandsState);
-
             //парно удялем бэнд и его описание
             editor.on('component:remove', (component) => {
-
 
 
                 if (component.attributes?.band === 'true' ||
@@ -639,7 +631,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 restrictDragToCanvas(event.target);
             }));
 
-            console.log(editor.Panels.getPanel('options'))
+            // console.log(editor.Panels.getPanel('options'))
 
 
             editor.Panels.removeButton('options', 'preview');
@@ -726,7 +718,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             setTimeout(() => {
 
 
-
                 const page = pages.find((p) => p.id === id);
                 if (page) {
                     editor.setComponents(page.content);
@@ -767,8 +758,11 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                     dbPassword: settingDB.password,
                     dbDriver: settingDB.driverClassName,
                     sql,
+                    reportName: reportName,
+                    reportCategory: reportCategory,
                     content: updatedPages[0].content,
                     styles: updatedPages[0].styles,
+                    parameters: parameters
                 }
 
                 try {
@@ -819,8 +813,11 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                             driverClassName: importedPages.dbDriver
                         });
                         setSql(importedPages.sql);
+                        setReportName(importedPages.reportName);
+                        setReportCategory(importedPages.reportCategory)
                         editorView.setComponents(importedPages.content);
                         editorView.setStyle(importedPages.styles);
+                        setParameters(importedPages.parameters)
 
                     };
                 } catch (error) {
@@ -858,36 +855,79 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             if (editorView) updateCanvasZoom(zoom);
         }, [zoom]);
 
+        const exportHtml = () => {
+            // Собираем все стили (убираем дубликаты)
+            const uniqueStyles = [...new Set(pages.map(p => p.styles || ''))].join('\n');
 
-        // Функция экспорта HTML
-        const exportHtml = (editor) => {
-            // Получаем HTML контент
-            const htmlContent = editor.getHtml();
+            let pagesHtml = "";
+            for (let i = 0; i < pages.length; i++) {
+                pagesHtml += "<div class='page-container'>";
+                pagesHtml += pages[i].content;
+                pagesHtml += "</div> ";
+            }
 
-            // Получаем CSS, включая классы
-            const cssContent = editor.getCss();
-
-            // Создаем финальный HTML с добавленными стилями
             const finalHtml = `
-      <html>
-        <head>
-          <style>
-            ${cssContent} <!-- Вставляем все стили -->
-          </style>
-        </head>
-        <body>
-          ${htmlContent} <!-- Вставляем HTML контент -->
-        </body>
-      </html>
+         <!DOCTYPE html>
+                    <html lang="ru">
+                    <head>
+                        <meta charset="UTF-8" />
+                        <style>
+                            @page { 
+                                size: A4;
+                                margin: 0;
+                            }
+                            body, html {
+                                /*font-family: Arial, 'Times New Roman', sans-serif;*/
+                                margin: 0;
+                                padding: 0;
+                                left: 0;
+                                right: 0;
+                                display: flex;
+                                align-items: center;
+                                flex-direction: column;
+                            }
+                            .page-container {
+                                 position: relative;
+                                 page-break-after: always;
+                                 height: 297mm;
+                                 overflow: hidden;
+                                 margin: 0;
+                                 padding: 0;
+                                 left: 0;
+                                 right: 0;
+                                 box-sizing: border-box;
+                            }
+                            hr {
+                                margin-top: 20px;
+                                margin-bottom: 20px;
+                            }
+                            ${uniqueStyles}
+                        </style>
+                    </head>
+                    <body> 
+                        ${pagesHtml}
+                    </body>
+                    </html>
     `;
 
-            // Создаем Blob и ссылку для скачивания
-            const blob = new Blob([finalHtml], {type: "text/html"});
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "exported_with_css.html"; // Имя файла
-            link.click();
+            downloadFile(finalHtml, 'report.html');
         };
+
+        function downloadFile(content, filename) {
+            const blob = new Blob([content], {type: 'text/html;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => {
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+
 
         // Функция экспорта PDF
         const exportPDF = async (editor) => {
@@ -1199,7 +1239,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             try {
                 const response = await fetch(`${API_URL}/api/pdf/generate`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(updatedPages),
                 });
 
@@ -1234,7 +1274,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             try {
                 const response = await fetch(`${API_URL}/api/pdf/generate`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(updatedPages),
                 });
 //нужно доделать чтобы отображались русские символы и линия чтобы была до края при 100%
@@ -1393,11 +1433,10 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                    pointer-events: none;
               ">DataBand: ${tableName}</div>
               
-              <div data-band="true" id="${tableName}" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
-<!--                 <h2 style="position: absolute; top: 20px; left: 20px; margin: 0px">Начни создание отчета</h2>-->
-<!--                 <p class="data-band-field" style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажи поле из запроса в двойных скобках: {{field_1}}</p>-->
-<!--                 <p class="data-band-field" style="position: absolute; top: 60px; left: 500px; margin: 0px">Повтори действие: {{field_2}}</p>-->
-              
+              <div data-band="true" id="${tableName}" draggable="false" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
+                 <h2 style="position: absolute; top: 20px; left: 20px; margin: 0px">Начни создание отчета</h2>
+                 <p class="data-band-field" style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажи поле из запроса в двойных скобках: {{field_1}}</p>
+                 <p class="data-band-field" style="position: absolute; top: 60px; left: 500px; margin: 0px">Повтори действие: {{field_2}}</p>
               </div>
       `,
                         // script: function () {
@@ -1413,10 +1452,10 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             });
 
             const components = editorView.getComponents();
-            if(usedBands.reportSummary && usedBands.footerPage){
-                components.add('<div data-gjs-type="data-band-block"></div>', {at: components.length-2});
-            } else if(usedBands.reportSummary) {
-                components.add('<div data-gjs-type="data-band-block"></div>', {at: components.length-1});
+            if (usedBands.reportSummary && usedBands.footerPage) {
+                components.add('<div data-gjs-type="data-band-block"></div>', {at: components.length - 2});
+            } else if (usedBands.reportSummary) {
+                components.add('<div data-gjs-type="data-band-block"></div>', {at: components.length - 1});
             } else {
                 components.add('<div data-gjs-type="data-band-block"></div>');
             }
@@ -1455,7 +1494,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             const components = editorView.getComponents();
             if (usedBands.headerPage === false) {
-                if(usedBands.reportTitle){
+                if (usedBands.reportTitle) {
                     components.add('<div data-gjs-type="pageHeader-band-block"></div>', {at: 1}); // Добавляем вторым элементом
                 } else {
                     components.add('<div data-gjs-type="pageHeader-band-block"></div>', {at: 0}); // Добавляем первым элементом
@@ -1573,6 +1612,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             }
         }
 
+
         function renderDataBand(htmlTemplate, dataArray, css) {
 
             const parser = new DOMParser();
@@ -1584,14 +1624,11 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             descriptionBands.forEach(description => {
                 description.remove();
             })
-            // console.log(bands)
-
 
             dataBands.forEach(band => {
                 const bandHtml = band.innerHTML;
 
                 const bandId = band.getAttribute('id');
-
                 dataArray.forEach(item => {
                     if (bandId.toLowerCase().startsWith(item.tableName.toLowerCase())) {
 
@@ -1605,7 +1642,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                             let bandCopy = band.cloneNode()
                             bandCopy.innerHTML = instanceHtml;
                             doc.body.appendChild(bandCopy)
-
                         });
                     }
                 });
@@ -1645,14 +1681,21 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             }
         }
 
+        useEffect(()=>{
+            if(editorView){
+                editorView.UndoManager.clear(); // Полностью очищаем историю undo/redo
+            }
+        },[pages])
+
 
         function exitPreviewMode() {
             setIsPreviewMode(!isPreviewMode);
-
+            setCurrentPage(1)
             setPages(oldPages);
 
             editorView.setComponents(oldPages[0].content);
             editorView.setStyle(oldPages[0].styles);
+            defineBands(oldPages[0].content);
 
             document.querySelector('.gjs-pn-panels').style.display = '';
             document.querySelector('.gjs-pn-views-container').style.display = '';
@@ -1660,18 +1703,12 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         }
 
         async function clickEnterPreviewMode(parameters) {
-            // setIsModalParameter(false);
-            // setIsLoading(true);
-            // await fetchReportTemplate(selectName);
-            // console.log(parameters)
-            // await fetchReportData(selectName, parameters);
-
             setIsModalParameter(true);
         }
 
         async function enterPreviewMode(parameters) {
             setIsModalParameter(false);
-            // switchPage(1)
+
             setIsPreviewMode(!isPreviewMode);
             const data = await fetchReportData("", "", settingDB.url, settingDB.username,
                 settingDB.password, settingDB.driverClassName, sql, "", "", parameters)
@@ -1681,62 +1718,44 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             }
 
             render(data, editorView.getHtml(), editorView.getCss());
-            document.querySelector('.gjs-pn-panels').style.display = 'none';
-            document.querySelector('.gjs-pn-views-container').style.display = 'none';
-            editorView.getWrapper().view.$el.css('pointer-events', 'none');
+            disableEditor();
         }
-
-        // async function enterPreviewMode() {
-        //     // switchPage(1)
-        //     setIsPreviewMode(!isPreviewMode);
-        //     const data = await fetchReportData("","", settingDB.url, settingDB.username, settingDB.password, settingDB.driverClassName, sql, "", "")
-        //     if (!data) {
-        //         setIsPreviewMode(false);
-        //         return
-        //     }
-        //
-        //     render(data, editorView.getHtml(), editorView.getCss());
-        //     document.querySelector('.gjs-pn-panels').style.display = 'none';
-        //     document.querySelector('.gjs-pn-views-container').style.display = 'none';
-        //     editorView.getWrapper().view.$el.css('pointer-events', 'none');
-        // }
 
         function enterViewMode(data, html, css) {
-// console.log(html)
-// console.log(css)
             setIsPreviewMode(true);
+
             render(data, html, css);
+            //Почему-то при просмотре через отчеты не учитывается футер страницы
+            disableEditor();
+        }
+
+        function disableEditor() {
             document.querySelector('.gjs-pn-panels').style.display = 'none';
             document.querySelector('.gjs-pn-views-container').style.display = 'none';
             editorView.getWrapper().view.$el.css('pointer-events', 'none');
         }
-
 
         function render(data, html, css) {
 
             let startTime = performance.now();
-
 
             defineBands(html);
             setOldPage([{id: 1, content: html, styles: css}])
 
             css = transformIDs(css);
             setTimeout(() => {
-                // editorView.setComponents(renderedHtml);
                 editorView.setStyle(css);
             }, 100); // Небольшая задержка для обновления состояния
 
-            let renderedHtml = renderDataBand(html, data.tableData, css);
+            renderDataBand(html, data.tableData, css);
 
             let endTime = performance.now();
             const seconds = (endTime - startTime) / 1000; // Преобразуем миллисекунды в секунды
             console.log("Рендер: " + seconds.toFixed(3))
-
         }
 
 
         function transformIDs(css) { //т.к. нужно применять ко всем дубликатам бэнда
-            // console.log(css)
             return css.replace(/(?<!:)\#([a-zA-Z_][\w-]+)/g, (match, id) => {
                 return `[id^='${id}']`; // заменяем #id на [id^='id']
             });
@@ -1776,7 +1795,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         function createTempContainer() {
             const tempDiv = document.createElement("div");
             tempDiv.style.position = 'relative';
-                tempDiv.style.height = "297mm"
+            tempDiv.style.height = "297mm"
 
             const headerContainer = document.createElement('div');
             headerContainer.id = 'header-container';
@@ -1795,9 +1814,9 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         }
 
         function getFooterBandHeight() {
-            if (usedBands.footerPage === true) {
-                var footerPage = document.getElementById('pageFooter');
-                if (footerPage != null) return footerPage.offsetHeight
+            let footerPage = document.getElementById('pageFooter');
+            if (footerPage != null) {
+                return footerPage.offsetHeight
             } else {
                 return 0;
             }
@@ -1806,20 +1825,26 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         function defineBands(html) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-console.log("defineBands")
-            doc.getElementById('pageHeader') ? setUsedBands(prevState => ({...prevState, headerPage: true})) : setUsedBands(prevState => ({...prevState, headerPage: false}))
-            doc.getElementById('reportTitle') ? setUsedBands(prevState => ({...prevState, reportTitle: true})) : setUsedBands(prevState => ({...prevState, reportTitle: false}))
-            doc.getElementById('reportSummary') ? setUsedBands(prevState => ({...prevState, reportSummary: true})) : setUsedBands(prevState => ({...prevState, reportSummary: false}))
-            doc.getElementById('pageFooter') ? setUsedBands(prevState => ({...prevState, footerPage: true})) : setUsedBands(prevState => ({...prevState, footerPage: false}))
+            doc.getElementById('pageHeader') ? setUsedBands(prevState => ({
+                ...prevState,
+                headerPage: true
+            })) : setUsedBands(prevState => ({...prevState, headerPage: false}))
+            doc.getElementById('reportTitle') ? setUsedBands(prevState => ({
+                ...prevState,
+                reportTitle: true
+            })) : setUsedBands(prevState => ({...prevState, reportTitle: false}))
+            doc.getElementById('reportSummary') ? setUsedBands(prevState => ({
+                ...prevState,
+                reportSummary: true
+            })) : setUsedBands(prevState => ({...prevState, reportSummary: false}))
+            doc.getElementById('pageFooter') ? setUsedBands(prevState => ({
+                ...prevState,
+                footerPage: true
+            })) : setUsedBands(prevState => ({...prevState, footerPage: false}))
         }
 
-        useEffect(() => {
-            console.log("usedBands")
-            console.log(usedBands)
-        }, [usedBands])
 
         function splitIntoA4Pages(htmlString, css, bands) {
-
 
 
             return new Promise((resolve) => {
@@ -1827,11 +1852,11 @@ console.log("defineBands")
 
                 const tempContainer = createTempContainer();
                 tempContainer.style.cssText = `
-            position: absolute;
-            left: -9999px;
-            width: 794px;
-            visibility: hidden;
-        `;
+                        position: absolute;
+                        left: -9999px;
+                        width: 794px;
+                        visibility: hidden;
+                `;
 
                 const bodyContainer = tempContainer.querySelector('#body-container');
                 bodyContainer.innerHTML = `<style>${css}</style>${htmlString}`;
@@ -1844,14 +1869,15 @@ console.log("defineBands")
                     reportFooter: getBandHeight(bands, 'reportSummary')
                 };
 
+                console.log(bandHeights)
 
 
                 const measureDiv = createTempContainer();
                 measureDiv.style.cssText = `
-            position: absolute;
-            visibility: hidden;
-            width: 794px;
-        `;
+                        position: absolute;
+                        visibility: hidden;
+                        width: 794px;
+                `;
                 document.body.appendChild(measureDiv);
 
                 try {
@@ -1866,7 +1892,7 @@ console.log("defineBands")
                         return;
                     }
 
-                    // 6. Разбиение на страницы
+                    //  Разбиение на страницы
                     const pages = [];
                     let currentPage = createPageTemplate(1, css);
                     let currentPageHeight = 0;
@@ -1918,15 +1944,15 @@ console.log("defineBands")
                         finalizePage(currentPage, pages, bands, false, false);
                     }
 
-                    // 7. Сохраняем результат
+                    // Сохраняем результат
                     setPages(pages);
                     setCurrentPage(1);
                     resolve(pages[0]?.content || '');
 
                 } finally {
-                    // 8. Очистка
                     safeRemove(tempContainer);
                     safeRemove(measureDiv);
+
                     const duration = (performance.now() - startTime) / 1000;
                     console.log(`Разбиение выполнено за ${duration.toFixed(3)} сек`);
                 }
@@ -1950,7 +1976,7 @@ console.log("defineBands")
             temp.appendChild(band)
             document.body.appendChild(temp);
             let height;
-            if(type === 'pageFooter'){
+            if (type === 'pageFooter') {
                 height = getFooterBandHeight()
             } else {
                 height = temp.offsetHeight;
@@ -1989,7 +2015,7 @@ console.log("defineBands")
         }
 
         function finalizePage(page, pages, bands, showReportHeader, showReportFooter) {
-            if(pages.length === 0) {
+            if (pages.length === 0) {
                 insertBand(page.container, bands, true, showReportFooter);
             } else {
                 insertBand(page.container, bands, showReportHeader, showReportFooter);
@@ -2009,7 +2035,6 @@ console.log("defineBands")
                 console.warn('Ошибка при удалении элемента:', error);
             }
         }
-
 
 
 //работать пробовать с этим методом
@@ -2275,7 +2300,6 @@ console.log("defineBands")
                     }
 
                     let updateHeight = getFooterBandHeight() + tempDiv.scrollHeight;
-                    console.log(getFooterBandHeight())
 
                     // Если элемент не влезает - начинаем новую страницу
                     if (updateHeight + nodeHeight > maxHeight) {
@@ -2462,7 +2486,10 @@ console.log("defineBands")
 
                             {previewMode && <button onClick={() => {
                                 onCloseReport();
-                                setPages([])
+                                setPages([
+                                    {id: 1, content: "", styles: ""}
+                                ])
+                                switchPage(1)
                             }}>Закрыть отчет</button>}
                         </div>
 

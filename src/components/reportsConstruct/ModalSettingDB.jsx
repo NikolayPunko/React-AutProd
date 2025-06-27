@@ -1,7 +1,37 @@
 import {styleInput, styleLabelInput} from "../../data/styles";
-import React from "react";
+import React, {useEffect, useState} from "react";
+import {CustomStyle} from "../../data/styleForSelect";
+import Select from "react-select";
 
 export function ModalSettingDB({ onChangeField, onClose, url, username, password, driverClassName}) {
+
+
+    let options = [
+        {value: "org.postgresql.Driver", label: "PostgreSQL"},
+        {value: "com.microsoft.sqlserver.jdbc.SQLServerDriver", label: "SQL Server"},
+        // {value: "My SQL", label: "My SQL"}
+    ]
+
+    const [selectValue, setSelectValue] = useState(options[0]);
+
+    const handleChangeSelect = (event) => {
+        if (event != null) {
+            setSelectValue(event);
+            onChangeField('driverClassName', event.value)
+        } else {
+            setSelectValue(options[1]);
+            onChangeField('driverClassName', options[1].value)
+        }
+    };
+
+    const setValueSelect = (driverOld) => {
+        let x = options.find(x => x.value === driverOld)
+        setSelectValue(x);
+    }
+
+    useEffect(() => {
+        setValueSelect(driverClassName);
+    },[])
 
     return (
         <>
@@ -40,12 +70,14 @@ export function ModalSettingDB({ onChangeField, onClose, url, username, password
                         />
                     </div>
                     <div className="flex flex-row items-center">
-                        <span className={styleLabelInput + "w-20 mr-2"}>DriverClass</span>
-                        <input
-                            className={styleInput + "w-80"}
-                            value={driverClassName}
-                            onChange={(e) => onChangeField('driverClassName', e.target.value)}
-                        />
+                        <span className={styleLabelInput + "w-20 mr-2"}>Database</span>
+                        <Select className="text-sm font-medium w-80"
+                                placeholder={"Все статусы"}
+                                value={selectValue}
+                                onChange={handleChangeSelect}
+                                styles={CustomStyle }
+                                options={options}
+                                isClearable={false} isSearchable={false}/>
                     </div>
 
                     <div className="flex flex-row justify-end mt-4">
