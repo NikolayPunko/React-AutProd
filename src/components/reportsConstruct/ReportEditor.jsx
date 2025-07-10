@@ -33,6 +33,8 @@ import Loading from "../loading/Loading";
 import {decryptData, encryptData} from "../../utils/Сrypto";
 import {ModalParameter} from "./ModalParameter";
 import {API_URL} from "../../http";
+import {Editor} from "@monaco-editor/react";
+import {JavaEditor} from "../javaEditor/JavaEditor";
 
 
 // Добавляем шрифт Roboto в виртуальную файловую систему pdfmake
@@ -66,7 +68,11 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         const [isModalDownloadReport, setIsModalDownloadReport] = useState(false);
         const [isModalSettingDB, setIsModalSettingDB] = useState(false);
         const [isModalSQL, setIsModalSQL] = useState(false);
+        const [isJavaEditor, setIsJavaEditor] = useState(false);
         const [modalMsg, setModalMsg] = useState('');
+
+        const [isSqlMode, setIsSqlMode] = useState(false);
+        const [script, setScript] = useState("");
 
         const [optReportsName, setOptReportsName] = useState([]);
 
@@ -150,7 +156,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
 
             });
-
 
 
             setTimeout(() => {
@@ -1681,11 +1686,11 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             }
         }
 
-        useEffect(()=>{
-            if(editorView){
+        useEffect(() => {
+            if (editorView) {
                 editorView.UndoManager.clear(); // Полностью очищаем историю undo/redo
             }
-        },[pages])
+        }, [pages])
 
 
         function exitPreviewMode() {
@@ -1723,9 +1728,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
         function enterViewMode(data, html, css) {
             setIsPreviewMode(true);
-
             render(data, html, css);
-            //Почему-то при просмотре через отчеты не учитывается футер страницы
             disableEditor();
         }
 
@@ -1846,7 +1849,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
         function splitIntoA4Pages(htmlString, css, bands) {
 
-
             return new Promise((resolve) => {
                 const startTime = performance.now();
 
@@ -1869,7 +1871,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                     reportFooter: getBandHeight(bands, 'reportSummary')
                 };
 
-                console.log(bandHeights)
+                // console.log(bandHeights)
 
 
                 const measureDiv = createTempContainer();
@@ -1939,12 +1941,10 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         }
                     }
 
-                    // Финализируем последнюю страницу
                     if (currentPage.container.querySelector('#body-container').childNodes.length > 0) {
                         finalizePage(currentPage, pages, bands, false, false);
                     }
 
-                    // Сохраняем результат
                     setPages(pages);
                     setCurrentPage(1);
                     resolve(pages[0]?.content || '');
@@ -2035,180 +2035,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 console.warn('Ошибка при удалении элемента:', error);
             }
         }
-
-
-//работать пробовать с этим методом
-
-//         function splitIntoA4Pages(htmlString, css, bands) {
-//             return new Promise((resolve) => {
-//                 const startTime = performance.now();
-//
-//                 // 1. Создаем и настраиваем контейнеры
-//                 const tempContainer = createTempContainer();
-//                 tempContainer.style.cssText = `
-//             position: absolute;
-//             left: -9999px;
-//             width: 794px;
-//             visibility: hidden;
-//         `;
-//
-//                 const bodyContainer = tempContainer.querySelector('#body-container');
-//                 bodyContainer.innerHTML = `<style>${css}</style>${htmlString}`;
-//                 document.body.appendChild(tempContainer);
-//
-//                 // 2. Предварительно вычисляем высоты всех бэндов
-//                 const bandHeights = {
-//                     header: getBandHeight(bands, 'header'),
-//                     footer: getBandHeight(bands, 'footer'),
-//                     reportHeader: getBandHeight(bands, 'report-header'),
-//                     reportFooter: getBandHeight(bands, 'report-footer')
-//                 };
-//
-//                 // 3. Создаем контейнер для измерений
-//                 const measureDiv = createTempContainer();
-//                 measureDiv.style.cssText = `
-//             position: absolute;
-//             visibility: hidden;
-//             width: 794px;
-//         `;
-//                 document.body.appendChild(measureDiv);
-//
-//                 try {
-//                     // 4. Первоначальная вставка бэндов для измерения
-//                     insertBand(tempContainer, bands, true, true);
-//
-//                     // 5. Проверка на одну страницу
-//                     const maxHeight = 1123; // Высота A4
-//                     const initialHeight = tempContainer.scrollHeight;
-//
-//                     if (initialHeight <= maxHeight) {
-//                         const result = removeStyle(tempContainer.innerHTML);
-//                         resolve(result);
-//                         return;
-//                     }
-//
-//                     // 6. Разбиение на страницы
-//                     const pages = [];
-//                     let currentPage = createPageTemplate(1, css);
-//                     let currentPageHeight = 0;
-//                     const childNodes = Array.from(bodyContainer.childNodes);
-//
-//                     for (let i = 0; i < childNodes.length; i++) {
-//                         const node = childNodes[i];
-//                         const isLastNode = i === childNodes.length - 1;
-//
-//                         // Измеряем высоту узла
-//                         measureDiv.innerHTML = '';
-//                         measureDiv.appendChild(node.cloneNode(true));
-//                         const nodeHeight = measureDiv.scrollHeight;
-//
-//                         // Рассчитываем высоту с учетом бэндов
-//                         const isFirstPage = currentPage.id === 1;
-//                         const currentBandsHeight = calculateCurrentBandsHeight(isFirstPage, isLastNode, bandHeights);
-//                         const totalHeight = currentPageHeight + nodeHeight + currentBandsHeight;
-//
-//                         // Если не помещается - сохраняем текущую страницу
-//                         if (totalHeight > maxHeight) {
-//                             finalizePage(currentPage, pages, bands, false, false);
-//
-//                             // Создаем новую страницу
-//                             currentPage = createPageTemplate(pages.length + 1, css);
-//                             currentPageHeight = 0;
-//
-//                             // Добавляем обычный header (не report header)
-//                             insertBand(currentPage.container, bands, false, false);
-//                             currentPageHeight += bandHeights.header;
-//                         }
-//
-//                         // Добавляем узел на страницу
-//                         currentPage.container.querySelector('#body-container').appendChild(node.cloneNode(true));
-//                         currentPageHeight += nodeHeight;
-//
-//                         // Если это последний узел - добавляем report footer
-//                         if (isLastNode) {
-//                             insertBand(currentPage.container, bands, false, true);
-//                             currentPageHeight += bandHeights.reportFooter;
-//                         }
-//                     }
-//
-//                     // Финализируем последнюю страницу
-//                     if (currentPage.container.querySelector('#body-container').childNodes.length > 0) {
-//                         finalizePage(currentPage, pages, bands, false, false);
-//                     }
-//
-//                     // 7. Сохраняем результат
-//                     setPages(pages);
-//                     setCurrentPage(1);
-//                     resolve(pages[0]?.content || '');
-//
-//                 } finally {
-//                     // 8. Очистка
-//                     safeRemove(tempContainer);
-//                     safeRemove(measureDiv);
-//                     const duration = (performance.now() - startTime) / 1000;
-//                     console.log(`Разбиение выполнено за ${duration.toFixed(3)} сек`);
-//                 }
-//             });
-//         }
-//
-// // Вспомогательные функции
-//         function getBandHeight(bands, type) {
-//             const band = Array.isArray(bands) ? bands.find(b => b.type === type) : null;
-//             if (!band) return 0;
-//
-//             const temp = document.createElement('div');
-//             temp.innerHTML = band.html;
-//             temp.style.position = 'absolute';
-//             temp.style.visibility = 'hidden';
-//             document.body.appendChild(temp);
-//             const height = temp.offsetHeight;
-//             document.body.removeChild(temp);
-//             return height;
-//         }
-//
-//         function createPageTemplate(id, css) {
-//             const container = createTempContainer();
-//             return {
-//                 id,
-//                 content: "",
-//                 styles: css,
-//                 container
-//             };
-//         }
-//
-//         function calculateCurrentBandsHeight(isFirstPage, isLastNode, bandHeights) {
-//             let height = 0;
-//
-//             if (isFirstPage) {
-//                 height += bandHeights.reportHeader; // Заголовок отчета
-//             }
-//
-//             height += bandHeights.header; // Обычный заголовок страницы
-//
-//             if (isLastNode) {
-//                 height += bandHeights.reportFooter; // Футер отчета
-//             }
-//
-//             return height;
-//         }
-//
-//         function finalizePage(page, pages, bands, showReportHeader, showReportFooter) {
-//             insertBand(page.container, bands, showReportHeader, showReportFooter);
-//             page.content = page.container.innerHTML;
-//             pages.push(page);
-//             safeRemove(page.container);
-//         }
-//
-//         function safeRemove(element) {
-//             try {
-//                 if (element?.parentNode) {
-//                     element.parentNode.removeChild(element);
-//                 }
-//             } catch (error) {
-//                 console.warn('Ошибка при удалении элемента:', error);
-//             }
-//         }
-
 
         function splitIntoA4Pages2(htmlString, css, bands) {
             return new Promise((resolve) => {
@@ -2369,7 +2195,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                     await ReportService.createReportTemplate(reportName, reportCategory,
                         settingDB.url, settingDB.username, encryptData(settingDB.password), settingDB.driverClassName, sql,
                         parameters,
-                        updatedPages[0].content, updatedPages[0].styles);
+                        updatedPages[0].content, updatedPages[0].styles,
+                        script, isSqlMode);
                     setModalMsg("Документ успешно отправлен!");
 
                 } catch (error) {
@@ -2395,6 +2222,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 });
                 setSql(response.data.sql);
                 setParameters(JSON.parse(response.data.parameters));
+                setScript(JSON.parse(response.data.script));
+                setIsSqlMode(JSON.parse(response.data.sqlMode));
                 defineBands(response.data.content);
             } catch (error) {
                 setModalMsg("Ошибка загрузки отчета с сервера! Попробуйте еще раз.")
@@ -2457,11 +2286,25 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         }, [sql]);
 
 
+        const selectScriptMethod = () => {
+            setIsSqlMode(false);
+        }
+
+        const selectSQLMethod = () => {
+            setIsSqlMode(true);
+        }
+
+
+
         return (
             <div>
                 {isLoading && <Loading/>}
 
-                {!isLoading &&
+                {isJavaEditor && <JavaEditor onClose={() => setIsJavaEditor(false)} parameters={parameters}
+                                             setParameters={setParameters} onChange={(e) => setScript(e)}
+                                             script={script}/>}
+
+                {!isLoading && !isJavaEditor &&
                     <div className=" gjs-two-color gjs-one-bg flex flex-row justify-between py-1 gjs-pn-commands">
                         <div className="flex justify-start text-center ml-2 w-1/3">
                             {!isPreviewMode &&
@@ -2551,26 +2394,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         </div>
 
                     </div>}
-                {/*<div className=" gjs-two-color gjs-one-bg flex flex-row justify-start py-1 gjs-pn-commands gap-x-2">*/}
-                {/*    <button onClick={() => {*/}
-                {/*        addDataBand(tables[0])*/}
-                {/*    }}>DataBandT1*/}
-                {/*    </button>*/}
-                {/*    <button onClick={() => {*/}
-                {/*        addDataBand(tables[1])*/}
-                {/*    }}>DataBandT2*/}
-                {/*    </button>*/}
-                {/*    <button onClick={addPageHeaderBand}>Заголовок стр.</button>*/}
-                {/*    <button onClick={addReportTitleBand}>Заголовок отчета</button>*/}
-                {/*    <button onClick={addPageFooterBand}>Подвал стр.</button>*/}
-                {/*    <button onClick={addReportSummaryBand}>Подвал отчета</button>*/}
 
-                {/*    {!isPreviewMode && <button onClick={enterPreviewMode}>Просмотр</button>}*/}
-                {/*    {isPreviewMode && <button onClick={exitPreviewMode}>Редактор</button>}*/}
-
-
-                {/*</div>*/}
-                {!isPreviewMode &&
+                {!isPreviewMode && !isJavaEditor &&
                     <div
                         className="pl-2 gjs-two-color gjs-one-bg flex flex-row justify-between py-1 gjs-pn-commands ">
                         <div className="flex flex-row gap-x-2">
@@ -2608,32 +2433,59 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                             </div>
                         </div>
                         <div className="flex flex-row gap-x-2 pr-2">
-                            <div className="hover:bg-gray-200 flex-col justify-center justify-items-center">
-                                <button onClick={showModalSettingDB}
-                                        className="flex flex-col justify-between justify-items-center">
+
+                            {isSqlMode && <>
+                                <div className="hover:bg-gray-200 flex-col justify-center justify-items-center">
+                                    <button onClick={showModalSettingDB}
+                                            className="flex flex-col justify-between justify-items-center">
                                 <span className="gjs-pn-btn hover:bg-gray-200 flex justify-center ">
                                         <i className="fa-lg fa-solid fa-server pt-3"></i>
                                 </span>
-                                    <span className="text-xs font-medium px-1">Конфигурация БД</span>
-                                </button>
-                            </div>
-                            <div className="hover:bg-gray-200 flex-col justify-center justify-items-center">
-                                <button onClick={showModalSQL}
-                                        className="flex flex-col justify-between justify-items-center">
+                                        <span className="text-xs font-medium px-1">Конфигурация БД</span>
+                                    </button>
+                                </div>
+                                <div className="hover:bg-gray-200 flex-col justify-center justify-items-center">
+                                    <button onClick={showModalSQL}
+                                            className="flex flex-col justify-between justify-items-center">
                                 <span className="gjs-pn-btn hover:bg-gray-200 flex justify-center ">
                                         <i className="fa-lg fa-solid fa-database pt-3"></i>
                                 </span>
-                                    <span className="text-xs font-medium px-1">SQL запрос</span>
+                                        <span className="text-xs font-medium px-1">SQL запрос</span>
+                                    </button>
+                                </div>
+                            </>}
+
+                            {!isSqlMode && <>
+                                <div className="hover:bg-gray-200 flex-col justify-center justify-items-center">
+                                    <button onClick={() => setIsJavaEditor(true)}
+                                            className="flex flex-col justify-between justify-items-center">
+                                <span className="gjs-pn-btn hover:bg-gray-200 flex justify-center ">
+                                        <i className="fa-lg fa-solid fa-keyboard pt-3"></i>
+                                </span>
+                                        <span className="text-xs font-medium px-1">Java редактор</span>
+                                    </button>
+                                </div>
+                            </>}
+                        </div>
+                        <div className="flex flex-row gap-x-2 pr-3 py-3">
+                            <div className="flex flex-row  ">
+                                <button onClick={selectSQLMethod}
+                                        className={isSqlMode ? "w-16 rounded-l-xl text-xs text-white font-medium shadow-inner bg-blue-800 hover:bg-blue-700" : "w-16 rounded-l-xl text-xs font-medium shadow-inner border border-slate-400 hover:bg-gray-200"}
+                                >SQL
+                                </button>
+                                <button onClick={selectScriptMethod}
+                                        className={isSqlMode ? "w-16 rounded-r-xl text-xs font-medium shadow-inner border border-slate-400 hover:bg-gray-200" : "w-16 rounded-r-xl text-xs text-white font-medium shadow-inner bg-blue-800 hover:bg-blue-700"}
+                                >Скрипт
                                 </button>
                             </div>
-                        </div>
-                        <div className="flex flex-row gap-x-2 pr-2">
                         </div>
 
 
                     </div>}
 
-                <div id="editor" ref={editorRef}/>
+                <div className={!isJavaEditor ? 'block' : 'hidden'}>
+                    <div id="editor" ref={editorRef}/>
+                </div>
 
 
                 {isModalSaveReport &&
