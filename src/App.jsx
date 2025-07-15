@@ -7,6 +7,7 @@ import {Context} from "./index";
 import PrivateRoute from "./components/PrivateRoute";
 import NotFound from "./pages/NotFound";
 import ReportsPage from "./pages/ReportsPage";
+import SchedulePage from "./pages/SchedulePage";
 
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
 
                     <Route path="/" element={<ReportsPage/>}/>
                     <Route path="/scheduler" element={<TaskSchedulerPage/>}/>
+                    <Route path="/scheduler2" element={<SchedulePage/>}/>
                     <Route path="/designer" element={<ReportDesignerPage/>}/>
                     <Route path="/" element={<PrivateRoute  />}>
 
