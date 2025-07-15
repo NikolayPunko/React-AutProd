@@ -1,4 +1,6 @@
 import Scheduler, {SchedulerData, ViewType, DATE_FORMAT, CellUnit} from "react-big-scheduler-stch";
+// import {Scheduler, SchedulerData, ViewType, DATE_FORMAT, CellUnit} from "react-big-schedule";
+
 import dayjs from "dayjs";
 // import "react-big-scheduler-stch/lib/css/style.css";
 import moment from 'moment';
@@ -13,6 +15,8 @@ import SchedulerService, {hardware, party, planByHardware, planByParty} from "..
 import Select from 'react-select';
 import {CustomStyle} from "../data/styleForSelect";
 import {useLocation, useNavigate} from "react-router-dom";
+import ReportService from "../services/ReportService";
+import {encryptData} from "../utils/Сrypto";
 
 moment.updateLocale('ru', {
     week: {
@@ -28,7 +32,7 @@ function TaskSchedulerPage() {
 
     const [isDisplayByHardware, setIsDisplayByHardware] = useState(false);
 
-    const [currentViewType, setCurrentViewType] = useState(ViewType.Month);
+    const [currentViewType, setCurrentViewType] = useState(ViewType.Day);
 
     const stylePartyBut = isDisplayByHardware ? "" : " bg-blue-600 text-white";
     const styleHardwareBut = isDisplayByHardware ? " bg-blue-600 text-white" : "";
@@ -40,6 +44,11 @@ function TaskSchedulerPage() {
 
     const [isLoading, setIsLoading] = useState(false);
 
+    const [isSolve, setIsSolve] = useState(false);
+    const [score, setScore] = useState("-0hard/-0medium/-0soft");
+    const [solverStatus, setSolverStatus] = useState("");
+
+
 
     //Пагинация для партий за период - день
     const [page, setPage] = useState(1);
@@ -48,9 +57,9 @@ function TaskSchedulerPage() {
 
     const schedulerData = new SchedulerData(
         // new dayjs().format(DATE_FORMAT) ,
-        new dayjs("2025-04-06"),
+        new dayjs("2025-05-25"),
         currentViewType, false, false, {
-            customCellWidth: '180',
+            // customCellWidth: '180',
             views: [
                 {viewName: 'День', viewType: ViewType.Day},
                 // {viewName: 'Неделя', viewType: ViewType.Week},
@@ -78,32 +87,15 @@ function TaskSchedulerPage() {
 
     useEffect(() => {
 
-
-        // SchedulerService.parseParty(eventsJson2).then((e)=>{
-        //     setParty(e);
-        //     viewModel.setResources(e);
-        // });
-        //
-        //  SchedulerService.parsePlanByParty(eventsJson2).then((e)=>{
-        //      setPlanByParty(e);
-        //      viewModel.setEvents(e);
-        //  });
-        //
-        //  SchedulerService.parseHardware(eventsJson2).then((e)=>{
-        //      setHardware(e);
-        //  });
-        //
-        //  SchedulerService.parsePlanByHardware(eventsJson2).then((e)=>{
-        //      setPlanByHardware(e);
-        //  });
-
-
         configScheduler();
         // schedulerData.setResources(party);
         // schedulerData.setEvents(planByParty);
+
         setViewModel(schedulerData);
+
         setRenderCounter(prevState => !renderCounter);
 
+        // onViewChange(SchedulerData, ViewType.Day)\
 
     }, []);
 
@@ -112,8 +104,8 @@ function TaskSchedulerPage() {
         schedulerData.setSchedulerLocale("ru");
         schedulerData.setCalendarPopoverLocale("by_BY"); // this uses antd [List of supported locales](https://ant.design/docs/react/i18n#supported-languages)
 
-        schedulerData.config.dayCellWidth = 20; //ширина клеток для дня
-        schedulerData.config.minuteStep = 5;
+        schedulerData.config.dayCellWidth = 5; //ширина клеток для дня
+        schedulerData.config.minuteStep = 1;
 
         //предложить идею если по партиям только одна синяя полоска то можно делать интервал хоть 5 минут, а когда переключаем по оборудованию тогда 1 минута
         //или делать пагинацию
@@ -133,7 +125,7 @@ function TaskSchedulerPage() {
         schedulerData.config.calendarPopoverEnabled = true;
         schedulerData.config.scrollToSpecialDaysjsEnabled = true;
         // schedulerData.config.tableHeaderHeight = 300;
-        schedulerData.config.schedulerWidth = "100%"
+        // schedulerData.config.schedulerWidth = "100px"
 
         // schedulerData.config.eventItemPopoverEnabled = false;
 
@@ -201,14 +193,59 @@ function TaskSchedulerPage() {
     }
 
     const onSelectDate = (schedulerData, date) => {
+        let result =  assignSettings(date);
+        // console.log(date)
         schedulerData.setDate(date);
         isDisplayByHardware ? schedulerData.setEvents(planByHardware) : schedulerData.setEvents(planByParty);
         // schedulerData.setEvents(events);
         setViewModel(schedulerData);
         setRenderCounter(prevState => !renderCounter);
 
-
     }
+
+    async function assignSettings(date) {
+        try {
+            const response = await SchedulerService.assignSettings(date);
+            return response.data;
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
+    async function fetchSolve(){
+        try {
+            await SchedulerService.solve();
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
+    async function fetchStopSolving(){
+        try {
+            await SchedulerService.stopSolving();
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
+    async function fetchPlan() {
+        try {
+            // setIsLoading(true);
+            const response = await SchedulerService.getPlan()
+            setDownloadedPlan(response.data)
+            setScore(response.data.score)
+            setSolverStatus(response.data.solverStatus)
+            // console.log(response.data)
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
+    useEffect(()=>{
+        if(solverStatus === "NOT_SOLVING"){
+            setIsSolve(false)
+        }
+    }, [solverStatus])
 
     const eventClicked = (schedulerData, event) => {
         // alert(`You just clicked an event: {id: ${event.id}, title: ${event.title}}`);
@@ -307,8 +344,8 @@ function TaskSchedulerPage() {
         setIsLoading(true)
         let currDate = viewModel.getViewDates().startDate
         setIsDisplayByHardware(false);
-        viewModel.config.dayCellWidth = 20;
-        viewModel.config.minuteStep = 5;
+        viewModel.config.dayCellWidth = 5;
+        viewModel.config.minuteStep = 1;
 
         let currViewType = viewModel.viewType
         viewModel.setViewType(ViewType.Month)
@@ -419,26 +456,26 @@ function TaskSchedulerPage() {
     useEffect(() => {
 
         if (downloadedPlan) {
-            SchedulerService.parseParty(downloadedPlan.data).then((e) => {
+            SchedulerService.parseParty(downloadedPlan).then((e) => {
                 setParty(e);
                 if (!isDisplayByHardware){
                     viewModel.viewType === 0 ? viewModel.setResources(e.slice(0, maxItemPage)) : viewModel.setResources(e)
                 }
             });
 
-            SchedulerService.parsePlanByParty(downloadedPlan.data).then((e) => {
+            SchedulerService.parsePlanByParty(downloadedPlan).then((e) => {
                 setPlanByParty(e);
                 if (!isDisplayByHardware)
                 viewModel.setEvents(e);
             });
 
-            SchedulerService.parseHardware(downloadedPlan.data).then((e) => {
+            SchedulerService.parseHardware(downloadedPlan).then((e) => {
                 setHardware(e);
                 if (isDisplayByHardware)
                     viewModel.setResources(e)
             });
 
-            SchedulerService.parsePlanByHardware(downloadedPlan.data).then((e) => {
+            SchedulerService.parsePlanByHardware(downloadedPlan).then((e) => {
                 setPlanByHardware(e);
                 if (isDisplayByHardware)
                     viewModel.setEvents(e);
@@ -507,17 +544,76 @@ function TaskSchedulerPage() {
         </div>
     );
 
+    function solve() {
+        fetchSolve();
+        setIsSolve(true);
+    }
+
+    useEffect(() => {
+        let intervalId;
+
+        if (isSolve) {
+            intervalId = setInterval(() => {
+                fetchPlan();
+            }, 2000);
+        }
+
+        return () => {
+            if (intervalId) clearInterval(intervalId); // Очистка при размонтировании или изменении isSolve
+        };
+    }, [isSolve]); // Зависимость от isSolve
+
+
+    function stopSolving(){
+        setIsSolve(false)
+        fetchStopSolving();
+    }
+
+    const ops1 = (schedulerData, event) => {
+        alert(`You just executed ops1 to event: {id: ${event.id}, title: ${event.title}}`);
+    };
+
+    const ops2 = (schedulerData, event) => {
+        alert(`You just executed ops2 to event: {id: ${event.id}, title: ${event.title}}`);
+    };
+
+
     let leftCustomHeader = (
-        <div className="w-40" style={{position: "relative", zIndex: 20}}>
-            <Select className="text-xs font-medium"
-                    placeholder={"Выберите план"}
-                    value={selectedOption}
-                    onChange={handleChangePlan}
-                    styles={CustomStyle}
-                    options={options}
-                    isClearable={false}
-                    isSearchable={false}
-            />
+        <div className="w-auto flex flex-row" style={{position: "relative", zIndex: 20}}>
+
+
+            {!isSolve &&
+                <div onClick={solve}>
+                    <button className="border h-[32px] w-28 border-gray-300 rounded-md text-white px-1 bg-green-600">
+                        <i className="fa-solid fa-play"></i>
+                        <span className="pl-1">Решать</span>
+                    </button>
+                </div>
+            }
+            {isSolve &&
+                <div onClick={stopSolving}>
+                    <button className="border h-[32px] w-28 border-gray-300 rounded-md text-white px-1 bg-red-600">
+                        <i className="fa-solid fa-stop"></i>
+                        <span className="pl-1">Остановить</span>
+                    </button>
+                </div>
+            }
+
+            <div className="flex items-center px-2">
+                <span className="font-medium">
+                    Счетчик: {score}
+                </span>
+            </div>
+
+            {/*<Select className="text-xs font-medium"*/}
+            {/*        placeholder={"Выберите план"}*/}
+            {/*        value={selectedOption}*/}
+            {/*        onChange={handleChangePlan}*/}
+            {/*        styles={CustomStyle}*/}
+            {/*        options={options}*/}
+            {/*        isClearable={false}*/}
+            {/*        isSearchable={false}*/}
+            {/*/>*/}
         </div>
     );
 
@@ -538,7 +634,7 @@ function TaskSchedulerPage() {
 
             <h1 className="font-bold text-center text-2xl mb-8">Планировщик задач</h1>
 
-            <div className="schedular-container">
+            <div className="schedular-container w-full">
                 <DndProvider backend={HTML5Backend}>
                     <Scheduler
                         ref={schedulerRef}
@@ -557,6 +653,12 @@ function TaskSchedulerPage() {
                         leftCustomHeader={rightCustomHeader}
                         // eventItemTemplateResolver={eventItemTemplateResolver} // Используем кастомизацию отображения
                         // eventItemPopoverTemplateResolver={}
+
+                        viewEventText="Ops 1"
+                        viewEvent2Text="Ops 2"
+                        viewEventClick={ops1}
+                        viewEvent2Click={ops2}
+
 
                     />
                 </DndProvider>
