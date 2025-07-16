@@ -1,11 +1,9 @@
 import {eventsJson2, resourse} from "../data/data";
 import {useState} from "react";
 import $api, {API_URL} from "../http";
-import $apiScheduler ,{API_URL_SCHEDULER} from "../http/scheduler";
+import $apiScheduler, {API_URL_SCHEDULER} from "../http/scheduler";
 import $apiSchedule from "../http/scheduler";
 import moment from "moment/moment";
-
-
 
 
 export const party = []
@@ -28,19 +26,7 @@ const exampleTask = {
     end_time: moment().add(1, 'hour'),
     canMove: false,
     canResize: false,
-    rightTitle : 'дополнительная информация о группе 1',
 
-    className: "important-task",
-    style: {
-        backgroundColor: "#ffcccc",
-        border: "1px solid #ff0000",
-    },
-    bgColor: "#ffd500",
-    color: "#ff0000",
-    tooltip: "Срочная задача!",
-    onClick: (event) => {
-        console.log("Клик по задаче 1");
-    },
 }
 
 export default class ScheduleService2 {
@@ -57,25 +43,27 @@ export default class ScheduleService2 {
             cleaning[i].id = filteredData[i].id + 'cl';
             cleaning[i].start_time = new Date(filteredData[i].startCleaningDateTime).getTime();
             cleaning[i].end_time = new Date(filteredData[i].startProductionDateTime).getTime();
-            cleaning[i].title = "Cleaning";
+            cleaning[i].title = "Мойка";
             cleaning[i].group = filteredData[i].id;
-            // cleaning[i].bgColor = "#e3a352";
             cleaning[i].itemProps = {
-                // these optional attributes are passed to the root <div /> of each item as <div {...itemProps} />
-                'data-custom-attribute': 'Random content',
-                'aria-hidden': true,
-                onDoubleClick: () => { console.log('You clicked double!') }, //это работает
-                className: 'bg-blue-600',
                 style: {
-                    background: 'fuchsia'
+                    background: 'rgb(197,57,57)',
+                    border: '1px solid #dcdcdc',
+                    whiteSpace: 'nowrap',      /* Запрет переноса строк */
+                    overflow: 'hidden',          /* Скрытие выходящего за границы текста */
+                    textOverflow: 'ellipsis',   /* Добавление "..." */
+                    maxWidth: '100%',           /* Ограничение ширины */
                 },
-                tip: 'additional information',
-                color: 'rgb(158, 14, 206)',
-                selectedBgColor: 'rgba(225, 166, 244, 1)',
-                bgColor : 'rgba(225, 166, 244, 0.6)',
+            };
+            cleaning[i].info = { //Доп информация
+                name: "Мойка",
+                start: filteredData[i].startCleaningDateTime,
+                end: filteredData[i].startProductionDateTime,
+                line: filteredData[i].line.name,
+                // quantity: obj.jobs[i].quantity,
             }
-
         }
+
 
         return cleaning;
     }
@@ -89,44 +77,40 @@ export default class ScheduleService2 {
         let cleaning = [];
         for (let i = 0; i < filteredData.length; i++) {
             cleaning[i] = Object.assign({}, exampleTask);
-            cleaning[i].id = i+"cleaning";
+            cleaning[i].id = i + "cleaning";
             cleaning[i].start_time = new Date(filteredData[i].startCleaningDateTime).getTime();
             cleaning[i].end_time = new Date(filteredData[i].startProductionDateTime).getTime();
-            cleaning[i].title = "Cleaning";
+            cleaning[i].title = "Мойка";
             cleaning[i].group = filteredData[i].line.id;
-            // cleaning[i].bgColor = "#e3a352";
             cleaning[i].itemProps = {
-                // these optional attributes are passed to the root <div /> of each item as <div {...itemProps} />
-                'data-custom-attribute': 'Random content',
-                'aria-hidden': true,
-                onDoubleClick: () => { console.log('You clicked double!') },
-                className: 'bg-blue-600',
                 style: {
-                    // background: 'fuchsia'
+                    background: 'rgb(197,57,57)',
+                    border: '1px solid #dcdcdc',
+                    whiteSpace: 'nowrap',      /* Запрет переноса строк */
+                    overflow: 'hidden',          /* Скрытие выходящего за границы текста */
+                    textOverflow: 'ellipsis',   /* Добавление "..." */
+                    maxWidth: '100%',           /* Ограничение ширины */
                 },
-                tip: 'additional information',
-                color: 'rgb(158, 14, 206)',
-                selectedBgColor: 'rgba(225, 166, 244, 1)',
-                bgColor : 'rgba(225, 166, 244, 0.6)',
             };
-            cleaning[i].tip = 'additional information';
+            cleaning[i].info = { //Доп информация
+                name: "Мойка",
+                start: filteredData[i].startCleaningDateTime,
+                end: filteredData[i].startProductionDateTime,
+                line: filteredData[i].line.name,
+                // quantity: obj.jobs[i].quantity,
+            }
 
-                cleaning[i].selectedBgColor = 'rgba(225, 166, 244, 1)';
-                cleaning[i].bgColor = 'rgba(225, 166, 244, 0.6)';
-            cleaning[i].className = "weekend"
-            cleaning[i].color = "#ff0000";
+
         }
         // console.log(planByParty)
         return cleaning;
     }
 
     static async parseParty(json) {
-        console.log(json)
         // const obj = JSON.parse(json);
         const obj = json;
-        console.log(obj)
         for (let i = 0; i < obj.jobs.length; i++) {
-            party[i] =  Object.assign({}, exampleResourse);
+            party[i] = Object.assign({}, exampleResourse);
             party[i].id = obj.jobs[i].id;
             party[i].title = obj.jobs[i].name + " " + obj.jobs[i].id;
         }
@@ -138,7 +122,7 @@ export default class ScheduleService2 {
         // const obj = JSON.parse(json);
         const obj = json;
         for (let i = 0; i < obj.lines.length; i++) {
-            hardware[i] =  Object.assign({}, exampleResourse);
+            hardware[i] = Object.assign({}, exampleResourse);
             hardware[i].id = obj.lines[i].id;
             hardware[i].title = obj.lines[i].name;
         }
@@ -155,23 +139,33 @@ export default class ScheduleService2 {
             planByParty[i].end_time = new Date(obj.jobs[i].endDateTime).getTime();
             planByParty[i].title = obj.jobs[i].line.name;
             planByParty[i].group = obj.jobs[i].id;
+
+            planByParty[i].itemProps = {
+                // 'data-custom-attribute': 'Random content',
+                // 'aria-hidden': false,
+                // onDoubleClick: (e) => { console.log(e) },
+                style: {
+                    background: 'oklch(0.429 0.209 264.071)',
+                    border: '1px solid #dcdcdc',
+                    whiteSpace: 'nowrap',      /* Запрет переноса строк */
+                    overflow: 'hidden',          /* Скрытие выходящего за границы текста */
+                    textOverflow: 'ellipsis',   /* Добавление "..." */
+                    maxWidth: '100%',           /* Ограничение ширины */
+                }
+            };
+            planByParty[i].info = { //Доп информация
+                name: obj.jobs[i].name,
+                start: obj.jobs[i].startProductionDateTime,
+                end: obj.jobs[i].endDateTime,
+                line: obj.jobs[i].line.name,
+                quantity: obj.jobs[i].quantity,
+
+            }
         }
-        // console.log(planByParty)
-
-
-        let x1 = Object.assign({}, exampleTask);
-        x1.id = "68clean";
-        x1.start = "2025-05-25T10:33:00".replace("T"," ");
-        x1.end = "2025-05-25T11:01:00".replace("T"," ");
-        x1.title = "Line6 68";
-        x1.resourceId = "68";
-
-
 
         let cleaning = await this.parseCleaningByParty(json)
-        let result = [...planByParty,...cleaning]
-        //  result = [...cleaning, x1]
-        return result ;
+        let result = [...planByParty, ...cleaning]
+        return result;
     }
 
     static async parsePlanByHardware(json) {
@@ -184,11 +178,33 @@ export default class ScheduleService2 {
             planByHardware[i].end_time = new Date(obj.jobs[i].endDateTime).getTime();
             planByHardware[i].title = obj.jobs[i].name;
             planByHardware[i].group = obj.jobs[i].line.id;
+
+            planByHardware[i].itemProps = {
+                // 'data-custom-attribute': 'Random content',
+                // 'aria-hidden': false,
+                // onDoubleClick: (e) => { console.log(e) },
+                style: {
+                    background: 'oklch(0.429 0.209 264.071)',
+                    border: '1px solid #dcdcdc',
+                    whiteSpace: 'nowrap',      /* Запрет переноса строк */
+                    overflow: 'hidden',          /* Скрытие выходящего за границы текста */
+                    textOverflow: 'ellipsis',   /* Добавление "..." */
+                    maxWidth: '100%',           /* Ограничение ширины */
+                }
+            };
+            planByHardware[i].info = { //Доп информация
+                name: obj.jobs[i].name,
+                start: obj.jobs[i].startProductionDateTime,
+                end: obj.jobs[i].endDateTime,
+                line: obj.jobs[i].line.name,
+                quantity: obj.jobs[i].quantity,
+
+            }
         }
         // console.log(planByHardware)
         let cleaning = await this.parseCleaningByHardware(json)
-        let result = [...planByHardware,...cleaning]
-        return result ;
+        let result = [...planByHardware, ...cleaning]
+        return result;
     }
 
     static async getPlansId() {
