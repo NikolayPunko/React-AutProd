@@ -137,5 +137,7 @@
 }
 
 .test {
-    border: 1px solid #dcdcdc
+    border: 1px solid #dcdcdc;
+    text-align: start;
+    color: #aeaeae;
 }
