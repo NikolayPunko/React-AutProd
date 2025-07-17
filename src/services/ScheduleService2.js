@@ -1,10 +1,6 @@
-import {eventsJson2, resourse} from "../data/data";
-import {useState} from "react";
 import $api, {API_URL} from "../http";
-import $apiScheduler, {API_URL_SCHEDULER} from "../http/scheduler";
-import $apiSchedule from "../http/scheduler";
+import $apiSchedule, {API_URL_SCHEDULER} from "../http/scheduler";
 import moment from "moment/moment";
-
 
 export const party = []
 export const hardware = []
@@ -26,15 +22,14 @@ const exampleTask = {
     end_time: moment().add(1, 'hour'),
     canMove: false,
     canResize: false,
+    // background: 'rgb(197,57,57)',
 
 }
 
 export default class ScheduleService2 {
 
     static async parseCleaningByParty(json) {
-        // const obj = JSON.parse(json);
-        const obj = json;
-        const filteredData = obj.jobs.filter(item => {
+        const filteredData = json.jobs.filter(item => {
             return item.startCleaningDateTime !== item.startProductionDateTime;
         });
         let cleaning = [];
@@ -47,12 +42,13 @@ export default class ScheduleService2 {
             cleaning[i].group = filteredData[i].id;
             cleaning[i].itemProps = {
                 style: {
-                    background: 'rgb(197,57,57)',
+                    background: '#f0f9ff',
                     border: '1px solid #dcdcdc',
                     whiteSpace: 'nowrap',      /* Запрет переноса строк */
                     overflow: 'hidden',          /* Скрытие выходящего за границы текста */
                     textOverflow: 'ellipsis',   /* Добавление "..." */
                     maxWidth: '100%',           /* Ограничение ширины */
+                    color: "#0369a1",
                 },
             };
             cleaning[i].info = { //Доп информация
@@ -60,7 +56,8 @@ export default class ScheduleService2 {
                 start: filteredData[i].startCleaningDateTime,
                 end: filteredData[i].startProductionDateTime,
                 line: filteredData[i].line.name,
-                // quantity: obj.jobs[i].quantity,
+                // quantity: json.jobs[i].quantity,
+                duration: json.jobs[i].duration,
             }
         }
 
@@ -69,9 +66,7 @@ export default class ScheduleService2 {
     }
 
     static async parseCleaningByHardware(json) {
-        // const obj = JSON.parse(json);
-        const obj = json;
-        const filteredData = obj.jobs.filter(item => {
+        const filteredData = json.jobs.filter(item => {
             return item.startCleaningDateTime !== item.startProductionDateTime;
         });
         let cleaning = [];
@@ -84,12 +79,13 @@ export default class ScheduleService2 {
             cleaning[i].group = filteredData[i].line.id;
             cleaning[i].itemProps = {
                 style: {
-                    background: 'rgb(197,57,57)',
+                    background: '#f0f9ff',
                     border: '1px solid #dcdcdc',
                     whiteSpace: 'nowrap',      /* Запрет переноса строк */
                     overflow: 'hidden',          /* Скрытие выходящего за границы текста */
                     textOverflow: 'ellipsis',   /* Добавление "..." */
                     maxWidth: '100%',           /* Ограничение ширины */
+                    color: "#0369a1",
                 },
             };
             cleaning[i].info = { //Доп информация
@@ -97,7 +93,8 @@ export default class ScheduleService2 {
                 start: filteredData[i].startCleaningDateTime,
                 end: filteredData[i].startProductionDateTime,
                 line: filteredData[i].line.name,
-                // quantity: obj.jobs[i].quantity,
+                // quantity: json.jobs[i].quantity,
+                duration: json.jobs[i].duration,
             }
 
 
@@ -107,59 +104,63 @@ export default class ScheduleService2 {
     }
 
     static async parseParty(json) {
-        // const obj = JSON.parse(json);
-        const obj = json;
-        for (let i = 0; i < obj.jobs.length; i++) {
+        for (let i = 0; i < json.jobs.length; i++) {
             party[i] = Object.assign({}, exampleResourse);
-            party[i].id = obj.jobs[i].id;
-            party[i].title = obj.jobs[i].name + " " + obj.jobs[i].id;
+            party[i].id = json.jobs[i].id;
+            party[i].title = json.jobs[i].name + " " + json.jobs[i].id;
         }
         return party;
     }
 
 
     static async parseHardware(json) {
-        // const obj = JSON.parse(json);
-        const obj = json;
-        for (let i = 0; i < obj.lines.length; i++) {
+        for (let i = 0; i < json.lines.length; i++) {
             hardware[i] = Object.assign({}, exampleResourse);
-            hardware[i].id = obj.lines[i].id;
-            hardware[i].title = obj.lines[i].name;
+            hardware[i].id = json.lines[i].id;
+            hardware[i].title = json.lines[i].name;
         }
         return hardware;
     }
 
     static async parsePlanByParty(json) {
-        // const obj = JSON.parse(json);
-        const obj = json;
-        for (let i = 0; i < obj.jobs.length; i++) {
+        for (let i = 0; i < json.jobs.length; i++) {
             planByParty[i] = Object.assign({}, exampleTask);
-            planByParty[i].id = obj.jobs[i].id;
-            planByParty[i].start_time = new Date(obj.jobs[i].startProductionDateTime).getTime();
-            planByParty[i].end_time = new Date(obj.jobs[i].endDateTime).getTime();
-            planByParty[i].title = obj.jobs[i].line.name;
-            planByParty[i].group = obj.jobs[i].id;
+            planByParty[i].id = json.jobs[i].id;
+            planByParty[i].start_time = new Date(json.jobs[i].startProductionDateTime).getTime();
+            planByParty[i].end_time = new Date(json.jobs[i].endDateTime).getTime();
+            planByParty[i].title = json.jobs[i].line.name;
+            planByParty[i].group = json.jobs[i].id;
 
             planByParty[i].itemProps = {
-                // 'data-custom-attribute': 'Random content',
-                // 'aria-hidden': false,
-                // onDoubleClick: (e) => { console.log(e) },
                 style: {
-                    background: 'oklch(0.429 0.209 264.071)',
+                    // background: '#f0f9ff',
+                    // background: '#f0fdf4',
+                    background: '#fffcd2',
+                    // background: 'oklch(0.888 0.056 253.411)',
                     border: '1px solid #dcdcdc',
                     whiteSpace: 'nowrap',      /* Запрет переноса строк */
                     overflow: 'hidden',          /* Скрытие выходящего за границы текста */
                     textOverflow: 'ellipsis',   /* Добавление "..." */
                     maxWidth: '100%',           /* Ограничение ширины */
+                    // color: "#0369a1",
+                    color: "#a16207",
                 }
             };
             planByParty[i].info = { //Доп информация
-                name: obj.jobs[i].name,
-                start: obj.jobs[i].startProductionDateTime,
-                end: obj.jobs[i].endDateTime,
-                line: obj.jobs[i].line.name,
-                quantity: obj.jobs[i].quantity,
+                name: json.jobs[i].name,
+                start: json.jobs[i].startProductionDateTime,
+                end: json.jobs[i].endDateTime,
+                line: json.jobs[i].line.name,
+                quantity: json.jobs[i].quantity,
+                np: json.jobs[i].np,
+                duration: json.jobs[i].duration,
 
+                fullName: json.jobs[i].product.name,
+                type: json.jobs[i].product.type,
+                glaze: json.jobs[i].product.glaze,
+                filling: json.jobs[i].product.filling,
+                _allergen: json.jobs[i].product._allergen,
+                pinned: json.jobs[i].pinned,
             }
         }
 
@@ -169,35 +170,44 @@ export default class ScheduleService2 {
     }
 
     static async parsePlanByHardware(json) {
-        // const obj = JSON.parse(json);
-        const obj = json;
-        for (let i = 0; i < obj.jobs.length; i++) {
+        for (let i = 0; i < json.jobs.length; i++) {
             planByHardware[i] = Object.assign({}, exampleTask);
-            planByHardware[i].id = obj.jobs[i].id;
-            planByHardware[i].start_time = new Date(obj.jobs[i].startProductionDateTime).getTime();
-            planByHardware[i].end_time = new Date(obj.jobs[i].endDateTime).getTime();
-            planByHardware[i].title = obj.jobs[i].name;
-            planByHardware[i].group = obj.jobs[i].line.id;
+            planByHardware[i].id = json.jobs[i].id;
+            planByHardware[i].start_time = new Date(json.jobs[i].startProductionDateTime).getTime();
+            planByHardware[i].end_time = new Date(json.jobs[i].endDateTime).getTime();
+            planByHardware[i].title = json.jobs[i].name;
+            planByHardware[i].group = json.jobs[i].line.id;
 
             planByHardware[i].itemProps = {
-                // 'data-custom-attribute': 'Random content',
-                // 'aria-hidden': false,
-                // onDoubleClick: (e) => { console.log(e) },
                 style: {
-                    background: 'oklch(0.429 0.209 264.071)',
+                    // background: '#f0f9ff',
+                    // background: '#f0fdf4',
+                    background: '#fffcd2',
+                    // background: 'oklch(0.888 0.056 253.411)',
                     border: '1px solid #dcdcdc',
                     whiteSpace: 'nowrap',      /* Запрет переноса строк */
                     overflow: 'hidden',          /* Скрытие выходящего за границы текста */
                     textOverflow: 'ellipsis',   /* Добавление "..." */
                     maxWidth: '100%',           /* Ограничение ширины */
+                    // color: "#0369a1",
+                    color: "#a16207",
                 }
             };
             planByHardware[i].info = { //Доп информация
-                name: obj.jobs[i].name,
-                start: obj.jobs[i].startProductionDateTime,
-                end: obj.jobs[i].endDateTime,
-                line: obj.jobs[i].line.name,
-                quantity: obj.jobs[i].quantity,
+                name: json.jobs[i].name,
+                start: json.jobs[i].startProductionDateTime,
+                end: json.jobs[i].endDateTime,
+                line: json.jobs[i].line.name,
+                quantity: json.jobs[i].quantity,
+                np: json.jobs[i].np,
+                duration: json.jobs[i].duration,
+
+                fullName: json.jobs[i].product.name,
+                type: json.jobs[i].product.type,
+                glaze: json.jobs[i].product.glaze,
+                filling: json.jobs[i].product.filling,
+                _allergen: json.jobs[i].product._allergen,
+                pinned: json.jobs[i].pinned,
 
             }
         }

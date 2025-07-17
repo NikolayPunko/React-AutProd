@@ -1,5 +1,5 @@
 import "./../App.css";
-import {useEffect, useRef, useState} from "react";
+import {useEffect, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import moment from 'moment'
 import {Timeline} from "react-calendar-timeline";
@@ -8,10 +8,12 @@ import {styleInput} from "../data/styles";
 import SchedulerService2 from "../services/ScheduleService2";
 import "./../components/scheduler/scheduler.css"
 
-import 'moment/locale/ru';
 import {ModalInfoItem} from "../components/scheduler/ModalInfoItem"; // Подключаем русскую локаль
 
 moment.locale('ru');
+moment.updateLocale('ru', {
+    months: 'Январь_Февраль_Март_Апрель_Май_Июнь_Июль_Август_Сентябрь_Октябрь_Ноябрь_Декабрь'.split('_')
+});
 
 
 function SchedulerPage() {
@@ -42,9 +44,9 @@ function SchedulerPage() {
     const [options, setOptions] = useState(null);
 
     const [downloadedPlan, setDownloadedPlan] = useState(null);
+    const [selectDate, setSelectDate] = useState(new Date().toISOString().split('T')[0])
 
 
-    const [renderCounter, setRenderCounter] = useState(false);
     const [timelineKey, setTimelineKey] = useState(0);
 
 
@@ -79,7 +81,6 @@ function SchedulerPage() {
             setDownloadedPlan(response.data)
             setScore(response.data.score)
             setSolverStatus(response.data.solverStatus)
-            // console.log(response.data)
         } catch (e) {
             console.error(e)
         }
@@ -113,31 +114,28 @@ function SchedulerPage() {
             ScheduleService2.parseHardware(downloadedPlan).then((e) => {
                 setHardware(e);
                 if (isDisplayByHardware)
-                    setGroups(hardware);
+                    setGroups(e);
             });
 
             ScheduleService2.parsePlanByHardware(downloadedPlan).then((e) => {
                 setPlanByHardware(e);
                 if (isDisplayByHardware)
-                    setItems(planByHardware);
+                    setItems(e);
             });
-
-            setTimelineKey(prev => prev + 1); //для корректной прокрутки в начале
 
             ScheduleService2.parseParty(downloadedPlan).then((e) => {
                 setParty(e);
                 if (!isDisplayByHardware) {
-                    setGroups(party);
+                    setGroups(e);
                 }
             });
 
             ScheduleService2.parsePlanByParty(downloadedPlan).then((e) => {
                 setPlanByParty(e);
                 if (!isDisplayByHardware)
-                    setItems(planByParty);
+                    setItems(e);
             });
-
-
+            setTimelineKey(prev => prev + 1); //для корректной прокрутки в начале
         }
 
 
@@ -170,45 +168,54 @@ function SchedulerPage() {
 
     const onSelectDate = (date) => {
         if (date) {
-            assignSettings(date);
-            setRenderCounter(prevState => !renderCounter);
+            setSelectDate(date);
         }
     }
 
     useEffect(() => {
-        onSelectDate("2025-07-16")
-    }, [])
+        assignSettings(selectDate);
+        setTimelineKey(prev => prev + 1); //для корректной прокрутки в начале
+    }, [selectDate])
 
 
     const [selectedItem, setSelectedItem] = useState(null);
 
     function onItemSelect(itemId, e, time) {
-
-        if(isDisplayByHardware){
+        if (isDisplayByHardware) {
             setSelectedItem(planByHardware.find(item => item.id === itemId))
         } else {
             setSelectedItem(planByParty.find(item => item.id === itemId))
         }
-
     }
 
+    //Обертка для исключения в библиотеке о передаче пропсов
+    const originalConsoleError = console.error;
+    useEffect(() => {
+        console.error = (...args) => {
+            if (!args[0].includes('A props object containing a "key" prop')) {
+                originalConsoleError(...args);
+            }
+        };
+        return () => {
+            console.error = originalConsoleError;
+        };
+    }, []);
 
     return (
         <div className="w-full">
 
-            {selectedItem && <ModalInfoItem info={selectedItem.info} onClose={() => setSelectedItem(null)} />}
+            {selectedItem && <ModalInfoItem info={selectedItem.info} onClose={() => setSelectedItem(null)}/>}
 
-            {isLoading && <div
-                className="fixed bg-black/50 top-0 z-30 right-0 left-0 bottom-0 text-center "
-
-            >Загрузка</div>}
+            {isLoading &&
+                <div className="fixed bg-black/50 top-0 z-30 right-0 left-0 bottom-0 text-center ">Загрузка</div>
+            }
 
             <button onClick={() => {
                 navigate(from, {replace: true})
-            }} className="mt-2 ml-8 py-1 px-2 rounded text-blue-800  hover:bg-blue-50">Вернуться назад
+            }} className="absolute ml-4 py-1 px-2 rounded text-blue-800  hover:bg-blue-50">Вернуться назад
             </button>
 
-            <h1 className="font-bold text-center text-2xl mb-8">Планировщик задач</h1>
+            <h1 className="font-bold text-center text-2xl mb-8 mt-6">Планировщик задач</h1>
 
             <div className="flex flex-row justify-between my-4 px-4 w-2/3">
                 <div className="">
@@ -251,25 +258,28 @@ function SchedulerPage() {
                         </span>
                     </div>
 
-
                 </div>
                 <div>
                     <input className={styleInput + " h-[30px]"} type="date"
+                           value={selectDate}
                            onChange={(e) => onSelectDate(e.target.value)}/>
                 </div>
             </div>
 
-            <div className="m-4  border-x-2 w-full">
+            <div className="m-4 border-x-2">
                 <Timeline
-                    // itemRenderer={customItemRenderer} //кастомный item
+                    itemRenderer={customItemRenderer} //кастомный item
                     key={timelineKey} //для корректной прокрутки в начале
                     groups={groups}
                     items={items}
-                    defaultTimeStart={moment().add(-12, 'hour')} //тут попробовать пото сделать переменную даты и подставить попробовать
-                    defaultTimeEnd={moment().add(12, 'hour')}
+                    defaultTimeStart={moment(selectDate).startOf('day').add(-2, 'hour')} //период начального отображения
+                    defaultTimeEnd={moment(selectDate).startOf('day').add(30, 'hour')}
 
                     // onItemSelect={onItemSelect}
                     onItemDoubleClick={onItemSelect}
+
+                    sidebarWidth={200}
+                    lineHeight={135}
                 />
             </div>
 
@@ -279,22 +289,54 @@ function SchedulerPage() {
 
 }
 
-// const customItemRenderer = ({ item, itemContext, getItemProps }) => {  //кастомный item
-//     return (
-//         <div
-//             {...getItemProps({
-//                 onClick: () => alert(`Клик по ${item.title}`),
-//                 style: {
-//                     cursor: 'pointer',
-//                     // background: item.background || '#b0e0e6',
-//                 },
-//             })}
-//         >
-//             <strong>{item.title}</strong>
-//             <strong>{item.id}</strong>
-//         </div>
-//     );
-// };
+
+const customItemRenderer = ({item, itemContext, getItemProps}) => {  //кастомный item
+    return (
+        <div
+            key={item.id} // Ключ передаётся напрямую
+            {...getItemProps({
+                style: {
+                    background: item.itemProps.style.background || '#ad37f1',
+                    // border: '1px solid #ccc',
+                    border: '1px solid #aeaeae',
+                    // height: '100px'
+                    textAlign: 'start',
+                    color: item.itemProps.style.color || 'black',
+                    // color: 'black',
+                    margin: 0,
+                    padding: '0', // Убираем внутренние отступы
+                    height: '100%', // Занимаем всю высоту ячейки
+
+                    whiteSpace: 'nowrap',      /* Запрет переноса строк */
+                    overflow: 'hidden',          /* Скрытие выходящего за границы текста */
+                    textOverflow: 'ellipsis',   /* Добавление "..." */
+                    maxWidth: '100%',           /* Ограничение ширины */
+                }
+            })}
+            className=""
+        >
+            <div className="flex px-1 justify-between font-medium text-sm text-black"> {/* Обрезаем длинный текст */}
+                {item.title}
+            </div>
+            <div className="flex flex-col justify-start text-xs"> {/* Компактное расположение дат */}
+                {item.info.np &&
+                    <span className=" px-1 rounded">№ партии: <span className="text-blue-500">{item.info.np}</span></span>
+                        }
+                        {item.info.duration &&
+                    <span className=" px-1 rounded">Длительность: <span className="text-pink-500">{item.info.duration / 60} мин.</span></span>
+                        }
+                        <span className=" px-1 rounded">
+                  Начало: <span className="text-green-600">{moment(item.start_time).format('HH:mm')}</span>
+                </span>
+                <span className=" px-1 rounded">
+                  Конец: <span className="text-red-500">{moment(item.end_time).format('HH:mm')}</span>
+                </span>
+            </div>
+
+
+        </div>
+    );
+};
 
 
 export default SchedulerPage
