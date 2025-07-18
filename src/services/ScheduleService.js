@@ -2,7 +2,7 @@ import $api, {API_URL} from "../http";
 import $apiSchedule, {API_URL_SCHEDULER} from "../http/scheduler";
 import moment from "moment/moment";
 
-export const party = []
+export let party = []
 export const hardware = []
 
 export const planByParty = []
@@ -26,7 +26,7 @@ const exampleTask = {
 
 }
 
-export default class ScheduleService2 {
+export default class ScheduleService {
 
     static async parseCleaningByParty(json) {
         const filteredData = json.jobs.filter(item => {
@@ -39,15 +39,11 @@ export default class ScheduleService2 {
             cleaning[i].start_time = new Date(filteredData[i].startCleaningDateTime).getTime();
             cleaning[i].end_time = new Date(filteredData[i].startProductionDateTime).getTime();
             cleaning[i].title = "Мойка";
-            cleaning[i].group = filteredData[i].id;
+            cleaning[i].group = filteredData[i].np;
             cleaning[i].itemProps = {
                 style: {
                     background: '#f0f9ff',
                     border: '1px solid #dcdcdc',
-                    whiteSpace: 'nowrap',      /* Запрет переноса строк */
-                    overflow: 'hidden',          /* Скрытие выходящего за границы текста */
-                    textOverflow: 'ellipsis',   /* Добавление "..." */
-                    maxWidth: '100%',           /* Ограничение ширины */
                     color: "#0369a1",
                 },
             };
@@ -56,7 +52,6 @@ export default class ScheduleService2 {
                 start: filteredData[i].startCleaningDateTime,
                 end: filteredData[i].startProductionDateTime,
                 line: filteredData[i].line.name,
-                // quantity: json.jobs[i].quantity,
                 duration: json.jobs[i].duration,
             }
         }
@@ -81,10 +76,6 @@ export default class ScheduleService2 {
                 style: {
                     background: '#f0f9ff',
                     border: '1px solid #dcdcdc',
-                    whiteSpace: 'nowrap',      /* Запрет переноса строк */
-                    overflow: 'hidden',          /* Скрытие выходящего за границы текста */
-                    textOverflow: 'ellipsis',   /* Добавление "..." */
-                    maxWidth: '100%',           /* Ограничение ширины */
                     color: "#0369a1",
                 },
             };
@@ -93,7 +84,6 @@ export default class ScheduleService2 {
                 start: filteredData[i].startCleaningDateTime,
                 end: filteredData[i].startProductionDateTime,
                 line: filteredData[i].line.name,
-                // quantity: json.jobs[i].quantity,
                 duration: json.jobs[i].duration,
             }
 
@@ -104,11 +94,18 @@ export default class ScheduleService2 {
     }
 
     static async parseParty(json) {
-        for (let i = 0; i < json.jobs.length; i++) {
-            party[i] = Object.assign({}, exampleResourse);
-            party[i].id = json.jobs[i].id;
-            party[i].title = json.jobs[i].name + " " + json.jobs[i].id;
-        }
+        const seenNp = new Map();
+        json.jobs.forEach(item => {
+            if (!seenNp.has(item.np)) {
+                seenNp.set(item.np, item); // Сохраняем объект по ключу np
+            }
+        });
+        party = Array.from(seenNp, ([np, originalItem], index) => ({
+            ...exampleResourse,
+            id: np,
+            title: `Партия №${np}`,
+            index: index
+        }));
         return party;
     }
 
@@ -123,26 +120,19 @@ export default class ScheduleService2 {
     }
 
     static async parsePlanByParty(json) {
+
         for (let i = 0; i < json.jobs.length; i++) {
             planByParty[i] = Object.assign({}, exampleTask);
             planByParty[i].id = json.jobs[i].id;
             planByParty[i].start_time = new Date(json.jobs[i].startProductionDateTime).getTime();
             planByParty[i].end_time = new Date(json.jobs[i].endDateTime).getTime();
             planByParty[i].title = json.jobs[i].line.name;
-            planByParty[i].group = json.jobs[i].id;
+            planByParty[i].group = json.jobs[i].np;
 
             planByParty[i].itemProps = {
                 style: {
-                    // background: '#f0f9ff',
-                    // background: '#f0fdf4',
                     background: '#fffcd2',
-                    // background: 'oklch(0.888 0.056 253.411)',
                     border: '1px solid #dcdcdc',
-                    whiteSpace: 'nowrap',      /* Запрет переноса строк */
-                    overflow: 'hidden',          /* Скрытие выходящего за границы текста */
-                    textOverflow: 'ellipsis',   /* Добавление "..." */
-                    maxWidth: '100%',           /* Ограничение ширины */
-                    // color: "#0369a1",
                     color: "#a16207",
                 }
             };
@@ -180,16 +170,8 @@ export default class ScheduleService2 {
 
             planByHardware[i].itemProps = {
                 style: {
-                    // background: '#f0f9ff',
-                    // background: '#f0fdf4',
                     background: '#fffcd2',
-                    // background: 'oklch(0.888 0.056 253.411)',
                     border: '1px solid #dcdcdc',
-                    whiteSpace: 'nowrap',      /* Запрет переноса строк */
-                    overflow: 'hidden',          /* Скрытие выходящего за границы текста */
-                    textOverflow: 'ellipsis',   /* Добавление "..." */
-                    maxWidth: '100%',           /* Ограничение ширины */
-                    // color: "#0369a1",
                     color: "#a16207",
                 }
             };
@@ -217,13 +199,6 @@ export default class ScheduleService2 {
         return result;
     }
 
-    static async getPlansId() {
-        return $api.get(`${API_URL}/api/scheduler/plansId`)
-    }
-
-    static async getByPlanId(planId) {
-        return $api.get(`${API_URL}/api/scheduler/` + planId)
-    }
 
     static async assignSettings(date) {
         return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/load`, {date})

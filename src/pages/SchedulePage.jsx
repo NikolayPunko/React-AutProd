@@ -3,9 +3,9 @@ import {useEffect, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import moment from 'moment'
 import {Timeline} from "react-calendar-timeline";
-import ScheduleService2 from "../services/ScheduleService2";
+import ScheduleService from "../services/ScheduleService";
 import {styleInput} from "../data/styles";
-import SchedulerService2 from "../services/ScheduleService2";
+import SchedulerService from "../services/ScheduleService";
 import "./../components/scheduler/scheduler.css"
 
 import {ModalInfoItem} from "../components/scheduler/ModalInfoItem"; // Подключаем русскую локаль
@@ -52,7 +52,7 @@ function SchedulerPage() {
 
     async function assignSettings(date) {
         try {
-            await SchedulerService2.assignSettings(date);
+            await SchedulerService.assignSettings(date);
         } catch (e) {
             console.error(e)
         }
@@ -60,7 +60,7 @@ function SchedulerPage() {
 
     async function fetchSolve() {
         try {
-            await SchedulerService2.solve();
+            await SchedulerService.solve();
         } catch (e) {
             console.error(e)
         }
@@ -68,7 +68,7 @@ function SchedulerPage() {
 
     async function fetchStopSolving() {
         try {
-            await SchedulerService2.stopSolving();
+            await SchedulerService.stopSolving();
         } catch (e) {
             console.error(e)
         }
@@ -77,7 +77,7 @@ function SchedulerPage() {
     async function fetchPlan() {
         try {
             // setIsLoading(true);
-            const response = await SchedulerService2.getPlan()
+            const response = await SchedulerService.getPlan()
             setDownloadedPlan(response.data)
             setScore(response.data.score)
             setSolverStatus(response.data.solverStatus)
@@ -111,26 +111,26 @@ function SchedulerPage() {
 
         if (downloadedPlan) {
 
-            ScheduleService2.parseHardware(downloadedPlan).then((e) => {
+            ScheduleService.parseHardware(downloadedPlan).then((e) => {
                 setHardware(e);
                 if (isDisplayByHardware)
                     setGroups(e);
             });
 
-            ScheduleService2.parsePlanByHardware(downloadedPlan).then((e) => {
+            ScheduleService.parsePlanByHardware(downloadedPlan).then((e) => {
                 setPlanByHardware(e);
                 if (isDisplayByHardware)
                     setItems(e);
             });
 
-            ScheduleService2.parseParty(downloadedPlan).then((e) => {
+            ScheduleService.parseParty(downloadedPlan).then((e) => {
                 setParty(e);
                 if (!isDisplayByHardware) {
                     setGroups(e);
                 }
             });
 
-            ScheduleService2.parsePlanByParty(downloadedPlan).then((e) => {
+            ScheduleService.parsePlanByParty(downloadedPlan).then((e) => {
                 setPlanByParty(e);
                 if (!isDisplayByHardware)
                     setItems(e);
@@ -201,6 +201,39 @@ function SchedulerPage() {
         };
     }, []);
 
+
+    useEffect(() => {
+        const x1 = [{ id: 1, title: 'group 1' }, { id: 2, title: 'group 2' }]
+
+        const x2 = [
+            {
+                id: 1,
+                group: 1,
+                title: 'item 1',
+                start_time: moment(),
+                end_time: moment().add(1, 'hour')
+            },
+            {
+                id: 2,
+                group: 2,
+                title: 'item 2',
+                start_time: moment().add(-0.5, 'hour'),
+                end_time: moment().add(0.5, 'hour')
+            },
+            {
+                id: 3,
+                group: 1,
+                title: 'item 3',
+                start_time: moment().add(2, 'hour'),
+                end_time: moment().add(3, 'hour')
+            }]
+
+        // setItems(x2)
+        // setGroups(x1)
+
+
+    }, []);
+
     return (
         <div className="w-full">
 
@@ -268,7 +301,7 @@ function SchedulerPage() {
 
             <div className="m-4 border-x-2">
                 <Timeline
-                    itemRenderer={customItemRenderer} //кастомный item
+                    itemRenderer={customItemRenderer} // кастомный item
                     key={timelineKey} //для корректной прокрутки в начале
                     groups={groups}
                     items={items}
@@ -278,11 +311,10 @@ function SchedulerPage() {
                     // onItemSelect={onItemSelect}
                     onItemDoubleClick={onItemSelect}
 
-                    sidebarWidth={200}
-                    lineHeight={135}
+                    sidebarWidth={150}
+                    lineHeight={90}
                 />
             </div>
-
 
         </div>
     )
@@ -296,41 +328,40 @@ const customItemRenderer = ({item, itemContext, getItemProps}) => {  //каст�
             key={item.id} // Ключ передаётся напрямую
             {...getItemProps({
                 style: {
-                    background: item.itemProps.style.background || '#ad37f1',
-                    // border: '1px solid #ccc',
+                    backgroundColor: item.itemProps.style.background || '#ad37f1', //из-за этого не работает выделение
+                    //чувть заработало но криво
                     border: '1px solid #aeaeae',
-                    // height: '100px'
                     textAlign: 'start',
                     color: item.itemProps.style.color || 'black',
-                    // color: 'black',
                     margin: 0,
                     padding: '0', // Убираем внутренние отступы
-                    height: '100%', // Занимаем всю высоту ячейки
 
                     whiteSpace: 'nowrap',      /* Запрет переноса строк */
                     overflow: 'hidden',          /* Скрытие выходящего за границы текста */
                     textOverflow: 'ellipsis',   /* Добавление "..." */
                     maxWidth: '100%',           /* Ограничение ширины */
-                }
+
+                },
+                onMouseDown: getItemProps().onMouseDown,
+                onTouchStart: getItemProps().onTouchStart
             })}
-            className=""
+            className="rct-item"
         >
             <div className="flex px-1 justify-between font-medium text-sm text-black"> {/* Обрезаем длинный текст */}
                 {item.title}
             </div>
             <div className="flex flex-col justify-start text-xs"> {/* Компактное расположение дат */}
-                {item.info.np &&
+                {item.info?.np &&
                     <span className=" px-1 rounded">№ партии: <span className="text-blue-500">{item.info.np}</span></span>
-                        }
-                        {item.info.duration &&
+                }
+                {item.info?.duration &&
                     <span className=" px-1 rounded">Длительность: <span className="text-pink-500">{item.info.duration / 60} мин.</span></span>
-                        }
-                        <span className=" px-1 rounded">
-                  Начало: <span className="text-green-600">{moment(item.start_time).format('HH:mm')}</span>
-                </span>
+                }
                 <span className=" px-1 rounded">
-                  Конец: <span className="text-red-500">{moment(item.end_time).format('HH:mm')}</span>
+                     Время: <span className="text-green-600">{moment(item.start_time).format('HH:mm')} </span>
+                    - <span className="text-red-500">{moment(item.end_time).format('HH:mm')}</span>
                 </span>
+
             </div>
 
 

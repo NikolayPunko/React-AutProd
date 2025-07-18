@@ -1,5 +1,4 @@
 import React, {useContext, useEffect, useState} from "react";
-import TaskSchedulerPage from "./pages/TaskSchedulerPage";
 import {Route, Routes} from 'react-router-dom';
 import ReportDesignerPage from "./pages/ReportDesignerPage";
 import Authorization from "./pages/Authorization";
@@ -31,8 +30,7 @@ function App() {
                 <Routes>
 
                     <Route path="/" element={<ReportsPage/>}/>
-                    <Route path="/scheduler" element={<TaskSchedulerPage/>}/>
-                    <Route path="/scheduler2" element={<SchedulePage/>}/>
+                    <Route path="/scheduler" element={<SchedulePage/>}/>
                     <Route path="/designer" element={<ReportDesignerPage/>}/>
                     <Route path="/" element={<PrivateRoute  />}>
 
