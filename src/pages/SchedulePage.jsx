@@ -1,19 +1,14 @@
 import "./../App.css";
 import {useEffect, useState} from "react";
-import {useLocation, useNavigate} from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import moment from 'moment'
 import {Timeline} from "react-calendar-timeline";
 import ScheduleService from "../services/ScheduleService";
-import {styleInput} from "../data/styles";
 import SchedulerService from "../services/ScheduleService";
 import "./../components/scheduler/scheduler.css"
 
-import {ModalInfoItem} from "../components/scheduler/ModalInfoItem"; // Подключаем русскую локаль
-
-moment.locale('ru');
-moment.updateLocale('ru', {
-    months: 'Январь_Февраль_Март_Апрель_Май_Июнь_Июль_Август_Сентябрь_Октябрь_Ноябрь_Декабрь'.split('_')
-});
+import {ModalInfoItem} from "../components/scheduler/ModalInfoItem";
+import {ModalDateSettings} from "../components/scheduler/ModalDateSettings";
 
 
 function SchedulerPage() {
@@ -40,19 +35,60 @@ function SchedulerPage() {
     const [score, setScore] = useState("-0hard/-0medium/-0soft");
     const [solverStatus, setSolverStatus] = useState("");
 
-    const [selectedOption, setSelectedOption] = useState(null);
-    const [options, setOptions] = useState(null);
+    const [isModalDateSettings, setIsModalDateSettings] = useState(false);
 
     const [downloadedPlan, setDownloadedPlan] = useState(null);
     const [selectDate, setSelectDate] = useState(new Date().toISOString().split('T')[0])
+    const [startTimeLines, setStartTimeLines] = useState([
+        {
+            id: "1",
+            name: "Line1",
+            operator: null,
+            startDateTime: "08:00"
+        },
+        {
+            id: "2",
+            name: "Line2",
+            operator: null,
+            startDateTime: "08:00"
+        },
+        {
+            id: "3",
+            name: "Line3",
+            operator: null,
+            startDateTime: "08:00"
+        },
+        {
+            id: "4",
+            name: "Line4",
+            operator: null,
+            startDateTime: "08:00"
+        },
+        {
+            id: "5",
+            name: "Line5",
+            operator: null,
+            startDateTime: "08:00"
+        },
+        {
+            id: "6",
+            name: "Line6",
+            operator: null,
+            startDateTime: "08:00"
+        },
+    ])
 
 
     const [timelineKey, setTimelineKey] = useState(0);
 
 
-    async function assignSettings(date) {
+    async function assignSettings() {
+
+        console.log(selectDate)
+        console.log(startTimeLines)
+
         try {
-            await SchedulerService.assignSettings(date);
+            await SchedulerService.assignSettings(selectDate);
         } catch (e) {
             console.error(e)
         }
@@ -202,38 +238,6 @@ function SchedulerPage() {
     }, []);
 
 
-    useEffect(() => {
-        const x1 = [{ id: 1, title: 'group 1' }, { id: 2, title: 'group 2' }]
-
-        const x2 = [
-            {
-                id: 1,
-                group: 1,
-                title: 'item 1',
-                start_time: moment(),
-                end_time: moment().add(1, 'hour')
-            },
-            {
-                id: 2,
-                group: 2,
-                title: 'item 2',
-                start_time: moment().add(-0.5, 'hour'),
-                end_time: moment().add(0.5, 'hour')
-            },
-            {
-                id: 3,
-                group: 1,
-                title: 'item 3',
-                start_time: moment().add(2, 'hour'),
-                end_time: moment().add(3, 'hour')
-            }]
-
-        // setItems(x2)
-        // setGroups(x1)
-
-
-    }, []);
-
     return (
         <div className="w-full">
 
@@ -292,10 +296,11 @@ function SchedulerPage() {
                     </div>
 
                 </div>
+
                 <div>
-                    <input className={styleInput + " h-[30px]"} type="date"
-                           value={selectDate}
-                           onChange={(e) => onSelectDate(e.target.value)}/>
+                    <button onClick={() => {setIsModalDateSettings(true)}}
+                            className={"border h-[30px] border-gray-300 rounded-md px-2 shadow-inner" + styleHardwareBut}>Настроить дату
+                    </button>
                 </div>
             </div>
 
@@ -307,14 +312,20 @@ function SchedulerPage() {
                     items={items}
                     defaultTimeStart={moment(selectDate).startOf('day').add(-2, 'hour')} //период начального отображения
                     defaultTimeEnd={moment(selectDate).startOf('day').add(30, 'hour')}
-
-                    // onItemSelect={onItemSelect}
                     onItemDoubleClick={onItemSelect}
-
                     sidebarWidth={150}
-                    lineHeight={90}
-                />
+                    lineHeight={90}>
+                </Timeline>
+
+
             </div>
+
+            {isModalDateSettings && <ModalDateSettings onClose={() => {setIsModalDateSettings(false)}}
+                                                       selectDate={selectDate} setDate={setSelectDate}
+                                                       lines={startTimeLines} setLines={setStartTimeLines}
+                                                       apply={assignSettings}
+            />}
+
 
         </div>
     )
@@ -323,18 +334,18 @@ function SchedulerPage() {
 
 
 const customItemRenderer = ({item, itemContext, getItemProps}) => {  //кастомный item
+
     return (
         <div
             key={item.id} // Ключ передаётся напрямую
             {...getItemProps({
                 style: {
-                    backgroundColor: item.itemProps.style.background || '#ad37f1', //из-за этого не работает выделение
-                    //чувть заработало но криво
+                    background: itemContext.selected ? "#d0ff9a" : item.itemProps.style.background,
                     border: '1px solid #aeaeae',
                     textAlign: 'start',
                     color: item.itemProps.style.color || 'black',
                     margin: 0,
-                    padding: '0', // Убираем внутренние отступы
+                    padding: '0',
 
                     whiteSpace: 'nowrap',      /* Запрет переноса строк */
                     overflow: 'hidden',          /* Скрытие выходящего за границы текста */
@@ -347,15 +358,17 @@ const customItemRenderer = ({item, itemContext, getItemProps}) => {  //каст�
             })}
             className="rct-item"
         >
-            <div className="flex px-1 justify-between font-medium text-sm text-black"> {/* Обрезаем длинный текст */}
+            <div className="flex px-1 justify-between font-medium text-sm text-black">
                 {item.title}
             </div>
-            <div className="flex flex-col justify-start text-xs"> {/* Компактное расположение дат */}
+            <div className="flex flex-col justify-start text-xs">
                 {item.info?.np &&
-                    <span className=" px-1 rounded">№ партии: <span className="text-blue-500">{item.info.np}</span></span>
+                    <span className=" px-1 rounded">№ партии: <span
+                        className="text-blue-500">{item.info.np}</span></span>
                 }
                 {item.info?.duration &&
-                    <span className=" px-1 rounded">Длительность: <span className="text-pink-500">{item.info.duration / 60} мин.</span></span>
+                    <span className=" px-1 rounded">Длительность: <span
+                        className="text-pink-500">{item.info.duration / 60} мин.</span></span>
                 }
                 <span className=" px-1 rounded">
                      Время: <span className="text-green-600">{moment(item.start_time).format('HH:mm')} </span>

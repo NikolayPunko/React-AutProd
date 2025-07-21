@@ -1,4 +1,3 @@
-import $api, {API_URL} from "../http";
 import $apiSchedule, {API_URL_SCHEDULER} from "../http/scheduler";
 import moment from "moment/moment";
 
@@ -22,7 +21,6 @@ const exampleTask = {
     end_time: moment().add(1, 'hour'),
     canMove: false,
     canResize: false,
-    // background: 'rgb(197,57,57)',
 
 }
 
@@ -55,8 +53,6 @@ export default class ScheduleService {
                 duration: json.jobs[i].duration,
             }
         }
-
-
         return cleaning;
     }
 
@@ -86,10 +82,7 @@ export default class ScheduleService {
                 line: filteredData[i].line.name,
                 duration: json.jobs[i].duration,
             }
-
-
         }
-        // console.log(planByParty)
         return cleaning;
     }
 
@@ -126,7 +119,7 @@ export default class ScheduleService {
             planByParty[i].id = json.jobs[i].id;
             planByParty[i].start_time = new Date(json.jobs[i].startProductionDateTime).getTime();
             planByParty[i].end_time = new Date(json.jobs[i].endDateTime).getTime();
-            planByParty[i].title = json.jobs[i].line.name;
+            planByParty[i].title = json.jobs[i].name;
             planByParty[i].group = json.jobs[i].np;
 
             planByParty[i].itemProps = {
@@ -190,7 +183,6 @@ export default class ScheduleService {
                 filling: json.jobs[i].product.filling,
                 _allergen: json.jobs[i].product._allergen,
                 pinned: json.jobs[i].pinned,
-
             }
         }
         // console.log(planByHardware)
