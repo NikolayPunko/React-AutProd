@@ -2,7 +2,7 @@ import "./../App.css";
 import {useEffect, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import moment from 'moment'
-import {Timeline} from "react-calendar-timeline";
+import {CursorMarker, CustomMarker, Timeline, TimelineMarkers, TodayMarker} from "react-calendar-timeline";
 import ScheduleService from "../services/ScheduleService";
 import {styleInput} from "../data/styles";
 import SchedulerService from "../services/ScheduleService";
@@ -202,38 +202,6 @@ function SchedulerPage() {
     }, []);
 
 
-    useEffect(() => {
-        const x1 = [{ id: 1, title: 'group 1' }, { id: 2, title: 'group 2' }]
-
-        const x2 = [
-            {
-                id: 1,
-                group: 1,
-                title: 'item 1',
-                start_time: moment(),
-                end_time: moment().add(1, 'hour')
-            },
-            {
-                id: 2,
-                group: 2,
-                title: 'item 2',
-                start_time: moment().add(-0.5, 'hour'),
-                end_time: moment().add(0.5, 'hour')
-            },
-            {
-                id: 3,
-                group: 1,
-                title: 'item 3',
-                start_time: moment().add(2, 'hour'),
-                end_time: moment().add(3, 'hour')
-            }]
-
-        // setItems(x2)
-        // setGroups(x1)
-
-
-    }, []);
-
     return (
         <div className="w-full">
 
@@ -307,13 +275,12 @@ function SchedulerPage() {
                     items={items}
                     defaultTimeStart={moment(selectDate).startOf('day').add(-2, 'hour')} //период начального отображения
                     defaultTimeEnd={moment(selectDate).startOf('day').add(30, 'hour')}
-
-                    // onItemSelect={onItemSelect}
                     onItemDoubleClick={onItemSelect}
-
                     sidebarWidth={150}
-                    lineHeight={90}
-                />
+                    lineHeight={90}>
+                </Timeline>
+
+
             </div>
 
         </div>
@@ -323,18 +290,18 @@ function SchedulerPage() {
 
 
 const customItemRenderer = ({item, itemContext, getItemProps}) => {  //кастомный item
+
     return (
         <div
             key={item.id} // Ключ передаётся напрямую
             {...getItemProps({
                 style: {
-                    backgroundColor: item.itemProps.style.background || '#ad37f1', //из-за этого не работает выделение
-                    //чувть заработало но криво
+                    background: itemContext.selected ? "#d0ff9a" : item.itemProps.style.background,
                     border: '1px solid #aeaeae',
                     textAlign: 'start',
                     color: item.itemProps.style.color || 'black',
                     margin: 0,
-                    padding: '0', // Убираем внутренние отступы
+                    padding: '0',
 
                     whiteSpace: 'nowrap',      /* Запрет переноса строк */
                     overflow: 'hidden',          /* Скрытие выходящего за границы текста */
@@ -347,15 +314,17 @@ const customItemRenderer = ({item, itemContext, getItemProps}) => {  //каст�
             })}
             className="rct-item"
         >
-            <div className="flex px-1 justify-between font-medium text-sm text-black"> {/* Обрезаем длинный текст */}
+            <div className="flex px-1 justify-between font-medium text-sm text-black">
                 {item.title}
             </div>
-            <div className="flex flex-col justify-start text-xs"> {/* Компактное расположение дат */}
+            <div className="flex flex-col justify-start text-xs">
                 {item.info?.np &&
-                    <span className=" px-1 rounded">№ партии: <span className="text-blue-500">{item.info.np}</span></span>
+                    <span className=" px-1 rounded">№ партии: <span
+                        className="text-blue-500">{item.info.np}</span></span>
                 }
                 {item.info?.duration &&
-                    <span className=" px-1 rounded">Длительность: <span className="text-pink-500">{item.info.duration / 60} мин.</span></span>
+                    <span className=" px-1 rounded">Длительность: <span
+                        className="text-pink-500">{item.info.duration / 60} мин.</span></span>
                 }
                 <span className=" px-1 rounded">
                      Время: <span className="text-green-600">{moment(item.start_time).format('HH:mm')} </span>
