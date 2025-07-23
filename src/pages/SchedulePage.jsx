@@ -39,6 +39,9 @@ function SchedulerPage() {
 
     const [downloadedPlan, setDownloadedPlan] = useState(null);
     const [selectDate, setSelectDate] = useState(new Date().toISOString().split('T')[0])
+    const [selectEndDate, setSelectEndDate] = useState(new Date().toISOString().split('T')[0])
+    const [idealEndDateTime, setIdealEndDateTime] = useState("2025-07-22T02:00");
+    const [maxEndDateTime, setMaxEndDateTime] = useState("2025-07-24T07:00");
     const [startTimeLines, setStartTimeLines] = useState([
         {
             id: "1",
@@ -82,13 +85,22 @@ function SchedulerPage() {
     const [timelineKey, setTimelineKey] = useState(0);
 
 
-    async function assignSettings() {
 
-        console.log(selectDate)
-        console.log(startTimeLines)
+    const prepareDataForApi = () => {
+        const lineStartTimes = {};
+
+        startTimeLines.forEach(line => {
+            lineStartTimes[line.id] = line.startDateTime;
+        });
+
+        return lineStartTimes;
+    };
+
+    async function assignSettings() {
+        const requestData = prepareDataForApi();
 
         try {
-            await SchedulerService.assignSettings(selectDate);
+            await SchedulerService.assignSettings(selectDate, selectEndDate, idealEndDateTime, maxEndDateTime, requestData );
         } catch (e) {
             console.error(e)
         }
@@ -322,8 +334,11 @@ function SchedulerPage() {
 
             {isModalDateSettings && <ModalDateSettings onClose={() => {setIsModalDateSettings(false)}}
                                                        selectDate={selectDate} setDate={setSelectDate}
+                                                       selectEndDate={selectEndDate} setSelectEndDate={setSelectEndDate}
                                                        lines={startTimeLines} setLines={setStartTimeLines}
                                                        apply={assignSettings}
+                                                       idealEndDateTime={idealEndDateTime} setIdealEndDateTime={setIdealEndDateTime}
+                                                       maxEndDateTime={maxEndDateTime} setMaxEndDateTime={setMaxEndDateTime}
             />}
 
 
