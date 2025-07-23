@@ -38,7 +38,13 @@ function SchedulerPage() {
     const [isModalDateSettings, setIsModalDateSettings] = useState(false);
 
     const [downloadedPlan, setDownloadedPlan] = useState(null);
+
     const [selectDate, setSelectDate] = useState(new Date().toISOString().split('T')[0])
+    const [selectEndDate, setSelectEndDate] = useState(new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0])
+
+    const [idealEndDateTime, setIdealEndDateTime] = useState(() => new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().replace(/T.*/, 'T02:00'));
+    const [maxEndDateTime, setMaxEndDateTime] = useState(() => new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().replace(/T.*/, 'T07:00'));
+
     const [startTimeLines, setStartTimeLines] = useState([
         {
             id: "1",
@@ -82,13 +88,22 @@ function SchedulerPage() {
     const [timelineKey, setTimelineKey] = useState(0);
 
 
-    async function assignSettings() {
 
-        console.log(selectDate)
-        console.log(startTimeLines)
+    const prepareDataForApi = () => {
+        const lineStartTimes = {};
+
+        startTimeLines.forEach(line => {
+            lineStartTimes[line.id] = line.startDateTime;
+        });
+
+        return lineStartTimes;
+    };
+
+    async function assignSettings() {
+        const requestData = prepareDataForApi();
 
         try {
-            await SchedulerService.assignSettings(selectDate);
+            await SchedulerService.assignSettings(selectDate, selectEndDate, idealEndDateTime, maxEndDateTime, requestData );
         } catch (e) {
             console.error(e)
         }
@@ -197,15 +212,10 @@ function SchedulerPage() {
     }, [isSolve]); // Зависимость от isSolve
 
 
-    function stopSolving() {
+    async function stopSolving() {
         setIsSolve(false)
-        fetchStopSolving();
-    }
-
-    const onSelectDate = (date) => {
-        if (date) {
-            setSelectDate(date);
-        }
+        await fetchStopSolving();
+        fetchPlan();
     }
 
     useEffect(() => {
@@ -299,7 +309,7 @@ function SchedulerPage() {
 
                 <div>
                     <button onClick={() => {setIsModalDateSettings(true)}}
-                            className={"border h-[30px] border-gray-300 rounded-md px-2 shadow-inner" + styleHardwareBut}>Настроить дату
+                            className={"border h-[30px] border-gray-300 rounded-md px-2 shadow-inner bg-blue-800 hover:bg-blue-700 text-white"}>Настроить дату
                     </button>
                 </div>
             </div>
@@ -322,8 +332,11 @@ function SchedulerPage() {
 
             {isModalDateSettings && <ModalDateSettings onClose={() => {setIsModalDateSettings(false)}}
                                                        selectDate={selectDate} setDate={setSelectDate}
+                                                       selectEndDate={selectEndDate} setSelectEndDate={setSelectEndDate}
                                                        lines={startTimeLines} setLines={setStartTimeLines}
                                                        apply={assignSettings}
+                                                       idealEndDateTime={idealEndDateTime} setIdealEndDateTime={setIdealEndDateTime}
+                                                       maxEndDateTime={maxEndDateTime} setMaxEndDateTime={setMaxEndDateTime}
             />}
 
 
@@ -368,7 +381,7 @@ const customItemRenderer = ({item, itemContext, getItemProps}) => {  //каст�
                 }
                 {item.info?.duration &&
                     <span className=" px-1 rounded">Длительность: <span
-                        className="text-pink-500">{item.info.duration / 60} мин.</span></span>
+                        className="text-pink-500">{item.info.duration} мин.</span></span>
                 }
                 <span className=" px-1 rounded">
                      Время: <span className="text-green-600">{moment(item.start_time).format('HH:mm')} </span>
