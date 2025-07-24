@@ -56,7 +56,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         const [oldPages, setOldPage] = useState([]);
         const [currentPage, setCurrentPage] = useState(1); // Активная страница
 
-        const [tablesOpt, setTablesOpt] = useState([])
+        const [dataBandsOpt, setDataBandsOpt] = useState([])
 
         const [isPreviewMode, setIsPreviewMode] = useState(false);
 
@@ -1669,11 +1669,11 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             return doc.body.innerHTML;
         }
 
-        async function fetchReportData(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, content, styles, parameters) {
+        async function fetchReportData(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, content, styles, parameters, script, isSqlMode) {
             try {
                 setIsLoading(true);
                 const response = await ReportService.getDataForReport(reportName, reportCategory, dbUrl, dbUsername,
-                    encryptData(dbPassword), dbDriver, sql, content, styles, parameters);
+                    encryptData(dbPassword), dbDriver, sql, content, styles, parameters, script, isSqlMode);
                 return response.data;
             } catch (e) {
                 setError(e.response.data.message)
@@ -1716,7 +1716,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             setIsPreviewMode(!isPreviewMode);
             const data = await fetchReportData("", "", settingDB.url, settingDB.username,
-                settingDB.password, settingDB.driverClassName, sql, "", "", parameters)
+                settingDB.password, settingDB.driverClassName, sql, "", "", parameters, script, isSqlMode)
             if (!data) {
                 setIsPreviewMode(false);
                 return
@@ -2222,10 +2222,11 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 });
                 setSql(response.data.sql);
                 setParameters(JSON.parse(response.data.parameters));
-                setScript(JSON.parse(response.data.script));
-                setIsSqlMode(JSON.parse(response.data.sqlMode));
+                setScript(response.data.script);
+                setIsSqlMode(response.data.sqlMode);
                 defineBands(response.data.content);
             } catch (error) {
+                console.error(error)
                 setModalMsg("Ошибка загрузки отчета с сервера! Попробуйте еще раз.")
                 showModalNotif();
             } finally {
@@ -2252,7 +2253,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         };
 
         const extractTablesAndCheckSQL = () => {
-            // console.log(tablesOpt)
+            // console.log(dataBandsOpt)
             const tableRegex = /(?:FROM|JOIN|UPDATE|INTO)\s+([\w.]+)(?:\s|$|;|\))/gi;
             const foundTables = new Set();
 
@@ -2271,14 +2272,18 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         }
                     }
                 });
-                setTablesOpt(Array.from(foundTables).sort());
+                setDataBandsOpt(Array.from(foundTables).sort());
                 setIsValidSql(true);
             } catch (e) {
-                setTablesOpt([]);
+                setDataBandsOpt([]);
                 // setIsValidSql(false);
             }
 
         };
+
+    useEffect(() => {
+       console.log(dataBandsOpt)
+    }, [dataBandsOpt]);
 
 
         useEffect(() => {
@@ -2302,7 +2307,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
                 {isJavaEditor && <JavaEditor onClose={() => setIsJavaEditor(false)} parameters={parameters}
                                              setParameters={setParameters} onChange={(e) => setScript(e)}
-                                             script={script}/>}
+                                             script={script} dataBandsOpt={dataBandsOpt} setDataBandsOpt={setDataBandsOpt}
+                />}
 
                 {!isLoading && !isJavaEditor &&
                     <div className=" gjs-two-color gjs-one-bg flex flex-row justify-between py-1 gjs-pn-commands">
@@ -2429,7 +2435,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                             </div>
                             <div className="p-1 hover:bg-gray-200 flex-col justify-center justify-items-center">
                                 <img src="/icons/DataBand.png" className="icon-band" alt="Data band"/>
-                                <Dropdown options={tablesOpt} onSelect={handleSelectTableBand}/>
+                                <Dropdown options={dataBandsOpt} onSelect={handleSelectTableBand}/>
                             </div>
                         </div>
                         <div className="flex flex-row gap-x-2 pr-2">

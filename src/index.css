@@ -28,4 +28,4 @@ input:-webkit-autofill {
     -webkit-text-fill-color: #000 !important; /* Заменяем цвет текста */
 }
 
-
+iframe#webpack-dev-server-client-overlay{display:none!important} /* Чтолбы не было ошибки ResizeObserver loop completed with undelivered notifications. */
