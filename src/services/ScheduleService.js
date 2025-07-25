@@ -192,8 +192,8 @@ export default class ScheduleService {
     }
 
 
-    static async assignSettings(date) {
-        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/load`, {date})
+    static async assignSettings(startDate, endDate, idealEndDateTime, maxEndDateTime, lineStartTimes ) {
+        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/load`, {startDate, endDate, idealEndDateTime, maxEndDateTime, lineStartTimes})
     }
 
     static async getPlan() {

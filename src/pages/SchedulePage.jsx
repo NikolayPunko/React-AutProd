@@ -1,19 +1,14 @@
 import "./../App.css";
 import {useEffect, useState} from "react";
-import {useLocation, useNavigate} from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import moment from 'moment'
 import {CursorMarker, CustomMarker, Timeline, TimelineMarkers, TodayMarker} from "react-calendar-timeline";
 import ScheduleService from "../services/ScheduleService";
-import {styleInput} from "../data/styles";
 import SchedulerService from "../services/ScheduleService";
 import "./../components/scheduler/scheduler.css"
 
-import {ModalInfoItem} from "../components/scheduler/ModalInfoItem"; // Подключаем русскую локаль
-
-moment.locale('ru');
-moment.updateLocale('ru', {
-    months: 'Январь_Февраль_Март_Апрель_Май_Июнь_Июль_Август_Сентябрь_Октябрь_Ноябрь_Декабрь'.split('_')
-});
+import {ModalInfoItem} from "../components/scheduler/ModalInfoItem";
+import {ModalDateSettings} from "../components/scheduler/ModalDateSettings";
 
 
 function SchedulerPage() {
@@ -40,19 +35,72 @@ function SchedulerPage() {
     const [score, setScore] = useState("-0hard/-0medium/-0soft");
     const [solverStatus, setSolverStatus] = useState("");
 
-    const [selectedOption, setSelectedOption] = useState(null);
-    const [options, setOptions] = useState(null);
+    const [isModalDateSettings, setIsModalDateSettings] = useState(false);
 
     const [downloadedPlan, setDownloadedPlan] = useState(null);
     const [selectDate, setSelectDate] = useState(new Date().toISOString().split('T')[0])
+    const [selectEndDate, setSelectEndDate] = useState(new Date().toISOString().split('T')[0])
+    const [idealEndDateTime, setIdealEndDateTime] = useState("2025-07-22T02:00");
+    const [maxEndDateTime, setMaxEndDateTime] = useState("2025-07-24T07:00");
+    const [startTimeLines, setStartTimeLines] = useState([
+        {
+            id: "1",
+            name: "Line1",
+            operator: null,
+            startDateTime: "08:00"
+        },
+        {
+            id: "2",
+            name: "Line2",
+            operator: null,
+            startDateTime: "08:00"
+        },
+        {
+            id: "3",
+            name: "Line3",
+            operator: null,
+            startDateTime: "08:00"
+        },
+        {
+            id: "4",
+            name: "Line4",
+            operator: null,
+            startDateTime: "08:00"
+        },
+        {
+            id: "5",
+            name: "Line5",
+            operator: null,
+            startDateTime: "08:00"
+        },
+        {
+            id: "6",
+            name: "Line6",
+            operator: null,
+            startDateTime: "08:00"
+        },
+    ])
 
 
     const [timelineKey, setTimelineKey] = useState(0);
 
 
-    async function assignSettings(date) {
+
+    const prepareDataForApi = () => {
+        const lineStartTimes = {};
+
+        startTimeLines.forEach(line => {
+            lineStartTimes[line.id] = line.startDateTime;
+        });
+
+        return lineStartTimes;
+    };
+
+    async function assignSettings() {
+        const requestData = prepareDataForApi();
+
         try {
-            await SchedulerService.assignSettings(date);
+            await SchedulerService.assignSettings(selectDate, selectEndDate, idealEndDateTime, maxEndDateTime, requestData );
         } catch (e) {
             console.error(e)
         }
@@ -260,10 +308,11 @@ function SchedulerPage() {
                     </div>
 
                 </div>
+
                 <div>
-                    <input className={styleInput + " h-[30px]"} type="date"
-                           value={selectDate}
-                           onChange={(e) => onSelectDate(e.target.value)}/>
+                    <button onClick={() => {setIsModalDateSettings(true)}}
+                            className={"border h-[30px] border-gray-300 rounded-md px-2 shadow-inner" + styleHardwareBut}>Настроить дату
+                    </button>
                 </div>
             </div>
 
@@ -282,6 +331,16 @@ function SchedulerPage() {
 
 
             </div>
+
+            {isModalDateSettings && <ModalDateSettings onClose={() => {setIsModalDateSettings(false)}}
+                                                       selectDate={selectDate} setDate={setSelectDate}
+                                                       selectEndDate={selectEndDate} setSelectEndDate={setSelectEndDate}
+                                                       lines={startTimeLines} setLines={setStartTimeLines}
+                                                       apply={assignSettings}
+                                                       idealEndDateTime={idealEndDateTime} setIdealEndDateTime={setIdealEndDateTime}
+                                                       maxEndDateTime={maxEndDateTime} setMaxEndDateTime={setMaxEndDateTime}
+            />}
+
 
         </div>
     )
