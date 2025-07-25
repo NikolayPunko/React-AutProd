@@ -107,6 +107,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 height: "1200px",
                 width: 'auto',
                 default_locale: 'ru',
+                // cssComposer: false,
                 i18n: {
                     locale: 'ru', // default locale
                     detectLocale: true, // by default, the editor will detect the language
@@ -1641,7 +1642,15 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                             let instanceHtml = bandHtml;
 
                             Object.keys(tableData).forEach(field => {
-                                instanceHtml = instanceHtml.replaceAll(`{{${field}}}`, tableData[field]);
+                                // if (field === 'datetime_field') {
+                                //     console.log("true")
+                                    instanceHtml = instanceHtml.replaceAll(
+                                        `{{${field}}}`, //видимо стиль по id имеет больший приоритет
+                                        `<span style="color: red !important; font-weight: bold !important;">${tableData[field]}</span>`
+                                    );
+                                // } else {
+                                //     instanceHtml = instanceHtml.replaceAll(`{{${field}}}`, tableData[field]);
+                                // }
                             });
 
                             let bandCopy = band.cloneNode()
@@ -1859,10 +1868,15 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         width: 794px;
                         visibility: hidden;
                 `;
+//не получается применить inline стили при подстановке полей
 
                 const bodyContainer = tempContainer.querySelector('#body-container');
                 bodyContainer.innerHTML = `<style>${css}</style>${htmlString}`;
+                // bodyContainer.innerHTML = `${htmlString}`;
+                // bodyContainer.style.css = css
                 document.body.appendChild(tempContainer);
+
+
 
                 const bandHeights = {
                     header: getBandHeight(bands, 'pageHeader'),
@@ -2036,129 +2050,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             }
         }
 
-        function splitIntoA4Pages2(htmlString, css, bands) {
-            return new Promise((resolve) => {
-
-                const pagesBuf = [
-                    {id: 1, content: "", styles: ""}
-                ];
-                setPages(pagesBuf);
-                setCurrentPage(1);
-
-                const tempContainer = createTempContainer();
-                tempContainer.style.position = "absolute";
-                tempContainer.style.left = "-9999px";
-                tempContainer.style.width = "794px"; // Ширина A4
-                tempContainer.querySelector('#body-container').innerHTML = `<style>${css}</style>${htmlString}`;
-
-
-                document.body.appendChild(tempContainer);
-
-                //Логика вставки бэндов в разметку
-                insertBand(tempContainer, bands, true, true)
-
-                let contentHeight = tempContainer.scrollHeight; //бэнды которые позиционируются абсолютно, не учитываются
-
-                contentHeight = contentHeight + getFooterBandHeight(); //т.к. footerBand имеет абсолютное позиционирование
-
-                const maxHeight = 1123; // Высота A4
-
-                let newHtml = removeStyle(tempContainer.innerHTML) //html с бэндами
-
-                //  Если контент помещается, просто возвращаем его
-                if (contentHeight <= maxHeight) {
-                    document.body.removeChild(tempContainer);
-                    return resolve(newHtml);
-                }
-
-                let pageId = 0;
-
-                // Разбиваем контент на страницы
-                let firstPageHtml = "";
-
-                const childNodes = Array.from(tempContainer.querySelector('#body-container').childNodes);
-
-
-                const tempDiv = createTempContainer();
-
-
-                // console.log(tempDiv)
-
-                // console.log(childNodes)
-
-                const start = performance.now(); // Начало замера
-                for (let i = 0; i < childNodes.length; i++) {
-
-                    let isAddBand = false;
-                    let isNeedReportTitle = false;
-                    let isNeedReportSummary = false;
-
-
-                    let node = childNodes[i];
-                    tempDiv.querySelector('#body-container').appendChild(node.cloneNode(true))
-                    // tempDiv.appendChild(node.cloneNode(true));
-
-
-                    // headerContainer.appendChild()
-
-                    const nodeHeight = node.scrollHeight;
-
-
-                    if (pageId === 0) isNeedReportTitle = true;
-
-
-                    if (i === childNodes.length - 1) {
-                        isNeedReportSummary = true;
-
-                        insertBand(tempDiv, bands, isNeedReportTitle, isNeedReportSummary);
-                        pagesBuf[pageId].content = tempDiv.innerHTML;
-                        pagesBuf[pageId].styles = css;
-                        break;
-                    }
-
-                    if (!isAddBand) {
-                        insertBand(tempDiv, bands, isNeedReportTitle, isNeedReportSummary);
-                        isAddBand = true;
-                        isNeedReportTitle = false;
-                    }
-                    if (pageId === 0) {
-                        firstPageHtml = tempDiv.innerHTML;
-                    }
-
-                    let updateHeight = getFooterBandHeight() + tempDiv.scrollHeight;
-
-                    // Если элемент не влезает - начинаем новую страницу
-                    if (updateHeight + nodeHeight > maxHeight) {
-                        isAddBand = false;
-
-                        pagesBuf[pageId].content = tempDiv.innerHTML;
-                        pagesBuf[pageId].styles = css;
-                        pageId++;
-                        pagesBuf.push({id: pageId + 1, content: "", styles: ""});
-
-                        tempDiv.querySelector('#body-container').innerHTML = "";
-                        tempDiv.querySelector('#header-container').innerHTML = "";
-                        tempDiv.querySelector('#footer-container').innerHTML = "";
-
-                    }
-
-
-                    document.body.appendChild(tempDiv);
-                }
-                const end = performance.now(); // Конец замера
-                const seconds = (end - start) / 1000; // Преобразуем миллисекунды в секунды
-
-                console.log(`Метод выполнился за ${seconds.toFixed(3)} секунд`);
-
-                document.body.removeChild(tempDiv);
-
-                setPages(pagesBuf);
-
-                document.body.removeChild(tempContainer);
-                resolve(firstPageHtml);
-            });
-        }
-
         const handleSelectTableBand = (option) => {
             addDataBand(option);
         };
@@ -2281,10 +2172,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
         };
 
-    useEffect(() => {
-       console.log(dataBandsOpt)
-    }, [dataBandsOpt]);
-
 
         useEffect(() => {
             extractTablesAndCheckSQL();
@@ -2306,7 +2193,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 {isLoading && <Loading/>}
 
                 {isJavaEditor && <JavaEditor onClose={() => setIsJavaEditor(false)} parameters={parameters}
-                                             setParameters={setParameters} onChange={(e) => setScript(e)}
+                                             setParameters={setParameters} setScript={(e) => setScript(e)}
                                              script={script} dataBandsOpt={dataBandsOpt} setDataBandsOpt={setDataBandsOpt}
                 />}
 
@@ -2381,10 +2268,10 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                                 <>
                             <span className="gjs-pn-btn hover:bg-gray-200" onClick={exportJSON}
                                   title="Экспорт шаблона JSON">
-                            <i className="fa fa-file-export"></i></span>
+                            <i className="fa fa-upload"></i></span>
                                     <span className="gjs-pn-btn hover:bg-gray-200" onClick={importJSON}
                                           title="Импорт шаблона JSON">
-                            <i className="fa fa-upload"></i></span>
+                            <i className="fa fa-download"></i></span>
 
                                     <span className="gjs-pn-btn hover:bg-gray-200" onClick={showModalSaveReport}
                                           title="Сохранить шаблон на сервер">
