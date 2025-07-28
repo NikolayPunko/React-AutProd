@@ -50,7 +50,7 @@ export default class ScheduleService {
                 start: filteredData[i].startCleaningDateTime,
                 end: filteredData[i].startProductionDateTime,
                 line: filteredData[i].line.name,
-                duration: json.jobs[i].duration,
+                duration: Math.round(new Date(filteredData[i].startProductionDateTime) - new Date(filteredData[i].startCleaningDateTime))/ 60000,
             }
         }
         return cleaning;
@@ -80,7 +80,7 @@ export default class ScheduleService {
                 start: filteredData[i].startCleaningDateTime,
                 end: filteredData[i].startProductionDateTime,
                 line: filteredData[i].line.name,
-                duration: json.jobs[i].duration,
+                duration: Math.round(new Date(filteredData[i].startProductionDateTime) - new Date(filteredData[i].startCleaningDateTime))/ 60000,
             }
         }
         return cleaning;
@@ -136,7 +136,7 @@ export default class ScheduleService {
                 line: json.jobs[i].line.name,
                 quantity: json.jobs[i].quantity,
                 np: json.jobs[i].np,
-                duration: json.jobs[i].duration,
+                duration: Math.round(new Date(json.jobs[i].endDateTime) - new Date(json.jobs[i].startProductionDateTime))/ 60000,
 
                 fullName: json.jobs[i].product.name,
                 type: json.jobs[i].product.type,
@@ -175,7 +175,7 @@ export default class ScheduleService {
                 line: json.jobs[i].line.name,
                 quantity: json.jobs[i].quantity,
                 np: json.jobs[i].np,
-                duration: json.jobs[i].duration,
+                duration: Math.round(new Date(json.jobs[i].endDateTime) - new Date(json.jobs[i].startProductionDateTime))/ 60000,
 
                 fullName: json.jobs[i].product.name,
                 type: json.jobs[i].product.type,

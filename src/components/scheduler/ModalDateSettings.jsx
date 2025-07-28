@@ -81,7 +81,7 @@ export function ModalDateSettings({lines, setLines, selectDate, setDate, selectE
                                     className="min-w-[50px] px-2 mx-2 h-7 rounded text-xs font-medium shadow-sm border border-slate-400 hover:bg-gray-200">
                                 Отмена
                             </button>
-                            <button onClick={() => {apply()}}
+                            <button onClick={() => {apply(); onClose()}}
                                     className="min-w-[50px] text-xs h-7 font-medium px-2 py-1 rounded text-white bg-blue-800 hover:bg-blue-700">
                                 Применить
                             </button>
