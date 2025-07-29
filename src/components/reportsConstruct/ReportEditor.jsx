@@ -108,6 +108,20 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 width: 'auto',
                 default_locale: 'ru',
                 // cssComposer: false,
+                allowScripts: true,
+                avoidInlineStyle: false,
+                cleanHtml: false,
+                domComponents: {
+                    parser: {
+                        html: {
+                            allowScripts: true,
+                            allowUnsafeAttr: true,
+                            keepUnusedStyles: true,
+                            keepInlineStyles: true  // Критически важный параметр
+                        }
+                    }
+                },
+
                 i18n: {
                     locale: 'ru', // default locale
                     detectLocale: true, // by default, the editor will detect the language
@@ -394,15 +408,15 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 const modelRect = modelEl.getBoundingClientRect();
 
                 const initialTop = modelRect.top - parentRect.top;
-                console.log("")
-                console.log("initialTop " + initialTop)
+                // console.log("")
+                // console.log("initialTop " + initialTop)
 
                 const modelRectBefore = modelEl.getBoundingClientRect();
 
                 const x = modelRectBefore.left + modelRectBefore.width / 2;
                 const y = modelRectBefore.top + modelRectBefore.height / 2;
 
-                console.log("modelRectBefore.top " + modelRectBefore.top)
+                // console.log("modelRectBefore.top " + modelRectBefore.top)
 
                 const target = findTargetComponentAtPoint(editor.DomComponents.getComponents(), x, y, modelEl);
 
@@ -493,7 +507,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             //парно удялем бэнд и его описание
             editor.on('component:remove', (component) => {
-
 
                 if (component.attributes?.band === 'true' ||
                     component.getAttributes?.()?.band === 'true' || component.attributes?.['data-band'] === 'true' || component.getAttributes?.()?.['data-band'] === 'true') {
@@ -603,9 +616,9 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             addBlocks(editor);
 
-            editor.DataSources.add({
-                id: 'my_data_source_id', records: [{id: 'id1', name: 'value1'}, {id: 'id2', name: 'value2'}]
-            });
+            // editor.DataSources.add({
+            //     id: 'my_data_source_id', records: [{id: 'id1', name: 'value1'}, {id: 'id2', name: 'value2'}]
+            // });
 
 
             const restrictDragToCanvas = (component) => {
@@ -729,6 +742,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                     editor.setComponents(page.content);
                     editor.setStyle(page.styles);
                     setCurrentPage(id);
+                    console.log(page.content)
                 }
             }, 100);
         };
@@ -768,7 +782,9 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                     reportCategory: reportCategory,
                     content: updatedPages[0].content,
                     styles: updatedPages[0].styles,
-                    parameters: parameters
+                    parameters: parameters,
+                    sqlMode: isSqlMode,
+                    script: script
                 }
 
                 try {
@@ -823,7 +839,9 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         setReportCategory(importedPages.reportCategory)
                         editorView.setComponents(importedPages.content);
                         editorView.setStyle(importedPages.styles);
-                        setParameters(importedPages.parameters)
+                        setParameters(importedPages.parameters);
+                        setIsSqlMode(importedPages.sqlMode);
+                        setScript(importedPages.script)
 
                     };
                 } catch (error) {
@@ -965,57 +983,57 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 const printDocument = printFrame.contentDocument || printFrame.contentWindow.document;
                 printDocument.open("", "_blank");
                 printDocument.write(`
-   
-     <html>
-        <head>
-          <title>Печать</title>
-          <style>
-            ${combinedCSS}
-
-            @media print {
-            body {
-              margin: 0;
-              padding: 0;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              -webkit-print-color-adjust: exact; /* Для Chrome и Safari */
-              print-color-adjust: exact; /* Для Firefox */
-              box-sizing: border-box;
-            }
-            .print-page {
-              width: 100%;
-              max-width: 100%;
-              height: 100vh;
-              min-height: 100vh;
-              box-sizing: border-box;
-              display: flex;
-              flex-direction: column;
-              justify-content: flex-start;
-              align-items: flex-start;
-              padding: 0;
-              margin: 0 auto;
-              position: relative;
-              overflow: hidden;
-              page-break-after: always; /* Стабильное разбиение страниц */
-              break-after: page;
-            }
-            .print-page:last-child {
-              page-break-after: auto; /* Убираем лишний пустой лист в конце */
-            }
-          }
-            @page { size: A4; margin: 0; }
-            body { width: 210mm; height: 297mm; margin: 0 auto; overflow: hidden; }
-
+               
+                 <html>
+                    <head>
+                      <title>Печать</title>
+                      <style>
+                        ${combinedCSS}
             
-          </style>
-        </head>
-        <body>${combinedHTML}
-      </html>
-        
-       
-      
-  `);
+                        @media print {
+                        body {
+                          margin: 0;
+                          padding: 0;
+                          display: flex;
+                          flex-direction: column;
+                          align-items: center;
+                          -webkit-print-color-adjust: exact; /* Для Chrome и Safari */
+                          print-color-adjust: exact; /* Для Firefox */
+                          box-sizing: border-box;
+                        }
+                        .print-page {
+                          width: 100%;
+                          max-width: 100%;
+                          height: 100vh;
+                          min-height: 100vh;
+                          box-sizing: border-box;
+                          display: flex;
+                          flex-direction: column;
+                          justify-content: flex-start;
+                          align-items: flex-start;
+                          padding: 0;
+                          margin: 0 auto;
+                          position: relative;
+                          overflow: hidden;
+                          page-break-after: always; /* Стабильное разбиение страниц */
+                          break-after: page;
+                        }
+                        .print-page:last-child {
+                          page-break-after: auto; /* Убираем лишний пустой лист в конце */
+                        }
+                      }
+                        @page { size: A4; margin: 0; }
+                        body { width: 210mm; height: 297mm; margin: 0 auto; overflow: hidden; }
+            
+                        
+                      </style>
+                    </head>
+                    <body>${combinedHTML}
+                  </html>
+                    
+                   
+                  
+              `);
 
                 printDocument.close();
 
@@ -1053,10 +1071,10 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 for (let i = 0; i < updatedPages.length; i++) {
                     combinedHTML += `
       
-         <div class="print-page">
-            ${updatedPages[i].content}
-         </div>
-         `;
+                 <div class="print-page">
+                    ${updatedPages[i].content}
+                 </div>
+                 `;
                     combinedCSS += " " + updatedPages[i].styles;
                 }
 
@@ -1073,55 +1091,55 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 printDocument.open("", "_blank");
                 printDocument.write(`
    
-     <html>
-        <head>
-          <title>Печать</title>
-          <style>
-            ${combinedCSS}
-
-            @media print {
-            body {
-              margin: 0;
-              padding: 0;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              -webkit-print-color-adjust: exact; /* Для Chrome и Safari */
-              print-color-adjust: exact; /* Для Firefox */
-            }
-            .print-page {
-              width: 100%;
-              max-width: 100%;
-              height: 100vh;
-              min-height: 100vh;
-              box-sizing: border-box;
-              display: flex;
-              flex-direction: column;
-              justify-content: flex-start;
-              align-items: flex-start;
-              padding: 0;
-              margin: 0 auto;
-              position: relative;
-              overflow: hidden;
-              page-break-after: always; /* Стабильное разбиение страниц */
-              break-after: page;
-            }
-            .print-page:last-child {
-              page-break-after: auto; /* Убираем лишний пустой лист в конце */
-            }
-          }
-            @page { size: A4; margin: 0; }
-            body { width: 210mm; height: 297mm; margin: 0 auto; overflow: hidden; }
-
+                 <html>
+                    <head>
+                      <title>Печать</title>
+                      <style>
+                        ${combinedCSS}
             
-          </style>
-        </head>
-        <body>${combinedHTML}
-      </html>
-        
-       
-      
-  `);
+                        @media print {
+                        body {
+                          margin: 0;
+                          padding: 0;
+                          display: flex;
+                          flex-direction: column;
+                          align-items: center;
+                          -webkit-print-color-adjust: exact; /* Для Chrome и Safari */
+                          print-color-adjust: exact; /* Для Firefox */
+                        }
+                        .print-page {
+                          width: 100%;
+                          max-width: 100%;
+                          height: 100vh;
+                          min-height: 100vh;
+                          box-sizing: border-box;
+                          display: flex;
+                          flex-direction: column;
+                          justify-content: flex-start;
+                          align-items: flex-start;
+                          padding: 0;
+                          margin: 0 auto;
+                          position: relative;
+                          overflow: hidden;
+                          page-break-after: always; /* Стабильное разбиение страниц */
+                          break-after: page;
+                        }
+                        .print-page:last-child {
+                          page-break-after: auto; /* Убираем лишний пустой лист в конце */
+                        }
+                      }
+                        @page { size: A4; margin: 0; }
+                        body { width: 210mm; height: 297mm; margin: 0 auto; overflow: hidden; }
+            
+                        
+                      </style>
+                    </head>
+                    <body>${combinedHTML}
+                  </html>
+                    
+                   
+                  
+              `);
 
                 printDocument.close();
 
@@ -1156,36 +1174,36 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 // 3. Создаем базовую структуру документа
                 printWindow.document.open();
                 printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Печать</title>
-        <style>
-          @page {
-            size: A4;
-            margin: 0;
-          }
-          body {
-            margin: 0;
-            padding: 0;
-            width: 210mm;
-            overflow-x: hidden;
-          }
-          .print-page {
-            width: 210mm;
-            height: 297mm;
-            page-break-after: always;
-            position: relative;
-            overflow: hidden;
-          }
-          .print-page:last-child {
-            page-break-after: auto;
-          }
-        </style>
-      </head>
-      <body>
-    `);
+                  <!DOCTYPE html>
+                  <html>
+                  <head>
+                    <meta charset="UTF-8">
+                    <title>Печать</title>
+                    <style>
+                      @page {
+                        size: A4;
+                        margin: 0;
+                      }
+                      body {
+                        margin: 0;
+                        padding: 0;
+                        width: 210mm;
+                        overflow-x: hidden;
+                      }
+                      .print-page {
+                        width: 210mm;
+                        height: 297mm;
+                        page-break-after: always;
+                        position: relative;
+                        overflow: hidden;
+                      }
+                      .print-page:last-child {
+                        page-break-after: auto;
+                      }
+                    </style>
+                  </head>
+                  <body>
+                `);
 
                 // 4. Используем DocumentFragment для пакетной вставки
                 const fragment = printWindow.document.createDocumentFragment();
@@ -1437,7 +1455,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                    font-weight: bold;
                    font-size: 14px;
                    pointer-events: none;
-              ">DataBand: ${tableName}</div>
+              ">Бэнд данных: ${tableName}</div>
               
               <div data-band="true" id="${tableName}" draggable="false" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
                  <h2 style="position: absolute; top: 20px; left: 20px; margin: 0px">Начни создание отчета</h2>
@@ -1478,20 +1496,20 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         droppable: true,
                         highlightable: true,
                         components: `
-              <div description-band="true" style="
+                <div description-band="true" style="
                    background: #ededed;
                    padding: 2px 8px;
                    font-weight: bold;
                    font-size: 14px;
                    pointer-events: none;
-              ">Page header</div>
+              ">Шапка страницы</div>
               
-             <div band="true" id="pageHeader" style="height: 100px; width: 794px; background: #fbfbfb; position: relative;
-              border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
-            
-               <h2 style="">Page header band</h2>
-              
-            </div>
+                <div band="true" id="pageHeader" style="height: 100px; width: 794px; background: #fbfbfb; position: relative;
+                  border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+                
+                   <h2 style="">Шапка страницы</h2>
+                  
+                </div>
       `,
 
                     },
@@ -1524,11 +1542,11 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                    font-weight: bold;
                    font-size: 14px;
                    pointer-events: none;
-            ">Report title</div>
+            ">Шапка отчета</div>
               
             <div band="true" id="reportTitle" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
             
-               <h2 style="">Report title band</h2>
+               <h2 style="">Шапка отчета</h2>
               
             </div>
       `,
@@ -1564,11 +1582,11 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                    position: absolute;
                    bottom: 100px;
                    width: 794px;
-            ">Page footer</div>
+            ">Подвал страницы</div>
              <div band="true" id="pageFooter" style="height: 100px; width: 794px; position: absolute; bottom: 0;
               background: #fbfbfb;  border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
             
-               <h2 style="">Page footer band</h2>
+               <h2 style="">Подвал страницы</h2>
               
             </div>
 <!--  </div>-->
@@ -1600,10 +1618,10 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                    font-weight: bold;
                    font-size: 14px;
                    pointer-events: none;
-            ">Report summary</div>
-             <div band="true" id="reportSummary" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+            ">Подвал отчета</div>
+            <div band="true" id="reportSummary" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
             
-               <h2 style="">Report summary band</h2>
+               <h2 style="">Подвал отчета</h2>
               
             </div>
             `,
@@ -1652,6 +1670,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                                 //     instanceHtml = instanceHtml.replaceAll(`{{${field}}}`, tableData[field]);
                                 // }
                             });
+                            //Возможно потом переделать чтобы css отображался нормально отображение без редактора, проосто мб сделать компонент html
 
                             let bandCopy = band.cloneNode()
                             bandCopy.innerHTML = instanceHtml;
@@ -1672,7 +1691,6 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
             splitIntoA4Pages(doc.body.innerHTML, css, bands).then((pagedHtml) => {
                 editorView.setComponents(pagedHtml);
-
             });
 
             return doc.body.innerHTML;
@@ -1868,14 +1886,11 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         width: 794px;
                         visibility: hidden;
                 `;
-//не получается применить inline стили при подстановке полей
+// inline style пропадает при подстановки в конструктор, если и сработает то только со второй страницы
 
                 const bodyContainer = tempContainer.querySelector('#body-container');
                 bodyContainer.innerHTML = `<style>${css}</style>${htmlString}`;
-                // bodyContainer.innerHTML = `${htmlString}`;
-                // bodyContainer.style.css = css
                 document.body.appendChild(tempContainer);
-
 
 
                 const bandHeights = {
