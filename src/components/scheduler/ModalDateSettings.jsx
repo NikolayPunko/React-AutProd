@@ -55,7 +55,7 @@ export function ModalDateSettings({lines, setLines, selectDate, setDate, selectE
                     </div>
 
 
-                    <div className="flex flex-row my-2">
+                    <div className="flex flex-row my-2 hidden">
                         <span className={styleLable}>Идеальное время выполнения расчета:</span>
                         <input className={styleInfo} type={"datetime-local"}
                             value={idealEndDateTime}
