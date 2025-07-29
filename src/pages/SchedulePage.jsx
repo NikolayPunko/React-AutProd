@@ -247,6 +247,19 @@ function SchedulerPage() {
         };
     }, []);
 
+    function onChangeSelectDate(e) {
+        setSelectDate(e);
+        setSelectEndDate(new Date(new Date().setDate(new Date(e).getDate() + 1)).toISOString().split('T')[0]);
+        setIdealEndDateTime(new Date(new Date().setDate(new Date(e).getDate() + 1)).toISOString().replace(/T.*/, 'T02:00'));
+        setMaxEndDateTime(new Date(new Date().setDate(new Date(e).getDate() + 1)).toISOString().replace(/T.*/, 'T07:00'));
+    }
+
+    function onChangeEndDate(e) {
+        setSelectEndDate(e);
+        setIdealEndDateTime(new Date(e).toISOString().replace(/T.*/, 'T02:00'));
+        setMaxEndDateTime(new Date(e).toISOString().replace(/T.*/, 'T07:00'));
+    }
+
 
     return (
         <div className="w-full">
@@ -331,8 +344,8 @@ function SchedulerPage() {
             </div>
 
             {isModalDateSettings && <ModalDateSettings onClose={() => {setIsModalDateSettings(false)}}
-                                                       selectDate={selectDate} setDate={setSelectDate}
-                                                       selectEndDate={selectEndDate} setSelectEndDate={setSelectEndDate}
+                                                       selectDate={selectDate} setDate={onChangeSelectDate}
+                                                       selectEndDate={selectEndDate} setSelectEndDate={onChangeEndDate}
                                                        lines={startTimeLines} setLines={setStartTimeLines}
                                                        apply={assignSettings}
                                                        idealEndDateTime={idealEndDateTime} setIdealEndDateTime={setIdealEndDateTime}
