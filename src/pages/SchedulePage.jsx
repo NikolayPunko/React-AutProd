@@ -9,6 +9,7 @@ import "./../components/scheduler/scheduler.css"
 
 import {ModalInfoItem} from "../components/scheduler/ModalInfoItem";
 import {ModalDateSettings} from "../components/scheduler/ModalDateSettings";
+import {ModalAnalyze} from "../components/scheduler/ModalAnalyze";
 
 
 function SchedulerPage() {
@@ -36,8 +37,10 @@ function SchedulerPage() {
     const [solverStatus, setSolverStatus] = useState("");
 
     const [isModalDateSettings, setIsModalDateSettings] = useState(false);
+    const [isModalAnalyze, setIsModalAnalyze] = useState(false);
 
     const [downloadedPlan, setDownloadedPlan] = useState(null);
+    const [analyzeObj, setAnalyzeObj] = useState(null);
 
     const [selectDate, setSelectDate] = useState(new Date().toISOString().split('T')[0])
     const [selectEndDate, setSelectEndDate] = useState(new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0])
@@ -132,6 +135,15 @@ function SchedulerPage() {
             setDownloadedPlan(response.data)
             setScore(response.data.score)
             setSolverStatus(response.data.solverStatus)
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
+    async function fetchAnalyze() {
+        try {
+            const response = await SchedulerService.analyze()
+            setAnalyzeObj(response.data)
         } catch (e) {
             console.error(e)
         }
@@ -312,16 +324,26 @@ function SchedulerPage() {
                         </div>
                     }
 
-                    <div className="flex items-center px-4 border rounded mx-2">
-                        <span className="font-medium">
+                    <div className="flex items-center border rounded-md mx-2">
+                        <span className="font-medium px-4">
                             Расчеты: {score}
                         </span>
+                        <button onClick={() => {
+                            fetchAnalyze();
+                            setIsModalAnalyze(true);
+                        }}
+                                className={" h-full border-gray-300 rounded-r-md px-2 shadow-inner bg-blue-800 hover:bg-blue-700 text-white"}>
+                            Подробнее
+                            {/*<i className="fa-solid fa-question"></i>*/}
+                        </button>
                     </div>
 
                 </div>
 
                 <div>
-                    <button onClick={() => {setIsModalDateSettings(true)}}
+                    <button onClick={() => {
+                        setIsModalDateSettings(true)
+                    }}
                             className={"border h-[30px] border-gray-300 rounded-md px-2 shadow-inner bg-blue-800 hover:bg-blue-700 text-white"}>Настроить дату
                     </button>
                 </div>
@@ -350,6 +372,10 @@ function SchedulerPage() {
                                                        apply={assignSettings}
                                                        idealEndDateTime={idealEndDateTime} setIdealEndDateTime={setIdealEndDateTime}
                                                        maxEndDateTime={maxEndDateTime} setMaxEndDateTime={setMaxEndDateTime}
+            />}
+
+            {isModalAnalyze && <ModalAnalyze onClose={() => setIsModalAnalyze(false)}
+                                             analyzeObj={analyzeObj}
             />}
 
 

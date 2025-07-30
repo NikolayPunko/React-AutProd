@@ -213,5 +213,8 @@ export default class ScheduleService {
         return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/stopSolving`, {})
     }
 
+    static async analyze() {
+        return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/analyze`, {})
+    }
 
 }
