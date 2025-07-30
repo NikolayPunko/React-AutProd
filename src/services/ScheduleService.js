@@ -2,10 +2,10 @@ import $apiSchedule, {API_URL_SCHEDULER} from "../http/scheduler";
 import moment from "moment/moment";
 
 export let party = []
-export const hardware = []
+export let hardware = []
 
-export const planByParty = []
-export const planByHardware = []
+export let planByParty = []
+export let planByHardware = []
 
 
 const exampleResourse = {
@@ -36,7 +36,7 @@ export default class ScheduleService {
             cleaning[i].id = filteredData[i].id + 'cl';
             cleaning[i].start_time = new Date(filteredData[i].startCleaningDateTime).getTime();
             cleaning[i].end_time = new Date(filteredData[i].startProductionDateTime).getTime();
-            cleaning[i].title = "Мойка";
+            cleaning[i].title = "Мойка, переналадка";
             cleaning[i].group = filteredData[i].np;
             cleaning[i].itemProps = {
                 style: {
@@ -66,7 +66,7 @@ export default class ScheduleService {
             cleaning[i].id = i + "cleaning";
             cleaning[i].start_time = new Date(filteredData[i].startCleaningDateTime).getTime();
             cleaning[i].end_time = new Date(filteredData[i].startProductionDateTime).getTime();
-            cleaning[i].title = "Мойка";
+            cleaning[i].title = "Мойка, переналадка";
             cleaning[i].group = filteredData[i].line.id;
             cleaning[i].itemProps = {
                 style: {
@@ -87,6 +87,7 @@ export default class ScheduleService {
     }
 
     static async parseParty(json) {
+        party = [];
         const seenNp = new Map();
         json.jobs.forEach(item => {
             if (!seenNp.has(item.np)) {
@@ -104,6 +105,7 @@ export default class ScheduleService {
 
 
     static async parseHardware(json) {
+        hardware = [];
         for (let i = 0; i < json.lines.length; i++) {
             hardware[i] = Object.assign({}, exampleResourse);
             hardware[i].id = json.lines[i].id;
@@ -113,6 +115,7 @@ export default class ScheduleService {
     }
 
     static async parsePlanByParty(json) {
+        planByParty = [];
 
         for (let i = 0; i < json.jobs.length; i++) {
             planByParty[i] = Object.assign({}, exampleTask);
@@ -153,6 +156,8 @@ export default class ScheduleService {
     }
 
     static async parsePlanByHardware(json) {
+        planByHardware = [];
+
         for (let i = 0; i < json.jobs.length; i++) {
             planByHardware[i] = Object.assign({}, exampleTask);
             planByHardware[i].id = json.jobs[i].id;
