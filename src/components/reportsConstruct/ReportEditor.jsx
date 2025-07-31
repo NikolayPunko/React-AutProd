@@ -882,12 +882,36 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         const exportHtml = () => {
             // Собираем все стили (убираем дубликаты)
             const uniqueStyles = [...new Set(pages.map(p => p.styles || ''))].join('\n');
-
+console.log(pages)
             let pagesHtml = "";
             for (let i = 0; i < pages.length; i++) {
                 pagesHtml += "<div class='page-container'>";
                 pagesHtml += pages[i].content;
                 pagesHtml += "</div> ";
+                pagesHtml += "<script>\n" +
+                    "        document.addEventListener('DOMContentLoaded', function() {\n" +
+                    "            // Получаем все элементы с data-field=\"true\"\n" +
+                    "            const fields = document.querySelectorAll('[data-field=\"true\"]');\n" +
+                    "            let clickTimeout;\n" +
+                    "            \n" +
+                    "            fields.forEach(field => {\n" +
+                    "                // Одинарный клик - скрываем поле\n" +
+                    "                field.addEventListener('click', function(e) {\n" +
+                    "                    clearTimeout(clickTimeout);\n" +
+                    "                    \n" +
+                    "                    clickTimeout = setTimeout(() => {\n" +
+                    "                        this.style.visibility = 'hidden';\n" +
+                    "                    }, 250);\n" +
+                    "                });\n" +
+                    "                \n" +
+                    "                // Двойной клик - показываем поле\n" +
+                    "                field.addEventListener('dblclick', function(e) {\n" +
+                    "                    clearTimeout(clickTimeout);\n" +
+                    "                    this.style.visibility = 'visible';\n" +
+                    "                });\n" +
+                    "            });\n" +
+                    "        });\n" +
+                    "    </script>";
             }
 
             const finalHtml = `
@@ -1458,9 +1482,10 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
               ">Бэнд данных: ${tableName}</div>
               
               <div data-band="true" id="${tableName}" draggable="false" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
-                 <h2 style="position: absolute; top: 20px; left: 20px; margin: 0px">Начни создание отчета</h2>
-                 <p class="data-band-field" style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажи поле из запроса в двойных скобках: {{field_1}}</p>
-                 <p class="data-band-field" style="position: absolute; top: 60px; left: 500px; margin: 0px">Повтори действие: {{field_2}}</p>
+<!--                 <h2 style="position: absolute; top: 20px; left: 20px; margin: 0px">Начни создание отчета</h2>-->
+<!--                 <p data-field="true" class="data-band-field" style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажи поле из запроса в двойных скобках: {{field_1}}</p>-->
+                 <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажи поле из запроса в двойных скобках: {{field_1}}</p>
+<!--                 <p class="data-band-field" style="position: absolute; top: 60px; left: 500px; margin: 0px">Повтори действие: {{field_2}}</p>-->
               </div>
       `,
                         // script: function () {
@@ -1469,6 +1494,23 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                         //     });
                         //     this.querySelector('.data-band-table').addEventListener('click', function () {
                         //         alert('Будущее окно выбора таблицы из БД');
+                        //     });
+                        // },
+                        // script: function () {
+                        //     // Получаем все элементы с data-field="true"
+                        //     const fields = document.querySelectorAll('[data-field="true"]');
+                        //     let clickTimeout;
+                        //
+                        //     fields.forEach(field => {
+                        //         // Одинарный клик - скрываем поле
+                        //         field.addEventListener('dbclick', function(e) {
+                        //             clearTimeout(clickTimeout);
+                        //
+                        //             clickTimeout = setTimeout(() => {
+                        //                 this.style.visibility = 'hidden';
+                        //             }, 250);
+                        //         });
+                        //
                         //     });
                         // },
                     },
@@ -1920,6 +1962,10 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                     if (initialHeight <= maxHeight) {
                         const result = removeStyle(tempContainer.innerHTML);
                         resolve(result);
+                        console.log(pages)
+                        // let page = [{id: 1, content: result, styles: css}];
+                        // // console.log(page)
+                        // setPages(page)
                         return;
                     }
 
@@ -1978,6 +2024,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                     setCurrentPage(1);
                     resolve(pages[0]?.content || '');
 
+                } catch (e) {
+                    console.error(e)
                 } finally {
                     safeRemove(tempContainer);
                     safeRemove(measureDiv);
