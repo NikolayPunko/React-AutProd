@@ -5,7 +5,7 @@ import "./../reportsConstruct/ReportEditor.css";
 
 import * as XLSX from "xlsx";
 import html2canvas from "html2canvas";
-import html2pdf from "html2pdf.js";
+
 import jsPDF from "jspdf";
 import grapesjs from "grapesjs";
 
@@ -35,6 +35,7 @@ import {ModalParameter} from "./ModalParameter";
 import {API_URL} from "../../http";
 import {Editor} from "@monaco-editor/react";
 import {JavaEditor} from "../javaEditor/JavaEditor";
+import {ViewReport} from "./ViewReport";
 
 
 // Добавляем шрифт Roboto в виртуальную файловую систему pdfmake
@@ -58,7 +59,8 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
         const [dataBandsOpt, setDataBandsOpt] = useState([])
 
-        const [isPreviewMode, setIsPreviewMode] = useState(false);
+
+        const [isViewMode, setIsViewMode] = useState(false);
 
 
         const [isModalParameter, setIsModalParameter] = useState(false);
@@ -96,6 +98,12 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
         });
 
 
+    const [data, setData] = useState([]);
+    const [html, setHtml] = useState("");
+    const [css, setCss] = useState("");
+
+
+
         pdfMake.addVirtualFileSystem(pdfFonts);
 
         useEffect(() => {
@@ -108,19 +116,19 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
                 width: 'auto',
                 default_locale: 'ru',
                 // cssComposer: false,
-                allowScripts: true,
-                avoidInlineStyle: false,
-                cleanHtml: false,
-                domComponents: {
-                    parser: {
-                        html: {
-                            allowScripts: true,
-                            allowUnsafeAttr: true,
-                            keepUnusedStyles: true,
-                            keepInlineStyles: true  // Критически важный параметр
-                        }
-                    }
-                },
+                // allowScripts: true,
+                // avoidInlineStyle: false,
+                // cleanHtml: false,
+                // domComponents: {
+                //     parser: {
+                //         html: {
+                //             allowScripts: true,
+                //             allowUnsafeAttr: true,
+                //             keepUnusedStyles: true,
+                //             keepInlineStyles: true  // Критически важный параметр
+                //         }
+                //     }
+                // },
 
                 i18n: {
                     locale: 'ru', // default locale
@@ -700,7 +708,7 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
 
 
             if (previewMode) {
-                setIsPreviewMode(false)
+                // setIsPreviewMode(false)
             }
 
             setIsLoading(false);
@@ -720,32 +728,26 @@ const ReportEditor = forwardRef(({previewMode, htmlProps, cssProps, onCloseRepor
             setSql("from table1"); //временно для разработки
         }, []);
 
-        // Определяем методы, которые будут доступны родителю
-        useImperativeHandle(ref, () => ({
-            customMethod(data, html, css) {
-                enterViewMode(data, html, css);
-            },
-        }));
 
-        const switchPage = (id) => {
-            const editor = editorView
-            // if (!editor) {
-            //     return;
-            // }
-            saveCurrentPage(editor);
-
-            setTimeout(() => {
-
-
-                const page = pages.find((p) => p.id === id);
-                if (page) {
-                    editor.setComponents(page.content);
-                    editor.setStyle(page.styles);
-                    setCurrentPage(id);
-                    console.log(page.content)
-                }
-            }, 100);
-        };
+        // const switchPage = (id) => {
+        //     const editor = editorView
+        //     // if (!editor) {
+        //     //     return;
+        //     // }
+        //     saveCurrentPage(editor);
+        //
+        //     setTimeout(() => {
+        //
+        //
+        //         const page = pages.find((p) => p.id === id);
+        //         if (page) {
+        //             editor.setComponents(page.content);
+        //             editor.setStyle(page.styles);
+        //             setCurrentPage(id);
+        //             console.log(page.content)
+        //         }
+        //     }, 100);
+        // };
 
         const saveCurrentPage = async (editor) => {
             if (!editor) {
@@ -957,7 +959,8 @@ console.log(pages)
                     </body>
                     </html>
     `;
-
+console.log(pagesHtml)
+            console.log(uniqueStyles)
             downloadFile(finalHtml, 'report.html');
         };
 
@@ -1763,7 +1766,7 @@ console.log(pages)
 
 
         function exitPreviewMode() {
-            setIsPreviewMode(!isPreviewMode);
+            // setIsPreviewMode(!isPreviewMode);
             setCurrentPage(1)
             setPages(oldPages);
 
@@ -1783,20 +1786,29 @@ console.log(pages)
         async function enterPreviewMode(parameters) {
             setIsModalParameter(false);
 
-            setIsPreviewMode(!isPreviewMode);
+            // setIsPreviewMode(!isPreviewMode);
             const data = await fetchReportData("", "", settingDB.url, settingDB.username,
                 settingDB.password, settingDB.driverClassName, sql, "", "", parameters, script, isSqlMode)
             if (!data) {
-                setIsPreviewMode(false);
+                // setIsPreviewMode(false);
                 return
             }
 
-            render(data, editorView.getHtml(), editorView.getCss());
-            disableEditor();
+            // render(data, editorView.getHtml(), editorView.getCss());
+            // disableEditor();
+
+            setData(data)
+            setHtml(editorView.getHtml())
+            setCss(editorView.getCss())
+
+
+            setIsJavaEditor(false)
+            // setIsPreviewMode(true)
+            setIsViewMode(true)
         }
 
         function enterViewMode(data, html, css) {
-            setIsPreviewMode(true);
+            // setIsPreviewMode(true);
             render(data, html, css);
             disableEditor();
         }
@@ -2255,79 +2267,34 @@ console.log(pages)
             <div>
                 {isLoading && <Loading/>}
 
-                {isJavaEditor && <JavaEditor onClose={() => setIsJavaEditor(false)} parameters={parameters}
+
+                {!isViewMode && isJavaEditor && <JavaEditor onClose={() => setIsJavaEditor(false)} parameters={parameters}
                                              setParameters={setParameters} setScript={(e) => setScript(e)}
                                              script={script} dataBandsOpt={dataBandsOpt} setDataBandsOpt={setDataBandsOpt}
                 />}
 
-                {!isLoading && !isJavaEditor &&
+                {!isViewMode && !isLoading && !isJavaEditor &&
                     <div className=" gjs-two-color gjs-one-bg flex flex-row justify-between py-1 gjs-pn-commands">
                         <div className="flex justify-start text-center ml-2 w-1/3">
-                            {!isPreviewMode &&
+
                                 <>
                                     <span className="gjs-pn-btn font-medium">Конструктор отчетов</span>
                                     <span className="gjs-pn-btn">
                             <i className="fa-solid fa-pencil"></i>
                             </span>
                                 </>
-                            }
-                            {isPreviewMode &&
-                                <>
-                                    <span className="gjs-pn-btn font-medium">Просмотр отчетов</span>
-                                    <span className="gjs-pn-btn">
-                           <i className="fa-solid fa-eye"></i>
-                            </span>
-                                </>
-                            }
 
-                            {!isPreviewMode && !previewMode && <button onClick={clickEnterPreviewMode}>Просмотр</button>}
-                            {isPreviewMode && !previewMode && <button onClick={exitPreviewMode}>Конструктор</button>}
 
-                            {previewMode && <button onClick={() => {
-                                onCloseReport();
-                                setPages([
-                                    {id: 1, content: "", styles: ""}
-                                ])
-                                switchPage(1)
-                            }}>Закрыть отчет</button>}
+                            <button onClick={clickEnterPreviewMode}>Просмотр</button>
+
+
                         </div>
 
-                        {isPreviewMode && <div className="flex justify-start text-center w-1/3">
-                    <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => switchPage(currentPage - 1)}
-                          title="Пред. страница">
-                        <i className="fa-solid fa-angle-left"></i>
-                        </span>
-                            <span className="gjs-pn-btn">
-                       {currentPage} / {pages.length}
-                        </span>
-                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => switchPage(currentPage + 1)}
-                                  title="След. страница">
-                        <i className="fa-solid fa-angle-right"></i>
-                        </span>
-                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => generatePdf(editorView)}
-                                  title="Экспорт PDF">
-                        <i className="fa fa-file-pdf"></i>
-                        </span>
-                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => exportHtml(editorView)}
-                                  title="Экспорт HTML">
-                        <i className="fa fa-code"></i>
-                        </span>
-                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={printReport} title="Печать">
-                        <i className="fa fa-print"></i>
-                        </span>
-                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => changeZoom(-10)}
-                                  title="Уменьшить масштаб">
-                            <i className="fa fa-magnifying-glass-minus"></i>
-                        </span>
-                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => changeZoom(10)}
-                                  title="Увеличить масштаб">
-                        <i className="fa fa-magnifying-glass-plus"></i>
-                    </span>
-                        </div>}
+
 
                         <div className="flex justify-end text-center mr-2 w-1/3">
 
-                            {!isPreviewMode &&
+
                                 <>
                             <span className="gjs-pn-btn hover:bg-gray-200" onClick={exportJSON}
                                   title="Экспорт шаблона JSON">
@@ -2345,13 +2312,13 @@ console.log(pages)
                                           title="Загрузить шаблон с сервера">
                            <i className="fa-solid fa-cloud-arrow-down"></i></span>
                                 </>
-                            }
+
 
                         </div>
 
                     </div>}
 
-                {!isPreviewMode && !isJavaEditor &&
+                {!isViewMode && !isJavaEditor &&
                     <div
                         className="pl-2 gjs-two-color gjs-one-bg flex flex-row justify-between py-1 gjs-pn-commands ">
                         <div className="flex flex-row gap-x-2">
@@ -2439,12 +2406,12 @@ console.log(pages)
 
                     </div>}
 
-                <div className={!isJavaEditor ? 'block' : 'hidden'}>
+                <div className={!isViewMode && !isJavaEditor ? 'block' : 'hidden'}>
                     <div id="editor" ref={editorRef}/>
                 </div>
 
 
-                {isModalSaveReport &&
+                {!isViewMode && isModalSaveReport &&
                     <ModalInput title={"Сохранение отчета на сервер"} message={"modalMsg"} onClose={showModalSaveReport}
                                 onAgreement={saveReport} name={reportName}
                                 onChangeName={(e) => setReportName(e.target.value)}
@@ -2452,37 +2419,43 @@ console.log(pages)
                     />
                 }
 
-                {isModalNotify &&
+                {!isViewMode && isModalNotify &&
                     <ModalNotify title={"Результат операции"} message={modalMsg} onClose={showModalNotif}/>}
 
-                {isModalError &&
+                {!isViewMode && isModalError &&
                     <ModalNotify title={"Ошибка"} message={error} onClose={() => setIsModalError(false)}/>}
 
-                {isModalDownloadReport &&
+                {!isViewMode && isModalDownloadReport &&
                     <ModalSelect title={"Загрузка отчета с сервера"} message={"modalMsg"}
                                  onClose={showModalDownloadReport}
                                  onAgreement={downloadReport} options={optReportsName}/>
                 }
 
-                {isModalSettingDB &&
+                {!isViewMode && isModalSettingDB &&
                     <ModalSettingDB url={settingDB.url} username={settingDB.username}
                                     password={settingDB.password} driverClassName={settingDB.driverClassName}
                                     onChangeField={handleChangeSettingDB}
                                     onClose={showModalSettingDB}/>
                 }
 
-                {isModalSQL &&
+                {!isViewMode && isModalSQL &&
                     <ModalSQL value={sql} isValid={isValidSql} parameters={parameters} setParameters={setParameters}
                               onChange={(e) => setSql(e.target.value)}
                               onClose={showModalSQL}/>
                 }
 
-                {isModalParameter && <ModalParameter parameters={parameters || []}
+                {!isViewMode && isModalParameter && <ModalParameter parameters={parameters || []}
                                                      onSubmit={enterPreviewMode}
                                                      onClose={() => {
                                                          setIsModalParameter(false)
                                                      }}
                 />}
+
+
+                {isViewMode && <ViewReport data={data} html={html} css={css}
+                                           onClose={() => {setIsViewMode(false)}}
+                />}
+
 
 
             </div>
