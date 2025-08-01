@@ -1,4 +1,5 @@
 import React, {useEffect, useRef, useState} from "react";
+import {API_URL} from "../../http";
 
 
 export function ViewReport({data, html, css, onClose}) {
@@ -522,6 +523,7 @@ export function ViewReport({data, html, css, onClose}) {
                     </div>
 
 
+
                     <div className="flex justify-center text-center mr-2 w-1/3 ">
                         <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => {
                             printReport()
@@ -601,4 +603,260 @@ export function ViewReport({data, html, css, onClose}) {
             </div>
         </>
     )
+
+//     // Функция экспорта PDF
+//     const exportPDF = async (editor) => {
+//
+//         saveCurrentPage(editorView).then((updatedPages) => {
+//
+//             let combinedHTML = "";
+//             let combinedCSS = "";
+//
+//             for (let i = 0; i < updatedPages.length; i++) {
+//                 combinedHTML += `
+//
+//          <div class="print-page">
+//             ${updatedPages[i].content}
+//          </div>
+//          `;
+//                 combinedCSS += " " + updatedPages[i].styles;
+//             }
+//
+//             // Создаем скрытый iframe для окна печати
+//             const printFrame = document.createElement("iframe");
+//             printFrame.style.position = "absolute";
+//             printFrame.style.width = "0px";
+//             printFrame.style.height = "0px";
+//             printFrame.style.border = "none";
+//
+//             document.body.appendChild(printFrame);
+//
+//             const printDocument = printFrame.contentDocument || printFrame.contentWindow.document;
+//             printDocument.open("", "_blank");
+//             printDocument.write(`
+//
+//                  <html>
+//                     <head>
+//                       <title>Печать</title>
+//                       <style>
+//                         ${combinedCSS}
+//
+//                         @media print {
+//                         body {
+//                           margin: 0;
+//                           padding: 0;
+//                           display: flex;
+//                           flex-direction: column;
+//                           align-items: center;
+//                           -webkit-print-color-adjust: exact; /* Для Chrome и Safari */
+//                           print-color-adjust: exact; /* Для Firefox */
+//                           box-sizing: border-box;
+//                         }
+//                         .print-page {
+//                           width: 100%;
+//                           max-width: 100%;
+//                           height: 100vh;
+//                           min-height: 100vh;
+//                           box-sizing: border-box;
+//                           display: flex;
+//                           flex-direction: column;
+//                           justify-content: flex-start;
+//                           align-items: flex-start;
+//                           padding: 0;
+//                           margin: 0 auto;
+//                           position: relative;
+//                           overflow: hidden;
+//                           page-break-after: always; /* Стабильное разбиение страниц */
+//                           break-after: page;
+//                         }
+//                         .print-page:last-child {
+//                           page-break-after: auto; /* Убираем лишний пустой лист в конце */
+//                         }
+//                       }
+//                         @page { size: A4; margin: 0; }
+//                         body { width: 210mm; height: 297mm; margin: 0 auto; overflow: hidden; }
+//
+//
+//                       </style>
+//                     </head>
+//                     <body>${combinedHTML}
+//                   </html>
+//
+//
+//
+//               `);
+//
+//             printDocument.close();
+//
+//             setTimeout(() => {
+//                 printFrame.contentWindow.focus();
+//                 document.title = "Report"
+//                 printFrame.contentWindow.print();
+//                 document.title = "React App"
+//                 document.body.removeChild(printFrame);
+//             }, 1000);
+//
+//         });
+//     };
+//
+//     const printAllPages = async () => {
+//         // 1. Создаем отдельное окно вместо iframe (лучше для больших документов)
+//         const printWindow = window.open('', '_blank', 'width=800,height=600');
+//         if (!printWindow) {
+//             alert('Пожалуйста, разрешите всплывающие окна для печати');
+//             return;
+//         }
+//
+//         try {
+//             // 2. Получаем данные страниц
+//             const updatedPages = await saveCurrentPage(editorView);
+//             if (!updatedPages.length) {
+//                 printWindow.close();
+//                 return;
+//             }
+//
+//             // 3. Создаем базовую структуру документа
+//             printWindow.document.open();
+//             printWindow.document.write(`
+//                   <!DOCTYPE html>
+//                   <html>
+//                   <head>
+//                     <meta charset="UTF-8">
+//                     <title>Печать</title>
+//                     <style>
+//                       @page {
+//                         size: A4;
+//                         margin: 0;
+//                       }
+//                       body {
+//                         margin: 0;
+//                         padding: 0;
+//                         width: 210mm;
+//                         overflow-x: hidden;
+//                       }
+//                       .print-page {
+//                         width: 210mm;
+//                         height: 297mm;
+//                         page-break-after: always;
+//                         position: relative;
+//                         overflow: hidden;
+//                       }
+//                       .print-page:last-child {
+//                         page-break-after: auto;
+//                       }
+//                     </style>
+//                   </head>
+//                   <body>
+//                 `);
+//
+//             // 4. Используем DocumentFragment для пакетной вставки
+//             const fragment = printWindow.document.createDocumentFragment();
+//             const container = printWindow.document.createElement('div');
+//             fragment.appendChild(container);
+//
+//             console.log(updatedPages)
+//
+//             // 5. Создаем страницы с использованием createElement (быстрее чем innerHTML)
+//             for (let i = 0; i < updatedPages.length; i++) {
+//                 const page = updatedPages[i];
+//                 const pageDiv = printWindow.document.createElement('div');
+//                 pageDiv.className = 'print-page';
+//
+//                 if (page.styles) {
+//                     pageDiv.setAttribute('style', page.styles);
+//                 }
+//
+//                 // Используем innerHTML только для контента страницы
+//                 pageDiv.innerHTML = page.content;
+//                 container.appendChild(pageDiv);
+//
+//                 // Даем браузеру "передохнуть" каждые 10 страниц
+//                 if (i % 10 === 0) {
+//                     await new Promise(resolve => setTimeout(resolve, 0));
+//                 }
+//             }
+//
+//             // 6. Вставляем все страницы одним действием
+//             printWindow.document.body.appendChild(fragment);
+//             printWindow.document.write('</body></html>');
+//             printWindow.document.close();
+//
+//             // 7. Оптимизированная печать с задержкой для рендеринга
+//             setTimeout(() => {
+//                 const originalTitle = document.title;
+//                 document.title = "Report";
+//
+//                 printWindow.focus();
+//                 printWindow.print();
+//
+//                 // Восстановление состояния после печати
+//                 setTimeout(() => {
+//                     document.title = originalTitle;
+//                     printWindow.close();
+//                 }, 1000);
+//             }, 500);
+//
+//         } catch (error) {
+//             console.error('Print error:', error);
+//             if (printWindow) printWindow.close();
+//         }
+//     };
+//
+//     const printReport2 = async () => {
+//         const updatedPages = await saveCurrentPage(editorView);
+//         try {
+//             const response = await fetch(`${API_URL}/api/pdf/generate`, {
+//                 method: 'POST',
+//                 headers: {'Content-Type': 'application/json'},
+//                 body: JSON.stringify(updatedPages),
+//             });
+//
+//             const pdfBlob = await response.blob();
+//             const pdfUrl = URL.createObjectURL(pdfBlob);
+//
+//             const iframe = document.createElement('iframe');
+//             iframe.style.display = 'none';
+//             iframe.src = pdfUrl;
+//             document.body.appendChild(iframe);
+//
+//             iframe.onload = () => {
+//                 try {
+//                     setTimeout(() => {
+//                         iframe.contentWindow?.print();
+//                     }, 500);
+//                 } catch (e) {
+//                     console.error('Print error:', e);
+//                     document.body.removeChild(iframe);
+//                     URL.revokeObjectURL(pdfUrl);
+//                     alert('Ошибка при печати. Попробуйте снова или проверьте настройки печати.');
+//                 }
+//             };
+//
+//         } catch (error) {
+//             console.error('Ошибка:', error);
+//         }
+//     }
+//
+//     const generatePdf = async () => {
+//         const updatedPages = await saveCurrentPage(editorView);
+//         try {
+//             const response = await fetch(`${API_URL}/api/pdf/generate`, {
+//                 method: 'POST',
+//                 headers: {'Content-Type': 'application/json'},
+//                 body: JSON.stringify(updatedPages),
+//             });
+// //нужно доделать чтобы отображались русские символы и линия чтобы была до края при 100%
+//             const blob = await response.blob();
+//             const url = window.URL.createObjectURL(blob);
+//             const link = document.createElement('a');
+//             link.href = url;
+//             link.download = 'report.pdf';
+//             link.click();
+//         } catch (error) {
+//             console.error('Ошибка:', error);
+//         }
+//     }
+
+
+
 }
