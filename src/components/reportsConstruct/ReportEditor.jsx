@@ -98,10 +98,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         });
 
 
-    const [data, setData] = useState([]);
-    const [html, setHtml] = useState("");
-    const [css, setCss] = useState("");
-
+        const [data, setData] = useState([]);
+        const [html, setHtml] = useState("");
+        const [css, setCss] = useState("");
 
 
         pdfMake.addVirtualFileSystem(pdfFonts);
@@ -707,7 +706,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             setEditorView(editor);
 
 
-
             setIsLoading(false);
         }, []);
 
@@ -1029,21 +1027,21 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         droppable: true,
                         highlightable: true,
                         components: `
-              <div description-band="true" style="
-                   background: #f8b159;
-                   padding: 2px 8px;
-                   font-weight: bold;
-                   font-size: 14px;
-                   pointer-events: none;
-              ">Бэнд данных: ${tableName}</div>
-              
-              <div data-band="true" id="${tableName}" draggable="false" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
-<!--                 <h2 style="position: absolute; top: 20px; left: 20px; margin: 0px">Начни создание отчета</h2>-->
-<!--                 <p data-field="true" class="data-band-field" style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажи поле из запроса в двойных скобках: {{field_1}}</p>-->
-                 <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажи поле из запроса в двойных скобках: {{field_1}}</p>
-<!--                 <p class="data-band-field" style="position: absolute; top: 60px; left: 500px; margin: 0px">Повтори действие: {{field_2}}</p>-->
-              </div>
-      `,
+                      <div description-band="true" style="
+                           background: #f8b159;
+                           padding: 2px 8px;
+                           font-weight: bold;
+                           font-size: 14px;
+                           pointer-events: none;
+                      ">Бэнд данных: ${tableName}</div>
+
+                      <div data-band="true" id="${tableName}" draggable="false" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
+        <!--                 <h2 style="position: absolute; top: 20px; left: 20px; margin: 0px">Начни создание отчета</h2>-->
+        <!--                 <p data-field="true" class="data-band-field" style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажи поле из запроса в двойных скобках: {{field_1}}</p>-->
+                         <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажи поле из запроса в двойных скобках: {{field_1}}</p>
+        <!--                 <p class="data-band-field" style="position: absolute; top: 60px; left: 500px; margin: 0px">Повтори действие: {{field_2}}</p>-->
+                      </div>
+                   `,
                         // script: function () {
                         //     this.querySelector('.data-band-field').addEventListener('click', function () {
                         //         alert('Будущее окно выбора поля из БД');
@@ -1366,14 +1364,12 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         };
 
         const extractTablesAndCheckSQL = () => {
-            // console.log(dataBandsOpt)
             const tableRegex = /(?:FROM|JOIN|UPDATE|INTO)\s+([\w.]+)(?:\s|$|;|\))/gi;
             const foundTables = new Set();
 
             try {
                 const parser = new Parser();
                 sql.split(';').forEach(query => {
-                    // const ast = parser.astify(query); //На валидность запроса
                     let match;
                     while ((match = tableRegex.exec(query)) !== null) {
                         const tableName = match[1]
@@ -1389,9 +1385,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 setIsValidSql(true);
             } catch (e) {
                 setDataBandsOpt([]);
-                // setIsValidSql(false);
             }
-
         };
 
 
@@ -1409,60 +1403,43 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         }
 
 
-
         return (
             <div>
                 {isLoading && <Loading/>}
 
 
                 {!isViewMode && isJavaEditor && <JavaEditor onClose={() => setIsJavaEditor(false)} parameters={parameters}
-                                             setParameters={setParameters} setScript={(e) => setScript(e)}
-                                             script={script} dataBandsOpt={dataBandsOpt} setDataBandsOpt={setDataBandsOpt}
+                                                            setParameters={setParameters} setScript={(e) => setScript(e)}
+                                                            script={script} dataBandsOpt={dataBandsOpt}
+                                                            setDataBandsOpt={setDataBandsOpt}
                 />}
 
                 {!isViewMode && !isLoading && !isJavaEditor &&
                     <div className=" gjs-two-color gjs-one-bg flex flex-row justify-between py-1 gjs-pn-commands">
                         <div className="flex justify-start text-center ml-2 w-1/3">
-
-                                <>
-                                    <span className="gjs-pn-btn font-medium">Конструктор отчетов</span>
-                                    <span className="gjs-pn-btn">
+                            <span className="gjs-pn-btn font-medium">Конструктор отчетов</span>
+                            <span className="gjs-pn-btn">
                             <i className="fa-solid fa-pencil"></i>
                             </span>
-                                </>
-
-
                             <button onClick={clickEnterPreviewMode}>Просмотр</button>
-
-
                         </div>
 
-
-
                         <div className="flex justify-end text-center mr-2 w-1/3">
-
-
-                                <>
                             <span className="gjs-pn-btn hover:bg-gray-200" onClick={exportJSON}
                                   title="Экспорт шаблона JSON">
                             <i className="fa fa-upload"></i></span>
-                                    <span className="gjs-pn-btn hover:bg-gray-200" onClick={importJSON}
-                                          title="Импорт шаблона JSON">
+                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={importJSON}
+                                  title="Импорт шаблона JSON">
                             <i className="fa fa-download"></i></span>
-
-                                    <span className="gjs-pn-btn hover:bg-gray-200" onClick={showModalSaveReport}
-                                          title="Сохранить шаблон на сервер">
+                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={showModalSaveReport}
+                                  title="Сохранить шаблон на сервер">
                             <i className="fa-solid fa-sd-card"></i></span>
-                                    <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => {
-                                        downloadReportsName();
-                                    }}
-                                          title="Загрузить шаблон с сервера">
+                            <span className="gjs-pn-btn hover:bg-gray-200" onClick={() => {
+                                downloadReportsName();
+                            }}
+                                  title="Загрузить шаблон с сервера">
                            <i className="fa-solid fa-cloud-arrow-down"></i></span>
-                                </>
-
-
                         </div>
-
                     </div>}
 
                 {!isViewMode && !isJavaEditor &&
@@ -1549,8 +1526,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                 </button>
                             </div>
                         </div>
-
-
                     </div>}
 
                 <div className={!isViewMode && !isJavaEditor ? 'block' : 'hidden'}>
@@ -1592,17 +1567,18 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 }
 
                 {!isViewMode && isModalParameter && <ModalParameter parameters={parameters || []}
-                                                     onSubmit={enterPreviewMode}
-                                                     onClose={() => {
-                                                         setIsModalParameter(false)
-                                                     }}
+                                                                    onSubmit={enterPreviewMode}
+                                                                    onClose={() => {
+                                                                        setIsModalParameter(false)
+                                                                    }}
                 />}
 
 
                 {isViewMode && <ViewReport data={data} html={html} css={css}
-                                           onClose={() => {setIsViewMode(false)}}
+                                           onClose={() => {
+                                               setIsViewMode(false)
+                                           }}
                 />}
-
 
 
             </div>

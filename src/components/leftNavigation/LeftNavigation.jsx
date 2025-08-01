@@ -13,9 +13,7 @@ export function LeftNavigation() {
             {/*<StringLeftNavigation disabled={false} title="Диспетчеризация" navigationPath={"/"}/>*/}
             {/*<StringLeftNavigation disabled={false} title="Показатели KPI" navigationPath={"/"}/>*/}
             <StringLeftNavigation disabled={false} title="Конструктор отчетов" navigationPath={"/designer"}/>
-            <StringLeftNavigation disabled={false} title="Просмотр очтета" navigationPath={"/view"}/>
-
-
+            {/*<StringLeftNavigation disabled={false} title="Просмотр очтета" navigationPath={"/view"}/>*/}
         </div>
     )
 }

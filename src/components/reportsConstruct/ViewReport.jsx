@@ -1,9 +1,7 @@
 import React, {useEffect, useRef, useState} from "react";
-import {API_URL} from "../../http";
 
 
 export function ViewReport({data, html, css, onClose}) {
-
 
     const [printContent, setPrintContent] = useState("");
     const [uniqueStyles, setUniqueStyles] = useState("");
@@ -11,7 +9,7 @@ export function ViewReport({data, html, css, onClose}) {
     const iframeRef = useRef(null);
     const [iframeScale, setIframeScale] = useState(1); // Начальный масштаб 1 (100%)
 
-//На большом тестовом отчете не срабатывают скрипты потому что эт о еще старые элементы без data-field=true
+//На большом тестовом отчете не срабатывают скрипты потому что это еще старые элементы без data-field=true
 
 
     const [pages, setPages] = useState([
@@ -26,7 +24,7 @@ export function ViewReport({data, html, css, onClose}) {
     });
 
     useEffect(() => {
-        render(data,html,css)
+        render(data, html, css)
     }, [])
 
 
@@ -81,12 +79,9 @@ export function ViewReport({data, html, css, onClose}) {
             iframeRef.current.srcdoc = fullHtml;
             setFullHtml(fullHtml);
         }
-
-
-
     }, [printContent]);
 
-    function prepareHtmlAndCss(){
+    function prepareHtmlAndCss() {
         const uniqueStyles = [...new Set(pages.map(p => p.styles || ''))].join('\n');
         // console.log(pages)
         let pagesHtml = "";
@@ -129,20 +124,17 @@ export function ViewReport({data, html, css, onClose}) {
         let startTime = performance.now();
 
         defineBands(html);
-        // setOldPage([{id: 1, content: html, styles: css}])
 
         css = transformIDs(css);
-        // setTimeout(() => {
-        // editorView.setStyle(css);
         setUniqueStyles(css);
-        // }, 100); // Небольшая задержка для обновления состояния
 
         renderDataBand(html, data.tableData, css);
 
         let endTime = performance.now();
         const seconds = (endTime - startTime) / 1000; // Преобразуем миллисекунды в секунды
-        console.log("Рендер: " + seconds.toFixed(3))
+        // console.log("Рендер: " + seconds.toFixed(3))
     }
+
 
     function renderDataBand(htmlTemplate, dataArray, css) {
 
@@ -167,21 +159,29 @@ export function ViewReport({data, html, css, onClose}) {
                         let instanceHtml = bandHtml;
 
                         Object.keys(tableData).forEach(field => {
-                            // if (field === 'datetime_field') {
-                            //     console.log("true")
-                            instanceHtml = instanceHtml.replaceAll(
-                                `{{${field}}}`, //видимо стиль по id имеет больший приоритет
-                                `<span style="color: red !important; font-weight: bold !important;">${tableData[field]}</span>`
-                            );
-                            // } else {
-                            //     instanceHtml = instanceHtml.replaceAll(`{{${field}}}`, tableData[field]);
-                            // }
-                        });
-                        //Возможно потом переделать чтобы css отображался нормально отображение без редактора, проосто мб сделать компонент html
+                            const value = tableData[field];
+                            const style = tableData.style?.[field] || ''; // Получаем стиль для текущего поля
 
-                        let bandCopy = band.cloneNode()
+                            // Если есть стиль для поля - оборачиваем в span
+                            if (style) {
+                                instanceHtml = instanceHtml.replaceAll(
+                                    `{{${field}}}`,
+                                    `<span style="${style}">${value}</span>`
+                                );
+                            }
+                            // Без стиля - просто подставляем значение
+                            else {
+                                instanceHtml = instanceHtml.replaceAll(
+                                    `{{${field}}}`,
+                                    value
+                                );
+                            }
+                        });
+
+                        // Создаем копию бэнда с новыми данными
+                        let bandCopy = band.cloneNode();
                         bandCopy.innerHTML = instanceHtml;
-                        doc.body.appendChild(bandCopy)
+                        doc.body.appendChild(bandCopy);
                     });
                 }
             });
@@ -196,10 +196,7 @@ export function ViewReport({data, html, css, onClose}) {
         })
 
 
-        splitIntoA4Pages(doc.body.innerHTML, css, bands).then((pagedHtml) => {
-            // editorView.setComponents(pagedHtml);
-            // setPrintContent(pagedHtml)
-        });
+        splitIntoA4Pages(doc.body.innerHTML, css, bands)
 
         return doc.body.innerHTML;
     }
@@ -216,7 +213,6 @@ export function ViewReport({data, html, css, onClose}) {
                         width: 794px;
                         visibility: hidden;
                 `;
-// inline style пропадает при подстановки в конструктор, если и сработает то только со второй страницы
 
             const bodyContainer = tempContainer.querySelector('#body-container');
             bodyContainer.innerHTML = `<style>${css}</style>${htmlString}`;
@@ -308,8 +304,6 @@ export function ViewReport({data, html, css, onClose}) {
                 }
 
                 setPages(pages);
-                console.log(pages)
-                // setCurrentPage(1);
                 resolve(pages[0]?.content || '');
 
             } catch (e) {
@@ -319,7 +313,7 @@ export function ViewReport({data, html, css, onClose}) {
                 safeRemove(measureDiv);
 
                 const duration = (performance.now() - startTime) / 1000;
-                console.log(`Разбиение выполнено за ${duration.toFixed(3)} сек`);
+                // console.log(`Разбиение выполнено за ${duration.toFixed(3)} сек`);
             }
         });
     }
@@ -501,7 +495,7 @@ export function ViewReport({data, html, css, onClose}) {
     };
 
     const exportHtml = () => {
-        const blob = new Blob([fullHtml], { type: 'text/html' });
+        const blob = new Blob([fullHtml], {type: 'text/html'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -513,7 +507,6 @@ export function ViewReport({data, html, css, onClose}) {
     };
 
 
-
     return (
         <>
             <div>
@@ -521,7 +514,6 @@ export function ViewReport({data, html, css, onClose}) {
                     <div className="flex justify-start text-center ml-3 w-1/3">
                         <span className="gjs-pn-btn font-medium">Просмотр отчета</span>
                     </div>
-
 
 
                     <div className="flex justify-center text-center mr-2 w-1/3 ">
@@ -553,42 +545,14 @@ export function ViewReport({data, html, css, onClose}) {
 
                     </div>
                     <div className="flex justify-end items-center w-1/3 mr-3 ">
-                        <button className="h-[28px] px-3 rounded text-xs text-white font-medium shadow-inner bg-blue-800 hover:bg-blue-700" onClick={onClose}>Закрыть</button>
+                        <button
+                            className="h-[28px] px-3 rounded text-xs text-white font-medium shadow-inner bg-blue-800 hover:bg-blue-700"
+                            onClick={onClose}>Закрыть
+                        </button>
                     </div>
 
                 </div>
-                <div className="flex justify-start text-center w-1/3">
-                    {/*<span className="gjs-pn-btn hover:bg-gray-200" onClick={() => switchPage(currentPage - 1)}*/}
-                    {/*      title="Пред. страница">*/}
-                    {/*    <i className="fa-solid fa-angle-left"></i>*/}
-                    {/*    </span>*/}
-                    {/*<span className="gjs-pn-btn">*/}
-                    {/*   {currentPage} / {pages.length}*/}
-                    {/*    </span>*/}
-                    {/*<span className="gjs-pn-btn hover:bg-gray-200" onClick={() => switchPage(currentPage + 1)}*/}
-                    {/*      title="След. страница">*/}
-                    {/*    <i className="fa-solid fa-angle-right"></i>*/}
-                    {/*    </span>*/}
-                    {/*<span className="gjs-pn-btn hover:bg-gray-200" onClick={() => generatePdf(editorView)}*/}
-                    {/*      title="Экспорт PDF">*/}
-                    {/*    <i className="fa fa-file-pdf"></i>*/}
-                    {/*    </span>*/}
-                    {/*<span className="gjs-pn-btn hover:bg-gray-200" onClick={() => exportHtml(editorView)}*/}
-                    {/*      title="Экспорт HTML">*/}
-                    {/*    <i className="fa fa-code"></i>*/}
-                    {/*    </span>*/}
-                    {/*<span className="gjs-pn-btn hover:bg-gray-200" onClick={printReport} title="Печать">*/}
-                    {/*    <i className="fa fa-print"></i>*/}
-                    {/*    </span>*/}
-                    {/*<span className="gjs-pn-btn hover:bg-gray-200" onClick={() => changeZoom(-10)}*/}
-                    {/*      title="Уменьшить масштаб">*/}
-                    {/*        <i className="fa fa-magnifying-glass-minus"></i>*/}
-                    {/*    </span>*/}
-                    {/*<span className="gjs-pn-btn hover:bg-gray-200" onClick={() => changeZoom(10)}*/}
-                    {/*      title="Увеличить масштаб">*/}
-                    {/*    <i className="fa fa-magnifying-glass-plus"></i>*/}
-                    {/*</span>*/}
-                </div>
+
 
                 <div className="flex justify-center p-4 rounded-lg">
                     <iframe
@@ -856,7 +820,6 @@ export function ViewReport({data, html, css, onClose}) {
 //             console.error('Ошибка:', error);
 //         }
 //     }
-
 
 
 }
