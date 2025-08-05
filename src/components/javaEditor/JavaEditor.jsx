@@ -54,6 +54,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
         setDataBandsOpt(prevData => {
             const updatedData = [...prevData];
             updatedData[index] = newValue;
+            updatedData[index+1] = newValue + "-child";
             return updatedData;
         });
     };

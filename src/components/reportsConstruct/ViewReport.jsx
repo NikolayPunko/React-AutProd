@@ -136,69 +136,153 @@ export function ViewReport({data, html, css, onClose}) {
     }
 
 
-    function renderDataBand(htmlTemplate, dataArray, css) {
+    // function renderDataBand(htmlTemplate, dataArray, css) {
+    //
+    //     const parser = new DOMParser();
+    //     const doc = parser.parseFromString(htmlTemplate, 'text/html');
+    //
+    //     const dataBands = doc.querySelectorAll('[data-band="true"]');
+    //     const dataChildBands = doc.querySelectorAll('[data-band-child="true"]');
+    //
+    //     const descriptionBands = doc.querySelectorAll('[description-band="true"]');
+    //     descriptionBands.forEach(description => {
+    //         description.remove();
+    //     })
+    //
+    //     dataBands.forEach(band => {
+    //         const bandHtml = band.innerHTML;
+    //
+    //         const bandId = band.getAttribute('id');
+    //         const childs = doc.ge
+    //
+    //
+    //         dataArray.forEach(item => {
+    //             if (bandId.toLowerCase().startsWith(item.tableName.toLowerCase())) {
+    //
+    //                 item.data.forEach(tableData => {
+    //                     let instanceHtml = bandHtml;
+    //
+    //                     Object.keys(tableData).forEach(field => {
+    //                         const value = tableData[field];
+    //                         const style = tableData.style?.[field] || ''; // Получаем стиль для текущего поля
+    //
+    //                         // Если есть стиль для поля - оборачиваем в span
+    //                         if (style) {
+    //                             instanceHtml = instanceHtml.replaceAll(
+    //                                 `{{${field}}}`,
+    //                                 `<span style="${style}">${value}</span>`
+    //                             );
+    //                         }
+    //                         // Без стиля - просто подставляем значение
+    //                         else {
+    //                             instanceHtml = instanceHtml.replaceAll(
+    //                                 `{{${field}}}`,
+    //                                 value
+    //                             );
+    //                         }
+    //                     });
+    //
+    //                     // Создаем копию бэнда с новыми данными
+    //                     let bandCopy = band.cloneNode();
+    //                     bandCopy.innerHTML = instanceHtml;
+    //                     doc.body.appendChild(bandCopy);
+    //                 });
+    //             }
+    //         });
+    //
+    //         doc.body.removeChild(band.parentNode)
+    //     });
+    //
+    //     const bands = doc.querySelectorAll('[band="true"]');
+    //
+    //     bands.forEach(band => {
+    //         doc.body.removeChild(band.parentNode)
+    //     })
+    //
+    //
+    //     splitIntoA4Pages(doc.body.innerHTML, css, bands)
+    //
+    //     return doc.body.innerHTML;
+    // }
 
+    function renderDataBand(htmlTemplate, dataArray, css) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlTemplate, 'text/html');
 
+        // Удаляем описательные бэнды
+        const descriptionBands = doc.querySelectorAll('[description-band="true"]');
+        descriptionBands.forEach(description => description.remove());
+
+        // Находим все главные бэнды
         const dataBands = doc.querySelectorAll('[data-band="true"]');
 
-        const descriptionBands = doc.querySelectorAll('[description-band="true"]');
-        descriptionBands.forEach(description => {
-            description.remove();
-        })
-
         dataBands.forEach(band => {
+            const bandId = band.getAttribute('id');
             const bandHtml = band.innerHTML;
 
-            const bandId = band.getAttribute('id');
+            // Находим все дочерние бэнды для текущего главного
+            const childBands = Array.from(doc.querySelectorAll(`[data-band-child="true"][id^="${bandId}-child"]`));
+
             dataArray.forEach(item => {
                 if (bandId.toLowerCase().startsWith(item.tableName.toLowerCase())) {
-
                     item.data.forEach(tableData => {
-                        let instanceHtml = bandHtml;
-
-                        Object.keys(tableData).forEach(field => {
-                            const value = tableData[field];
-                            const style = tableData.style?.[field] || ''; // Получаем стиль для текущего поля
-
-                            // Если есть стиль для поля - оборачиваем в span
-                            if (style) {
-                                instanceHtml = instanceHtml.replaceAll(
-                                    `{{${field}}}`,
-                                    `<span style="${style}">${value}</span>`
-                                );
-                            }
-                            // Без стиля - просто подставляем значение
-                            else {
-                                instanceHtml = instanceHtml.replaceAll(
-                                    `{{${field}}}`,
-                                    value
-                                );
-                            }
-                        });
-
-                        // Создаем копию бэнда с новыми данными
-                        let bandCopy = band.cloneNode();
+                        // Рендерим главный бэнд
+                        let instanceHtml = replaceFieldsInHtml(bandHtml, tableData);
+                        let bandCopy = band.cloneNode(true); // Глубокое клонирование
                         bandCopy.innerHTML = instanceHtml;
                         doc.body.appendChild(bandCopy);
+
+                        // Рендерим дочерние бэнды
+                        childBands.forEach(originalChildBand => {
+                            const childHtml = originalChildBand.innerHTML;
+                            const childInstanceHtml = replaceFieldsInHtml(childHtml, tableData);
+
+                            // Клонируем ОРИГИНАЛЬНЫЙ дочерний бэнд (со всеми атрибутами и классами)
+                            const childBandCopy = originalChildBand.cloneNode(true);
+                            childBandCopy.innerHTML = childInstanceHtml;
+                            doc.body.appendChild(childBandCopy);
+                        });
                     });
                 }
             });
 
-            doc.body.removeChild(band.parentNode)
+            // Удаляем оригинальные бэнды из шаблона
+            doc.body.removeChild(band.parentNode);
+            childBands.forEach(child => {
+                if (child.parentNode) {
+                    doc.body.removeChild(child.parentNode);
+                }
+            });
         });
 
+        // Удаляем служебные бэнды
         const bands = doc.querySelectorAll('[band="true"]');
+        bands.forEach(band => doc.body.removeChild(band.parentNode));
 
-        bands.forEach(band => {
-            doc.body.removeChild(band.parentNode)
-        })
-
-
-        splitIntoA4Pages(doc.body.innerHTML, css, bands)
+        // Разбиваем на страницы
+        splitIntoA4Pages(doc.body.innerHTML, css, bands);
 
         return doc.body.innerHTML;
+    }
+
+    function replaceFieldsInHtml(html, data) {
+        let result = html;
+        Object.keys(data).forEach(field => {
+            if (data[field] && typeof data[field] === 'object' && 'value' in data[field]) {
+                // Если поле содержит объект с value и style
+                const value = data[field].value;
+                const style = data[field].style || '';
+                result = result.replaceAll(
+                    `{{${field}}}`,
+                    style ? `<span style="${style}">${value}</span>` : value
+                );
+            } else {
+                // Простое значение
+                const value = data[field] !== undefined ? data[field] : '';
+                result = result.replaceAll(`{{${field}}}`, value);
+            }
+        });
+        return result;
     }
 
     function splitIntoA4Pages(htmlString, css, bands) {

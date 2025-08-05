@@ -435,7 +435,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         const modelTopBefore = modelRectBefore.top;
                         const modelLeftBefore = modelRectBefore.left;
 
-                        if ((targetEl.getAttribute('data-band') === 'true') || (targetEl.getAttribute('band') === 'true')) {
+                        if ((targetEl.getAttribute('data-band') === 'true') || (targetEl.getAttribute('band') === 'true')
+                            || (targetEl.getAttribute('data-band-child') === 'true')) {
                             // Вставляем модель внутрь нового родителя
                             target.append(model);
 
@@ -500,7 +501,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         y >= rect.top && y <= rect.bottom;
 
                     if (isInside) {
-                        if (el.hasAttribute('data-band') || el.hasAttribute('band')) {
+                        if (el.hasAttribute('data-band') || el.hasAttribute('band') || el.hasAttribute('data-band-child')) {
                             target = comp;
                         } else if (comp.components && !target) {
                             const nestedTarget = findTargetComponentAtPoint(comp.components(), x, y, ignoreEl);
@@ -1062,8 +1063,42 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             } else {
                 components.add('<div data-gjs-type="data-band-block"></div>');
             }
+        }
 
+        function addChildDataBand(childName) {
 
+            editorView.Components.addType('data-child-band-block', {
+                model: {
+                    defaults: {
+                        tagName: 'div',
+                        draggable: false,
+                        droppable: true,
+                        highlightable: true,
+                        components: `
+                      <div description-band="true" style="
+                           background: #ed7060;
+                           padding: 2px 8px;
+                           font-weight: bold;
+                           font-size: 14px;
+                           pointer-events: none;
+                      ">Дочерний бэнд данных: ${childName}</div>
+
+                      <div data-band-child="true" id="${childName}" draggable="false" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
+                         <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px">Дочерний бэнд: {{field_1}}</p>
+                      </div>
+                   `,
+                    },
+                },
+            });
+
+            const components = editorView.getComponents();
+            if (usedBands.reportSummary && usedBands.footerPage) {
+                components.add('<div data-gjs-type="data-child-band-block"></div>', {at: components.length - 2});
+            } else if (usedBands.reportSummary) {
+                components.add('<div data-gjs-type="data-child-band-block"></div>', {at: components.length - 1});
+            } else {
+                components.add('<div data-gjs-type="data-child-band-block"></div>');
+            }
         }
 
         function addPageHeaderBand() {
@@ -1271,7 +1306,11 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         }
 
         const handleSelectTableBand = (option) => {
-            addDataBand(option);
+            if(option.endsWith("-child")){
+                addChildDataBand(option)
+            } else {
+                addDataBand(option);
+            }
         };
 
         function showModalSaveReport() {
