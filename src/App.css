@@ -35,9 +35,15 @@
 }
 
 .scheduler {
-    margin-left: 3%;
+    margin-left: 2%;
+    margin-right: 2%;
     border-spacing: 0;
-    width: 1800px
+    width: 87vw !important;
+}
+
+.scheduler-view {
+    border-spacing: 0;
+    width: 87vw !important;
 }
 
 .scheduler td {
@@ -58,6 +64,7 @@
 .resource-view {
     border: 1px solid #e9e9e9;
     overflow: hidden;
+    width: 100px;
 }
 
 .scheduler-view {
@@ -288,3 +295,4 @@ table.scheduler-table tr:last-child td {
 table.scheduler-bg-table td {
     border-right: none !important; /* Убирает вертикальные линии */
 }
+
