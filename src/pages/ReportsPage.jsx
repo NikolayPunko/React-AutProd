@@ -1,17 +1,14 @@
 import {Navigation} from "../components/Navigation";
 import {LeftNavigation} from "../components/leftNavigation/LeftNavigation";
-import ReportEditor from "../components/reportsConstruct/ReportEditor";
-import React, {useEffect, useRef, useState} from "react";
+import React, {useEffect, useState} from "react";
 import ReportService from "../services/ReportService";
 import Loading from "../components/loading/Loading";
 import {ModalNotify} from "../components/modal/ModalNotify";
 import {ModalParameter} from "../components/reportsConstruct/ModalParameter";
-import {encryptData} from "../utils/Сrypto";
+import {ViewReport} from "../components/reportsConstruct/ViewReport";
 
 
 function ReportsPage() {
-
-    const childRef = useRef();
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -74,22 +71,16 @@ function ReportsPage() {
 
     useEffect(() => {
         fetchReportsName();
-
     }, []);
 
     useEffect(() => {
-        if (reportData && reportTemplate) {
-
-            if (childRef.current) { //вызываем метод рендера у ребенка
-                childRef.current.customMethod(reportData, reportTemplate.content, reportTemplate.styles);
-            }
+        if
+        (reportData && reportTemplate) {
             setTimeout(() => {
                 setIsShowReport(true)
                 setIsLoading(false);
             }, 1500);
-
         }
-
     }, [reportTemplate, reportData]);
 
     async function handleReportClick(reportName) {
@@ -98,13 +89,7 @@ function ReportsPage() {
         setReportData(null);
         setSelectName(reportName);
         setIsModalParameter(true);
-
-
-        // setIsLoading(true)
-        // await fetchReportTemplate(reportName);
-        // await fetchReportData(reportName);
     }
-
 
 
     async function onSubmitParameters(parameters) {
@@ -113,8 +98,6 @@ function ReportsPage() {
         await fetchReportTemplate(selectName);
         await fetchReportData(selectName, parameters);
     }
-
-
 
 
     return (<>
@@ -141,10 +124,9 @@ function ReportsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                             {reportsName.map((option, index) => (
                                 <div key={index} className="border rounded-lg p-3">
-                                {/*// <div key={index} className=" p-3">*/}
-                                        <span className="block w-full px-2 bg-blue-800 text-white rounded shadow-inner">
+                                    <span className="block w-full px-2 bg-blue-800 text-white rounded shadow-inner">
                                             {index} {option.category}
-                                        </span>
+                                    </span>
 
                                     <div className="mt-2">
                                         {option.reports.map((report, reportIndex) => (<button
@@ -161,17 +143,21 @@ function ReportsPage() {
                 </>}
 
 
-                <div className={isShowReport && !isLoading ? 'block' : 'hidden'}>
-                    <ReportEditor previewMode={true} onCloseReport={() => setIsShowReport(!isShowReport)}
-                                  ref={childRef}
-                    />
-                </div>
+                {isShowReport && !isLoading &&
+                    <div>
+                        <ViewReport data={reportData} html={reportTemplate.content} css={reportTemplate.styles}
+                                    onClose={() => setIsShowReport(false)}/>
+                    </div>
+                }
 
                 {isModalError &&
                     <ModalNotify title={"Ошибка"} message={error} onClose={() => setIsModalError(false)}/>}
 
 
-                {isModalParameter && <ModalParameter parameters={parametersMeta || []} onSubmit={onSubmitParameters} onClose={() => {setIsModalParameter(false)}}/>}
+                {isModalParameter &&
+                    <ModalParameter parameters={parametersMeta || []} onSubmit={onSubmitParameters} onClose={() => {
+                        setIsModalParameter(false)
+                    }}/>}
 
             </div>
 

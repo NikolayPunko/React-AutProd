@@ -13,9 +13,9 @@ export default class ReportService {
         return $api.get(`${API_URL}/api/report/` + reportName + `/parameters`)
     }
 
-    static async createReportTemplate(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, parametersMeta, content, styles) {
+    static async createReportTemplate(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, parametersMeta, content, styles, script, sqlMode) {
         return $api.post(`${API_URL}/api/report/create`, {reportName, reportCategory, dbUrl, dbUsername,
-            dbPassword, dbDriver, sql, parameters: JSON.stringify(parametersMeta), content, styles})
+            dbPassword, dbDriver, sql, parameters: JSON.stringify(parametersMeta), content, styles, script, sqlMode})
     }
 
     static async getReportsName() {
@@ -30,7 +30,7 @@ export default class ReportService {
         return $api.post(`${API_URL}/api/report/data/` + reportName, {parameters})
     }
 
-    static async getDataForReport(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, content, styles, parameters) {
+    static async getDataForReport(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, content, styles, parameters, script, sqlMode) {
         return $api.post(`${API_URL}/api/report/data`,  {
             reportTemplateDTO: {
                 reportName,
@@ -41,7 +41,9 @@ export default class ReportService {
                 dbDriver,
                 sql,
                 content,
-                styles
+                styles,
+                script,
+                sqlMode,
             },
             parameters: parameters
         });

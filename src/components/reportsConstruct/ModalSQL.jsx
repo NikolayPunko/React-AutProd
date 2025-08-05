@@ -28,6 +28,7 @@ export function ModalSQL({value, parameters, isValid, onChange, onClose, setPara
         }]);
     };
 
+
     const findAndAddParameters = (inputString) => {
         const wordsStartingWithColon = inputString.match(/(?<=\s|^):\w+/g) || [];
         const keys = wordsStartingWithColon.map(word => word.substring(1));
@@ -106,8 +107,8 @@ export function ModalSQL({value, parameters, isValid, onChange, onClose, setPara
                 </div>
 
                 <div className="max-h-36 overflow-auto">
-                    {parameters.map(param => (
-                        <div key={param.key} className="flex flex-row py-0">
+                    {parameters.map((param,index) => (
+                        <div key={index} className="flex flex-row py-0">
                             <input className={styleInputWithoutRounded + " font-medium mr-0 w-1/4"}
                                    value={param.name}
                                    onChange={(e) => {
