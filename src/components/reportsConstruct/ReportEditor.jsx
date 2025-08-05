@@ -54,7 +54,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         const [pages, setPages] = useState([
             {id: 1, content: "", styles: ""}
         ]);
-        const [oldPages, setOldPage] = useState([]);
         const [currentPage, setCurrentPage] = useState(1); // Активная страница
 
         const [dataBandsOpt, setDataBandsOpt] = useState([])
@@ -97,7 +96,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             reportSummary: false,
         });
 
-
+        const [dataParam, setDataParam] = useState([]);
         const [data, setData] = useState([]);
         const [html, setHtml] = useState("");
         const [css, setCss] = useState("");
@@ -1269,6 +1268,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             if (!data) {
                 return
             }
+
+            setDataParam(parameters)
             setData(data)
             setHtml(editorView.getHtml())
             setCss(editorView.getCss())
@@ -1613,7 +1614,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 />}
 
 
-                {isViewMode && <ViewReport data={data} html={html} css={css}
+                {isViewMode && <ViewReport data={data} html={html} css={css} dataParam={dataParam}
                                            onClose={() => {
                                                setIsViewMode(false)
                                            }}

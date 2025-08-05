@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from "react";
 
 
-export function ViewReport({data, html, css, onClose}) {
+export function ViewReport({data, dataParam, html, css, onClose}) {
 
     const [printContent, setPrintContent] = useState("");
     const [uniqueStyles, setUniqueStyles] = useState("");
@@ -24,7 +24,7 @@ export function ViewReport({data, html, css, onClose}) {
     });
 
     useEffect(() => {
-        render(data, html, css)
+        render(data, dataParam, html, css)
     }, [])
 
 
@@ -119,7 +119,7 @@ export function ViewReport({data, html, css, onClose}) {
     }, [pages])
 
 
-    function render(data, html, css) {
+    function render(data, dataParam, html, css) {
 
         let startTime = performance.now();
 
@@ -128,7 +128,7 @@ export function ViewReport({data, html, css, onClose}) {
         css = transformIDs(css);
         setUniqueStyles(css);
 
-        renderDataBand(html, data.tableData, css);
+        renderDataBand(data.tableData, dataParam, html, css);
 
         let endTime = performance.now();
         const seconds = (endTime - startTime) / 1000; // Преобразуем миллисекунды в секунды
@@ -205,7 +205,7 @@ export function ViewReport({data, html, css, onClose}) {
     //     return doc.body.innerHTML;
     // }
 
-    function renderDataBand(htmlTemplate, dataArray, css) {
+    function renderDataBand(dataArray, dataParam, htmlTemplate, css) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlTemplate, 'text/html');
 
@@ -234,13 +234,17 @@ export function ViewReport({data, html, css, onClose}) {
 
                         // Рендерим дочерние бэнды
                         childBands.forEach(originalChildBand => {
-                            const childHtml = originalChildBand.innerHTML;
-                            const childInstanceHtml = replaceFieldsInHtml(childHtml, tableData);
+                            const childId = originalChildBand.getAttribute('id');
+                            //Если есть логический параметр с таким же id как и у дочернего бэнда или когда параметр вообще отсутствует тогда рендерим дочерний элемент
+                            if (dataParam[childId] || dataParam[childId] === undefined) {
+                                const childHtml = originalChildBand.innerHTML;
+                                const childInstanceHtml = replaceFieldsInHtml(childHtml, tableData);
+                                // Клонируем ОРИГИНАЛЬНЫЙ дочерний бэнд (со всеми атрибутами и классами)
+                                const childBandCopy = originalChildBand.cloneNode(true);
+                                childBandCopy.innerHTML = childInstanceHtml;
+                                doc.body.appendChild(childBandCopy);
+                            }
 
-                            // Клонируем ОРИГИНАЛЬНЫЙ дочерний бэнд (со всеми атрибутами и классами)
-                            const childBandCopy = originalChildBand.cloneNode(true);
-                            childBandCopy.innerHTML = childInstanceHtml;
-                            doc.body.appendChild(childBandCopy);
                         });
                     });
                 }
@@ -266,23 +270,19 @@ export function ViewReport({data, html, css, onClose}) {
     }
 
     function replaceFieldsInHtml(html, data) {
-        let result = html;
         Object.keys(data).forEach(field => {
-            if (data[field] && typeof data[field] === 'object' && 'value' in data[field]) {
-                // Если поле содержит объект с value и style
-                const value = data[field].value;
-                const style = data[field].style || '';
-                result = result.replaceAll(
-                    `{{${field}}}`,
-                    style ? `<span style="${style}">${value}</span>` : value
-                );
-            } else {
-                // Простое значение
-                const value = data[field] !== undefined ? data[field] : '';
-                result = result.replaceAll(`{{${field}}}`, value);
+            const value = data[field];
+            const style = data.style?.[field] || ''; // Получаем стиль для текущего поля
+            // Если есть стиль для поля - оборачиваем в span
+            if (style) {
+                html = html.replaceAll(`{{${field}}}`, `<span style="${style}">${value}</span>`);
+            }
+            // Без стиля - просто подставляем значение
+            else {
+                html = html.replaceAll(`{{${field}}}`, value);
             }
         });
-        return result;
+        return html;
     }
 
     function splitIntoA4Pages(htmlString, css, bands) {
