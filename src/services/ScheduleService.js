@@ -217,4 +217,10 @@ export default class ScheduleService {
         return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/analyze`, {})
     }
 
+    static async getExel() {
+        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/export`, {}, {
+            responseType: 'blob'
+        });
+    }
+
 }

@@ -149,6 +149,35 @@ function SchedulerPage() {
         }
     }
 
+    async function exportExel(){
+        try {
+            const response = await SchedulerService.getExel();
+
+            if (!response.data || response.data.size === 0) {
+                throw new Error('Получен пустой файл');
+            }
+
+            const blob = new Blob([response.data], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+
+            if (blob.size === 0) {
+                throw new Error('Blob создан, но пуст');
+            }
+
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'schedule_' + new Date().toISOString().split('T')[0] + '.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
     useEffect(() => {
         if (solverStatus === "NOT_SOLVING") {
             setIsSolve(false)
@@ -273,6 +302,8 @@ function SchedulerPage() {
     }
 
 
+
+
     return (
         <div className="w-full">
 
@@ -289,7 +320,7 @@ function SchedulerPage() {
 
             <h1 className="font-bold text-center text-2xl mb-8 mt-6">Планировщик задач</h1>
 
-            <div className="flex flex-row justify-between my-4 px-4 w-2/3">
+            <div className="flex flex-row justify-between my-4 px-4 ">
                 <div className="">
                     <button onClick={displayByParty}
                             className={"border h-[30px] border-gray-300 border-r-0 rounded-l-md px-2 shadow-inner" + stylePartyBut}>По
@@ -344,7 +375,15 @@ function SchedulerPage() {
                     <button onClick={() => {
                         setIsModalDateSettings(true)
                     }}
-                            className={"border h-[30px] border-gray-300 rounded-md px-2 shadow-inner bg-blue-800 hover:bg-blue-700 text-white"}>Настроить дату
+                            className={"border h-[30px] border-gray-300 rounded-md px-2 shadow-inner bg-blue-800 hover:bg-blue-700 text-white"}>Настроить
+                        дату
+                    </button>
+                </div>
+                <div>
+                    <button onClick={exportExel}
+                            className="h-[30px] px-2 mx-2 rounded shadow-sm border border-slate-400 hover:bg-gray-200">
+                        Excel экспорт
+                        <i className="pl-2 fa-solid fa-file-excel"></i>
                     </button>
                 </div>
             </div>
