@@ -1029,11 +1029,12 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         components: `
                       <div description-band="true" style="
                            background: #f8b159;
+                           color: #434343;
                            padding: 2px 8px;
-                           font-weight: bold;
+                           font-weight: bolder;
                            font-size: 14px;
                            pointer-events: none;
-                      ">Бэнд данных: ${tableName}</div>
+                      ">Главные данные: ${tableName}</div>
 
                       <div data-band="true" id="${tableName}" draggable="false" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
         <!--                 <h2 style="position: absolute; top: 20px; left: 20px; margin: 0px">Начни создание отчета</h2>-->
@@ -1075,12 +1076,13 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         highlightable: true,
                         components: `
                       <div description-band="true" style="
-                           background: #ed7060;
+                           background: #cdcdcd;
+                           color: #434343;
                            padding: 2px 8px;
                            font-weight: bold;
                            font-size: 14px;
                            pointer-events: none;
-                      ">Дочерний бэнд данных: ${childName}</div>
+                      ">Второстепенные данные: ${childName}</div>
 
                       <div data-band-child="true" id="${childName}" draggable="false" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
                          <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px">Дочерний бэнд: {{field_1}}</p>
@@ -1110,17 +1112,18 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         highlightable: true,
                         components: `
                 <div description-band="true" style="
-                   background: #ededed;
+                   background: #cdcdcd;
+                   color: #434343;
                    padding: 2px 8px;
                    font-weight: bold;
                    font-size: 14px;
                    pointer-events: none;
-              ">Шапка страницы</div>
+              ">Заголовок страницы</div>
                 <div band="true" id="pageHeader" style="height: 100px; width: 794px; background: #fbfbfb; position: relative;
                   border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
-                   <h2 style="">Шапка страницы</h2>
+                   <h2 style="">Заголовок страницы</h2>
                 </div>
-      `,
+              `,
                     },
                 },
             });
@@ -1146,14 +1149,15 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         highlightable: true,
                         components: `
             <div description-band="true" style="
-                   background: #ededed;
+                   background: #cdcdcd;
+                   color: #434343;
                    padding: 2px 8px;
                    font-weight: bold;
                    font-size: 14px;
                    pointer-events: none;
-            ">Шапка отчета</div>
+            ">Заголовок отчета</div>
             <div band="true" id="reportTitle" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
-               <h2 style="">Шапка отчета</h2>
+               <h2 style="">Заголовок отчета</h2>
             </div>
                `,
                     },
@@ -1177,7 +1181,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         components: `
 <!--<div style="position: absolute; bottom: 0">-->
              <div description-band="true" id="lablePageFooter" style="
-                   background: #ededed;
+                   background: #cdcdcd;
+                   color: #434343;
                    padding: 2px 8px;
                    font-weight: bold;
                    font-size: 14px;
@@ -1212,7 +1217,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         highlightable: true,
                         components: `
             <div description-band="true" style="
-                   background: #ededed;
+                   background: #cdcdcd;
+                   color: #434343;
                    padding: 2px 8px;
                    font-weight: bold;
                    font-size: 14px;
@@ -1277,13 +1283,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             setIsJavaEditor(false)
             setIsViewMode(true)
         }
-
-        function disableEditor() {
-            document.querySelector('.gjs-pn-panels').style.display = 'none';
-            document.querySelector('.gjs-pn-views-container').style.display = 'none';
-            editorView.getWrapper().view.$el.css('pointer-events', 'none');
-        }
-
 
         function defineBands(html) {
             const parser = new DOMParser();

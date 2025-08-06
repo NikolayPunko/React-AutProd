@@ -89,24 +89,24 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
             pagesHtml += "<div class='page-container'>";
             pagesHtml += pages[i].content;
             pagesHtml += "</div> ";
-            pagesHtml += "<script>\n" +
-                "        document.addEventListener('DOMContentLoaded', function() {\n" +
-                "            // Получаем все элементы с data-field=\"true\"\n" +
-                "            const fields = document.querySelectorAll('[data-field=\"true\"]');\n" +
-                "            let clickTimeout;\n" +
-                "            \n" +
-                "            fields.forEach(field => {\n" +
-                "                // Одинарный клик - скрываем поле\n" +
-                "                field.addEventListener('click', function(e) {\n" +
-                "                    clearTimeout(clickTimeout);\n" +
-                "                    \n" +
-                "                    clickTimeout = setTimeout(() => {\n" +
-                "                        this.style.visibility = 'hidden';\n" +
-                "                    }, 250);\n" +
-                "                });\n" +
-                "            });\n" +
-                "        });\n" +
-                "    </script>";
+            // pagesHtml += "<script>\n" +
+            //     "        document.addEventListener('DOMContentLoaded', function() {\n" +
+            //     "            // Получаем все элементы с data-field=\"true\"\n" +
+            //     "            const fields = document.querySelectorAll('[data-field=\"true\"]');\n" +
+            //     "            let clickTimeout;\n" +
+            //     "            \n" +
+            //     "            fields.forEach(field => {\n" +
+            //     "                // Одинарный клик - скрываем поле\n" +
+            //     "                field.addEventListener('click', function(e) {\n" +
+            //     "                    clearTimeout(clickTimeout);\n" +
+            //     "                    \n" +
+            //     "                    clickTimeout = setTimeout(() => {\n" +
+            //     "                        this.style.visibility = 'hidden';\n" +
+            //     "                    }, 250);\n" +
+            //     "                });\n" +
+            //     "            });\n" +
+            //     "        });\n" +
+            //     "    </script>";
         }
 
         // console.log(pagesHtml)
@@ -134,76 +134,6 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
         const seconds = (endTime - startTime) / 1000; // Преобразуем миллисекунды в секунды
         // console.log("Рендер: " + seconds.toFixed(3))
     }
-
-
-    // function renderDataBand(htmlTemplate, dataArray, css) {
-    //
-    //     const parser = new DOMParser();
-    //     const doc = parser.parseFromString(htmlTemplate, 'text/html');
-    //
-    //     const dataBands = doc.querySelectorAll('[data-band="true"]');
-    //     const dataChildBands = doc.querySelectorAll('[data-band-child="true"]');
-    //
-    //     const descriptionBands = doc.querySelectorAll('[description-band="true"]');
-    //     descriptionBands.forEach(description => {
-    //         description.remove();
-    //     })
-    //
-    //     dataBands.forEach(band => {
-    //         const bandHtml = band.innerHTML;
-    //
-    //         const bandId = band.getAttribute('id');
-    //         const childs = doc.ge
-    //
-    //
-    //         dataArray.forEach(item => {
-    //             if (bandId.toLowerCase().startsWith(item.tableName.toLowerCase())) {
-    //
-    //                 item.data.forEach(tableData => {
-    //                     let instanceHtml = bandHtml;
-    //
-    //                     Object.keys(tableData).forEach(field => {
-    //                         const value = tableData[field];
-    //                         const style = tableData.style?.[field] || ''; // Получаем стиль для текущего поля
-    //
-    //                         // Если есть стиль для поля - оборачиваем в span
-    //                         if (style) {
-    //                             instanceHtml = instanceHtml.replaceAll(
-    //                                 `{{${field}}}`,
-    //                                 `<span style="${style}">${value}</span>`
-    //                             );
-    //                         }
-    //                         // Без стиля - просто подставляем значение
-    //                         else {
-    //                             instanceHtml = instanceHtml.replaceAll(
-    //                                 `{{${field}}}`,
-    //                                 value
-    //                             );
-    //                         }
-    //                     });
-    //
-    //                     // Создаем копию бэнда с новыми данными
-    //                     let bandCopy = band.cloneNode();
-    //                     bandCopy.innerHTML = instanceHtml;
-    //                     doc.body.appendChild(bandCopy);
-    //                 });
-    //             }
-    //         });
-    //
-    //         doc.body.removeChild(band.parentNode)
-    //     });
-    //
-    //     const bands = doc.querySelectorAll('[band="true"]');
-    //
-    //     bands.forEach(band => {
-    //         doc.body.removeChild(band.parentNode)
-    //     })
-    //
-    //
-    //     splitIntoA4Pages(doc.body.innerHTML, css, bands)
-    //
-    //     return doc.body.innerHTML;
-    // }
 
     function renderDataBand(dataArray, dataParam, htmlTemplate, css) {
         const parser = new DOMParser();
