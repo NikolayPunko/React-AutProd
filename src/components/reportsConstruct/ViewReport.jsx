@@ -232,16 +232,12 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
             bodyContainer.innerHTML = `<style>${css}</style>${htmlString}`;
             document.body.appendChild(tempContainer);
 
-
             const bandHeights = {
                 header: getBandHeight(bands, 'pageHeader'),
                 footer: getBandHeight(bands, 'pageFooter'),
                 reportHeader: getBandHeight(bands, 'reportTitle'),
                 reportFooter: getBandHeight(bands, 'reportSummary')
             };
-
-            // console.log(bandHeights)
-
 
             const measureDiv = createTempContainer();
             measureDiv.style.cssText = `
@@ -252,16 +248,15 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
             document.body.appendChild(measureDiv);
 
             try {
-                insertBand(tempContainer, bands, true, true);
-
                 const maxHeight = 1123; // Высота A4
-                const initialHeight = tempContainer.scrollHeight;
+                const currentBandsHeight = calculateCurrentBandsHeight(true, true, bandHeights);
+                const initialHeight = tempContainer.scrollHeight + currentBandsHeight;
+                insertBand(tempContainer, bands, true, true);
 
                 if (initialHeight <= maxHeight) {
                     const result = removeStyle(tempContainer.innerHTML);
                     resolve(result);
                     let page = [{id: 1, content: result, styles: css}];
-                    console.log(page)
                     setPages(page)
                     return;
                 }
@@ -285,6 +280,7 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
 
                     // Рассчитываем высоту с учетом бэндов
                     const isFirstPage = currentPage.id === 1;
+                    //Улучшить рендер когда остается последний бэнд и за ним бэнд футер отчета, перепрыгивают вместе на след страницу, хотя обычный бэнд еще помещается на текущую
                     const currentBandsHeight = calculateCurrentBandsHeight(isFirstPage, isLastNode, bandHeights);
                     // console.log("BandsHeight" + currentBandsHeight)
                     // console.log("PageHeight" + currentPageHeight)
@@ -295,10 +291,8 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
                     // Если не помещается - сохраняем текущую страницу
                     if (totalHeight > maxHeight) {
                         finalizePage(currentPage, pages, bands, false, false);
-
                         currentPage = createPageTemplate(pages.length + 1, css);
                         currentPageHeight = 0;
-
                         insertBand(currentPage.container, bands, false, false);
                     }
 
