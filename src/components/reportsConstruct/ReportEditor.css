@@ -71,10 +71,25 @@
     display: none;
 }
 
-.testred {
-    color: red !important;
-    font-weight: bold !important;
+.gjs-highlighter {
+    /*Выделение при наведении*/
+    outline: 0 solid #b5b5b5 !important;
 }
+.gjs-selected {
+    /*outline: 2px solid #dd118a !important;*/
+    /*outline-offset: 2px !important;*/
+}
+
+.gjs-three-bg {
+    background-color: #9a9a9a !important;
+}
+
+.gjs-dashed [data-gjs-highlightable] {
+    outline: 1px dashed rgba(177, 21, 21, 0.7) !important;
+    outline-offset: -2px !important;
+}
+
+
 
 
 
