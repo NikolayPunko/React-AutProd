@@ -603,6 +603,28 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 },
             ]);
 
+            // Тип для заблокированного бэнда
+            editor.Components.addType('locked-band', {
+                model: {
+                    defaults: {
+                        draggable: false,
+                        droppable: true,
+                        copyable: false,
+                        removable: true,
+                        attributes: {
+                            'data-locked-band': 'true'
+                        },
+                    },
+                    isDraggable() {
+                        return false;
+                    }
+                },
+                view: {
+                    onRender() {
+                        // this.el.style.pointerEvents = 'none';
+                    }
+                }
+            });
 
             addBlocks(editor);
 
@@ -722,7 +744,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
         const exportJSON = async () => {
             saveCurrentPage(editorView).then((updatedPages) => {
-
+                let css = cleanCSS(updatedPages[0].styles)
                 let result = {
                     dbUrl: settingDB.url,
                     dbUsername: settingDB.username,
@@ -732,7 +754,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                     reportName: reportName,
                     reportCategory: reportCategory,
                     content: updatedPages[0].content,
-                    styles: updatedPages[0].styles,
+                    styles: css,
                     parameters: parameters,
                     sqlMode: isSqlMode,
                     script: script,
@@ -959,7 +981,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         }
 
         function addDataBand(tableName) {
-
             editorView.Components.addType('data-band-block', {
                 model: {
                     defaults: {
@@ -967,6 +988,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         draggable: false,
                         droppable: true,
                         highlightable: true,
+                        copyable: false,
+                        removable: true,
                         components: `
                               <div description-band="true" style="
                                    background: #f8b159;
@@ -976,7 +999,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                    font-size: 14px;
                                    pointer-events: none;
                               ">Главные данные: ${tableName}</div>
-                              <div data-band="true" id="${tableName}" draggable="false" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
+                              <div data-band="true" id="${tableName}" data-gjs-type="locked-band" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
                                  <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажите поле из запроса в двойных скобках: {{field_1}}</p>
                               </div>
                           `,
@@ -1011,6 +1034,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         draggable: false,
                         droppable: true,
                         highlightable: true,
+                        copyable: false,
+                        removable: true,
                         components: `
                           <div description-band="true" style="
                                background: #cdcdcd;
@@ -1020,8 +1045,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                font-size: 14px;
                                pointer-events: none;
                           ">Второстепенные данные: ${childName}</div>
-    
-                          <div data-band-child="true" id="${childName}" draggable="false" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
+                          <div data-band-child="true" id="${childName}" data-gjs-type="locked-band" draggable="false" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
                              <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px">Дочерний бэнд: {{field_1}}</p>
                           </div>
                        `,
@@ -1047,6 +1071,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         draggable: false,
                         droppable: true,
                         highlightable: true,
+                        copyable: false,
+                        removable: false,
                         components: `
                             <div description-band="true" style="
                                background: #cdcdcd;
@@ -1056,7 +1082,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                font-size: 14px;
                                pointer-events: none;
                           ">Заголовок страницы</div>
-                            <div band="true" id="pageHeader" style="height: 100px; width: 794px; background: #fbfbfb; position: relative;
+                            <div band="true" id="pageHeader" data-gjs-type="locked-band" style="height: 100px; width: 794px; background: #fbfbfb; position: relative;
                               border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
                                <h2 style="">Заголовок страницы</h2>
                             </div>
@@ -1081,9 +1107,11 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 model: {
                     defaults: {
                         tagName: 'div',
-                        draggable: true,
+                        draggable: false,
                         droppable: true,
                         highlightable: true,
+                        copyable: false,
+                        removable: false,
                         components: `
                             <div description-band="true" style="
                                    background: #cdcdcd;
@@ -1093,7 +1121,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                    font-size: 14px;
                                    pointer-events: none;
                             ">Заголовок отчета</div>
-                            <div band="true" id="reportTitle" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+                            <div band="true" id="reportTitle" data-gjs-type="locked-band" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
                                <h2 style="">Заголовок отчета</h2>
                             </div>
                                `,
@@ -1113,8 +1141,11 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 model: {
                     defaults: {
                         tagName: 'div',
-                        draggable: true,
+                        draggable: false,
+                        droppable: true,
                         highlightable: true,
+                        copyable: false,
+                        removable: false,
                         components: `
                              <div description-band="true" id="lablePageFooter" style="
                                    background: #cdcdcd;
@@ -1127,7 +1158,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                    bottom: 100px;
                                    width: 794px;
                             ">Подвал страницы</div>
-                             <div band="true" id="pageFooter" style="height: 100px; width: 794px; position: absolute; bottom: 0;
+                             <div band="true" id="pageFooter" data-gjs-type="locked-band" style="height: 100px; width: 794px; position: absolute; bottom: 0;
                               background: #fbfbfb;  border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
                                <h2 style="">Подвал страницы</h2>
                             </div>
@@ -1148,8 +1179,11 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 model: {
                     defaults: {
                         tagName: 'div',
-                        draggable: true,
+                        draggable: false,
+                        droppable: true,
                         highlightable: true,
+                        copyable: false,
+                        removable: false,
                         components: `
                             <div description-band="true" style="
                                    background: #cdcdcd;
@@ -1159,7 +1193,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                    font-size: 14px;
                                    pointer-events: none;
                             ">Подвал отчета</div>
-                            <div band="true" id="reportSummary" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+                            <div band="true" id="reportSummary" data-gjs-type="locked-band" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
                                <h2 style="">Подвал отчета</h2>
                             </div> `,
                     },
@@ -1268,15 +1302,52 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             setIsModalDownloadReport(!isModalDownloadReport)
         }
 
+        function cleanCSS(css) { //Для того чтобы убрать дубликаты стилей body и *
+            const globalRules = {
+                '*': new Set(),
+                'body': new Set()
+            };
+            let otherRules = [];
+            const rules = css.split('}');
+            rules.forEach(rule => {
+                const cleanedRule = rule.trim();
+                if (!cleanedRule) return;
+                const [selectorPart, ...propsParts] = cleanedRule.split('{');
+                const selector = selectorPart.trim();
+                const props = propsParts.join('{').trim();
+
+                if (selector === '*' || selector === 'body') {
+                    // Разбиваем свойства на отдельные декларации
+                    props.split(';').forEach(prop => {
+                        const cleanedProp = prop.trim();
+                        if (cleanedProp) {
+                            globalRules[selector].add(cleanedProp);
+                        }
+                    });
+                } else {
+                    // Сохраняем все другие правила
+                    if (selector && props) {
+                        otherRules.push(`${selector} { ${props} }`);
+                    }
+                }
+            });
+            const uniqueGlobalRules = [
+                `* { ${Array.from(globalRules['*']).join('; ')} }`,
+                `body { ${Array.from(globalRules['body']).join('; ')} }`
+            ].filter(rule => !rule.endsWith('{ }')); // Удаляем пустые правила
+            return [...uniqueGlobalRules, ...otherRules].join('\n');
+        }
+
         async function saveReport(reportName) {
             showModalSaveReport();
 
             saveCurrentPage(editorView).then(async (updatedPages) => {
+                let css = cleanCSS(updatedPages[0].styles)
                 try {
                     await ReportService.createReportTemplate(reportName, reportCategory,
                         settingDB.url, settingDB.username, encryptData(settingDB.password), settingDB.driverClassName, sql,
                         parameters,
-                        updatedPages[0].content, updatedPages[0].styles,
+                        updatedPages[0].content, css,
                         script, isSqlMode, dataBandsOpt);
                     setModalMsg("Документ успешно отправлен!");
 

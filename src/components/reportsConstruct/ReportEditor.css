@@ -84,7 +84,7 @@
     background-color: #9a9a9a !important;
 }
 
-.gjs-dashed [data-gjs-highlightable] {
+.gjs-dashed *[data-gjs-highlightable] {
     outline: 1px dashed rgba(177, 21, 21, 0.7) !important;
     outline-offset: -2px !important;
 }
