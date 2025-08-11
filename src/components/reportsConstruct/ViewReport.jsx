@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from "react";
 
 
-export function ViewReport({data, dataParam, html, css, onClose}) {
+export function ViewReport({data, dataParam, html, css, onClose, isBookOrientation}) {
 
     const [printContent, setPrintContent] = useState("");
     const [uniqueStyles, setUniqueStyles] = useState("");
@@ -15,6 +15,9 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
     const [pages, setPages] = useState([
         {id: 1, content: "", styles: ""}
     ]);
+
+    let heightPage = isBookOrientation? "297mm": "210mm";
+    let size = isBookOrientation? "A4": "A4 landscape"
 
     const [usedBands, setUsedBands] = useState({
         reportTitle: false,
@@ -39,7 +42,7 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
                     <style>
                         <style>
                             @page { 
-                                size: A4;
+                                size: ${size};
                                 margin: 0;
                             }
                             body, html {
@@ -55,7 +58,7 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
                             .page-container {
                                  position: relative;
                                  page-break-after: always;
-                                 height: 297mm;
+                                 height: ${heightPage};
                                  overflow: hidden;
                                  margin: 0;
                                  padding: 0;
@@ -82,8 +85,6 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
     }, [printContent]);
 
     function prepareHtmlAndCss() {
-        const uniqueStyles = [...new Set(pages.map(p => p.styles || ''))].join('\n');
-        // console.log(pages)
         let pagesHtml = "";
         for (let i = 0; i < pages.length; i++) {
             pagesHtml += "<div class='page-container'>";
@@ -109,9 +110,7 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
             //     "    </script>";
         }
 
-        // console.log(pagesHtml)
         setPrintContent(pagesHtml)
-        // setUniqueStyles(uniqueStyles)
     }
 
     useEffect(() => {
@@ -127,7 +126,6 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
 
         css = transformIDs(css);
         setUniqueStyles(css);
-
         renderDataBand(data, dataParam, html, css);
 
         let endTime = performance.now();
@@ -145,7 +143,7 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
 
         // Находим все главные бэнды
         const dataBands = doc.querySelectorAll('[data-band="true"]');
-console.log(data)
+
         dataBands.forEach(band => {
             const bandId = band.getAttribute('id');
             const bandHtml = band.innerHTML;
@@ -199,8 +197,7 @@ console.log(data)
         })
 
 
-
-        console.log(bands) //придумать как вставлять номера страниц
+        // console.log(bands) //придумать как вставлять номера страниц
         // Разбиваем на страницы
         splitIntoA4Pages(doc.body.innerHTML, css, bands);
 
@@ -256,7 +253,13 @@ console.log(data)
             document.body.appendChild(measureDiv);
 
             try {
-                const maxHeight = 1123; // Высота A4
+                let maxHeight;
+                if(isBookOrientation){
+                    maxHeight = 1123; // Высота A4
+                } else {
+                    maxHeight = 794; // Высота A4 горизонтально
+                }
+
                 const currentBandsHeight = calculateCurrentBandsHeight(true, true, bandHeights);
                 const initialHeight = tempContainer.scrollHeight + currentBandsHeight;
                 insertBand(tempContainer, bands, true, true);
@@ -451,7 +454,11 @@ console.log(data)
     function createTempContainer() {
         const tempDiv = document.createElement("div");
         tempDiv.style.position = 'relative';
-        tempDiv.style.height = "297mm"
+        if(isBookOrientation){
+            tempDiv.style.height = "297mm"
+        } else {
+            tempDiv.style.height = "210mm"
+        }
 
         const headerContainer = document.createElement('div');
         headerContainer.id = 'header-container';
@@ -522,6 +529,7 @@ console.log(data)
         URL.revokeObjectURL(url);
     };
 
+    let iframeSize = isBookOrientation?  "w-[215mm] h-[297mm]" : "w-[302mm] h-[210mm]";
 
     return (
         <>
@@ -575,7 +583,7 @@ console.log(data)
                         ref={iframeRef}
                         title="report-preview"
                         style={{transform: `scale(${iframeScale})`}}
-                        className="w-[215mm] h-[297mm] origin-top border shadow-lg bg-white"
+                        className={iframeSize + " origin-top border shadow-lg bg-white"}
                         // sandbox="allow-same-origin allow-scripts"
                     />
 

@@ -92,6 +92,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         const [html, setHtml] = useState("");
         const [css, setCss] = useState("");
 
+        const [isBookOrientation, setIsBookOrientation] = useState(true);
+
 
         pdfMake.addVirtualFileSystem(pdfFonts);
 
@@ -101,7 +103,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 container: editorRef.current,
                 telemetry: false,
                 fromElement: true,
-                height: "1200px",
+                // height: "1200px",
                 width: 'auto',
                 default_locale: 'ru',
                 // cssComposer: false,
@@ -134,23 +136,26 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 pluginsOpts: {
                     "plugin": ['map']
                 },
-                style: [`  .gjs-selected {
-                    outline: none !important;
-                    outline-offset: -1px;
-                }`],
+                style: [
+                //     `
+                //  .gjs-selected {
+                //     outline: none !important;
+                //     outline-offset: -1px;
+                // }`
+                ],
                 canvas: {
-                    styles: [`
-                      body {
-                        overflow: hidden; 
-                      }
-                      .gjs-cv-canvas {
-                        width: 210mm;  
-                        height: 297mm; 
-                        margin: auto;
-                       
-                        overflow: hidden; 
-                      }          
-                   `]
+                   //  styles: [`
+                   //    body {
+                   //      overflow: hidden;
+                   //    }
+                   //    .gjs-cv-canvas {
+                   //      width: 210mm;
+                   //      height: 297mm;
+                   //      margin: auto;
+                   //
+                   //      overflow: hidden;
+                   //    }
+                   // `]
                 },
 
                 // Очищаем список устройств
@@ -169,10 +174,20 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 const canvasElement = editor.Canvas.getElement()
 
                 // Устанавливаем размеры канваса (формат A4)
-                canvasElement.style.width = '794px';
-                canvasElement.style.height = '1123px';
-                // editor.Canvas.getBody().style.width = '1123px';
-                // editor.Canvas.getBody().style.height = '1587px';
+                if(isBookOrientation){
+                    canvasElement.style.width = '794px';
+                    canvasElement.style.height = '1123px';
+                    editor.Canvas.getBody().style.width = '794px';
+                    editor.Canvas.getBody().style.height = '1123px';
+                } else {
+                    canvasElement.style.width = '1123px';
+                    canvasElement.style.height = '794px';
+                    editor.Canvas.getBody().style.width = '1123px';
+                    editor.Canvas.getBody().style.height = '794px';
+                }
+
+
+
                 canvasElement.style.margin = '0';
                 // canvasElement.style.padding = '20px';
                 canvasElement.style.marginLeft = '15%';
@@ -182,10 +197,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 canvasElement.style.overflow = 'hidden';
 
 
-                editor.Canvas.getBody().style.width = '794px';
-                editor.Canvas.getBody().style.height = '1123px';
-                // editor.Canvas.getBody().style.width = '1123px';
-                // editor.Canvas.getBody().style.height = '1587px';
+
+
                 editor.Canvas.getBody().style.margin = '0';
                 editor.Canvas.getBody().style.backgroundColor = '#9a9a9a';
                 // editor.Canvas.getBody().style.padding = '20px';
@@ -198,9 +211,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
             editor.setComponents(pages[0].content);
 
-            editor.setStyle({
-                'background-color': '#ad4bbc', // Цвет фона
-            });
 
             // editor.setComponents(`<span style="text-align:center; padding: 10px; width:300px; left: 60px;
             //   position: absolute; top:60px; font-size: larger;font-weight: 700;">Начните создание отчета...</span>`);
@@ -209,8 +219,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             // Добавляем стили для блоков
             editor.Css.addRules(`
                 .report-page {
-                  width: 210mm;
-                  height: 297mm;
+                  width: 297mm;
+                  height: 210mm;
                   padding: 20mm;
                   border: 1px solid #000;
                   margin-bottom: 20px;
@@ -706,6 +716,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             setIsLoading(false);
         }, []);
 
+        const orientationOpt = ["Книжная","Альбомная"]
+
 
         useEffect(() => {
             if (editorView) {
@@ -758,7 +770,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                     parameters: parameters,
                     sqlMode: isSqlMode,
                     script: script,
-                    dataBands: JSON.stringify(dataBandsOpt)
+                    dataBands: JSON.stringify(dataBandsOpt),
+                    bookOrientation: isBookOrientation
                 }
 
                 try {
@@ -815,6 +828,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         setIsSqlMode(importedPages.sqlMode);
                         setScript(importedPages.script)
                         setDataBandsOpt(JSON.parse(importedPages.dataBands))
+                        setIsBookOrientation(importedPages.bookOrientation);
+
                     };
                 } catch (error) {
                     alert("Ошибка загрузки JSON");
@@ -1348,7 +1363,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         settingDB.url, settingDB.username, encryptData(settingDB.password), settingDB.driverClassName, sql,
                         parameters,
                         updatedPages[0].content, css,
-                        script, isSqlMode, dataBandsOpt);
+                        script, isSqlMode, dataBandsOpt, isBookOrientation);
                     setModalMsg("Документ успешно отправлен!");
 
                 } catch (error) {
@@ -1377,7 +1392,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 setScript(response.data.script);
                 setIsSqlMode(response.data.sqlMode);
                 defineBands(response.data.content);
-                setDataBandsOpt(JSON.parse(response.data.dataBands))
+                setDataBandsOpt(JSON.parse(response.data.dataBands));
+                setIsBookOrientation(response.data.bookOrientation);
             } catch (error) {
                 console.error(error)
                 setModalMsg("Ошибка загрузки отчета с сервера! Попробуйте еще раз.")
@@ -1443,6 +1459,36 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         const selectSQLMethod = () => {
             setIsSqlMode(true);
         }
+
+        function handleSelectOrientation(option){
+            switch (option) {
+                case "Книжная": {
+                    setIsBookOrientation(true);
+                    break;
+                }
+                case "Альбомная": {
+                    setIsBookOrientation(false);
+                    break;
+                }
+            }
+        }
+
+        useEffect(() => {
+            const canvasElement = editorView?.Canvas?.getElement()
+            if(canvasElement){
+                if(isBookOrientation){
+                    canvasElement.style.width = '794px';
+                    canvasElement.style.height = '1123px';
+                    editorView.Canvas.getBody().style.width = '794px';
+                    editorView.Canvas.getBody().style.height = '1123px';
+                } else {
+                    canvasElement.style.width = '1123px';
+                    canvasElement.style.height = '794px';
+                    editorView.Canvas.getBody().style.width = '1123px';
+                    editorView.Canvas.getBody().style.height = '794px';
+                }
+            }
+        }, [isBookOrientation])
 
 
         return (
@@ -1518,7 +1564,15 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                             </div>
                             <div className="p-1 hover:bg-gray-200 flex-col justify-center justify-items-center">
                                 <img src="/icons/DataBand.png" className="icon-band" alt="Data band"/>
-                                <Dropdown options={dataBandsOpt} onSelect={handleSelectTableBand}/>
+                                <Dropdown options={dataBandsOpt} onSelect={handleSelectTableBand} label={"Бэнды"}/>
+                            </div>
+                            <div className=" hover:bg-gray-200 flex flex-col justify-center justify-items-center">
+
+                                <span className=" hover:bg-gray-200 flex justify-center ">
+                                    <i className="fa-regular fa-copy pt-1"></i>
+                                </span>
+                                    <Dropdown options={orientationOpt} onSelect={handleSelectOrientation}
+                                              label={"Ориентация"}/>
                             </div>
                         </div>
                         <div className="flex flex-row gap-x-2 pr-2">
@@ -1548,9 +1602,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                 <div className="hover:bg-gray-200 flex-col justify-center justify-items-center">
                                     <button onClick={() => setIsJavaEditor(true)}
                                             className="flex flex-col justify-between justify-items-center">
-                                <span className="gjs-pn-btn hover:bg-gray-200 flex justify-center ">
-                                        <i className="fa-lg fa-solid fa-keyboard pt-3"></i>
-                                </span>
+                                        <span className="gjs-pn-btn hover:bg-gray-200 flex justify-center ">
+                                                <i className="fa-lg fa-solid fa-keyboard pt-3"></i>
+                                        </span>
                                         <span className="text-xs font-medium px-1">Java редактор</span>
                                     </button>
                                 </div>
@@ -1616,7 +1670,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 />}
 
 
-                {isViewMode && <ViewReport data={data} html={html} css={css} dataParam={dataParam}
+                {isViewMode && <ViewReport data={data} html={html} css={css} dataParam={dataParam} isBookOrientation={isBookOrientation}
                                            onClose={() => {
                                                setIsViewMode(false)
                                            }}
