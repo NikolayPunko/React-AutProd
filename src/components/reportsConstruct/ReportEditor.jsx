@@ -246,7 +246,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             const blocks = [
                 {
                     id: "text-block",
-                    label: "Text Block",
+                    label: "Текстовое поле",
                     content: '<div class="band-content" style="word-wrap: break-word; font-size: 14px; z-index:100">Введите текст...</div>',
                     category: "Текст",
                     draggable: true,

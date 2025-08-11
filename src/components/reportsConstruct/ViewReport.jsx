@@ -128,24 +128,24 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
         css = transformIDs(css);
         setUniqueStyles(css);
 
-        renderDataBand(data.tableData, dataParam, html, css);
+        renderDataBand(data, dataParam, html, css);
 
         let endTime = performance.now();
         const seconds = (endTime - startTime) / 1000; // Преобразуем миллисекунды в секунды
-        // console.log("Рендер: " + seconds.toFixed(3))
+        console.log("Рендер: " + seconds.toFixed(3))
     }
 
-    function renderDataBand(dataArray, dataParam, htmlTemplate, css) {
+    function renderDataBand(data, dataParam, htmlTemplate, css) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlTemplate, 'text/html');
-
+        const dataArray = data.tableData;
         // Удаляем описательные бэнды
         const descriptionBands = doc.querySelectorAll('[description-band="true"]');
         descriptionBands.forEach(description => description.remove());
 
         // Находим все главные бэнды
         const dataBands = doc.querySelectorAll('[data-band="true"]');
-
+console.log(data)
         dataBands.forEach(band => {
             const bandId = band.getAttribute('id');
             const bandHtml = band.innerHTML;
@@ -193,6 +193,14 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
         const bands = doc.querySelectorAll('[band="true"]');
         bands.forEach(band => doc.body.removeChild(band.parentNode));
 
+        //Вставляем глобальные данные в бэнды
+        bands.forEach(band => {
+            band.innerHTML = replaceFieldsInHtml(band.innerHTML, data.globalVar)
+        })
+
+
+
+        console.log(bands) //придумать как вставлять номера страниц
         // Разбиваем на страницы
         splitIntoA4Pages(doc.body.innerHTML, css, bands);
 

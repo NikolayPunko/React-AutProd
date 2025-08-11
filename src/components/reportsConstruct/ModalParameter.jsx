@@ -115,7 +115,7 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
                                 <div key={param.key} className=" rounded-lg p-2 inline-flex">
                                     <label className={styleLabelInput}>{param.name}</label>
                                     <input
-                                        className={"hover:border-blue-800 bg-blue-800 hover:bg-blue-800 outline-blue-800  w-[20px] ml-2"}
+                                        className={"hover:border-blue-800 bg-blue-800 hover:bg-blue-800 outline-blue-800 h-[20px] w-[40px] ml-2"}
                                         type="checkbox"
                                         checked={values[param.key] || param.defaultValue === false}
                                         onChange={(e) => handleChange(param.key, e.target.checked)}
