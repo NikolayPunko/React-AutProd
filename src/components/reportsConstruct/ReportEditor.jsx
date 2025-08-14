@@ -137,25 +137,25 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                     "plugin": ['map']
                 },
                 style: [
-                //     `
-                //  .gjs-selected {
-                //     outline: none !important;
-                //     outline-offset: -1px;
-                // }`
+                    //     `
+                    //  .gjs-selected {
+                    //     outline: none !important;
+                    //     outline-offset: -1px;
+                    // }`
                 ],
                 canvas: {
-                   //  styles: [`
-                   //    body {
-                   //      overflow: hidden;
-                   //    }
-                   //    .gjs-cv-canvas {
-                   //      width: 210mm;
-                   //      height: 297mm;
-                   //      margin: auto;
-                   //
-                   //      overflow: hidden;
-                   //    }
-                   // `]
+                    //  styles: [`
+                    //    body {
+                    //      overflow: hidden;
+                    //    }
+                    //    .gjs-cv-canvas {
+                    //      width: 210mm;
+                    //      height: 297mm;
+                    //      margin: auto;
+                    //
+                    //      overflow: hidden;
+                    //    }
+                    // `]
                 },
 
                 // Очищаем список устройств
@@ -174,7 +174,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 const canvasElement = editor.Canvas.getElement()
 
                 // Устанавливаем размеры канваса (формат A4)
-                if(isBookOrientation){
+                if (isBookOrientation) {
                     canvasElement.style.width = '794px';
                     canvasElement.style.height = '1123px';
                     editor.Canvas.getBody().style.width = '794px';
@@ -187,7 +187,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 }
 
 
-
                 canvasElement.style.margin = '0';
                 // canvasElement.style.padding = '20px';
                 canvasElement.style.marginLeft = '15%';
@@ -195,8 +194,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 canvasElement.style.backgroundColor = '#949494';
                 canvasElement.style.border = '5px';
                 canvasElement.style.overflow = 'hidden';
-
-
 
 
                 editor.Canvas.getBody().style.margin = '0';
@@ -285,7 +282,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                     component.setStyle(style);
                 }
             });
-
 
 
             // function findTargetComponentAtPoint(components, x, y, ignoreEl) {
@@ -716,7 +712,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             setIsLoading(false);
         }, []);
 
-        const orientationOpt = ["Книжная","Альбомная"]
+        const orientationOpt = ["Книжная", "Альбомная"]
 
 
         useEffect(() => {
@@ -865,7 +861,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         useEffect(() => {
             if (editorView) updateCanvasZoom(zoom);
         }, [zoom]);
-
 
         function downloadFile(content, filename) {
             const blob = new Blob([content], {type: 'text/html;charset=utf-8'});
@@ -1460,7 +1455,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             setIsSqlMode(true);
         }
 
-        function handleSelectOrientation(option){
+        function handleSelectOrientation(option) {
             switch (option) {
                 case "Книжная": {
                     setIsBookOrientation(true);
@@ -1475,8 +1470,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
         useEffect(() => {
             const canvasElement = editorView?.Canvas?.getElement()
-            if(canvasElement){
-                if(isBookOrientation){
+            if (canvasElement) {
+                if (isBookOrientation) {
                     canvasElement.style.width = '794px';
                     canvasElement.style.height = '1123px';
                     editorView.Canvas.getBody().style.width = '794px';
@@ -1503,6 +1498,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 />}
 
                 {!isViewMode && !isLoading && !isJavaEditor &&
+
                     <div className=" gjs-two-color gjs-one-bg flex flex-row justify-between py-1 gjs-pn-commands">
                         <div className="flex justify-start text-center ml-2 w-1/3">
                             <span className="gjs-pn-btn font-medium">Конструктор отчетов</span>
@@ -1530,7 +1526,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         </div>
                     </div>}
 
-                {!isViewMode && !isJavaEditor &&
+                {!isViewMode && !isLoading && !isJavaEditor &&
                     <div
                         className="pl-2 gjs-two-color gjs-one-bg flex flex-row justify-between py-1 gjs-pn-commands ">
                         <div className="flex flex-row gap-x-2">
@@ -1571,8 +1567,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                 <span className=" hover:bg-gray-200 flex justify-center ">
                                     <i className="fa-regular fa-copy pt-1"></i>
                                 </span>
-                                    <Dropdown options={orientationOpt} onSelect={handleSelectOrientation}
-                                              label={"Ориентация"}/>
+                                <Dropdown options={orientationOpt} onSelect={handleSelectOrientation}
+                                          label={"Ориентация"}/>
                             </div>
                         </div>
                         <div className="flex flex-row gap-x-2 pr-2">
@@ -1624,7 +1620,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         </div>
                     </div>}
 
-                <div className={!isViewMode && !isJavaEditor ? 'block' : 'hidden'}>
+                <div className={!isViewMode && !isLoading && !isJavaEditor ? 'block' : 'hidden'}>
                     <div id="editor" ref={editorRef}/>
                 </div>
 
@@ -1670,11 +1666,14 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 />}
 
 
-                {isViewMode && <ViewReport data={data} html={html} css={css} dataParam={dataParam} isBookOrientation={isBookOrientation}
-                                           onClose={() => {
-                                               setIsViewMode(false)
-                                           }}
-                />}
+                {isViewMode &&
+                    <ViewReport data={data} html={html} css={css} dataParam={dataParam}
+                                isBookOrientation={isBookOrientation}
+                                onClose={() => {
+                                    setIsViewMode(false)
+                                }}
+                    />
+                }
 
 
             </div>

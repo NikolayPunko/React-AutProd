@@ -77,10 +77,10 @@ function ReportsPage() {
     useEffect(() => {
         if
         (reportData && reportTemplate) {
+            setIsShowReport(true)
             setTimeout(() => {
-                setIsShowReport(true)
                 setIsLoading(false);
-            }, 1500);
+            }, 3000);
         }
     }, [reportTemplate, reportData]);
 
@@ -144,8 +144,8 @@ function ReportsPage() {
                 </>}
 
 
-                {isShowReport && !isLoading &&
-                    <div>
+                {isShowReport  &&
+                    <div className={isLoading? "hidden":""}>
                         <ViewReport data={reportData} dataParam={parameters} html={reportTemplate.content} css={reportTemplate.styles}
                                     onClose={() => setIsShowReport(false)} isBookOrientation={reportTemplate.bookOrientation}/>
                     </div>

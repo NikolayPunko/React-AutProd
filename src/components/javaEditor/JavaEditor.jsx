@@ -3,6 +3,7 @@ import {Editor, loader} from "@monaco-editor/react";
 import {styleInputWithoutRounded} from "../../data/styles";
 import Select from "react-select";
 import {CustomStyleWithoutRounded} from "../../data/styleForSelect";
+import { v4 as uuidv4 } from 'uuid';
 
 
 export function JavaEditor({script, parameters, setScript, onClose, setParameters, dataBandsOpt, setDataBandsOpt}) {
@@ -10,27 +11,54 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
     const editorRef = useRef(null);
 
 
-    const updateParameter = (key, field, value) => {
+    // const updateParameter = (key, field, value) => {
+    //     if (field === "type") {
+    //         setParameters(parameters.map(p =>
+    //             p.key === key ? {...p, [field]: value.value} : p
+    //         ));
+    //         return;
+    //     }
+    //
+    //     setParameters(parameters.map(p =>
+    //         p.key === key ? {...p, [field]: value} : p
+    //     ));
+    // };
+
+    // Обновление по id
+    const updateParameter = (id, field, value) => {
+
         if (field === "type") {
             setParameters(parameters.map(p =>
-                p.key === key ? {...p, [field]: value.value} : p
+                    p.id === id ? {...p, [field]: value.value} : p
             ));
             return;
         }
 
-        setParameters(parameters.map(p =>
-            p.key === key ? {...p, [field]: value} : p
+        setParameters(prev => prev.map(item =>
+            item.id === id ? { ...item, [field]: value } : item
         ));
     };
 
+
+//затестить изменения, паарметры должны добавляться нормально
     const addParameter = () => {
         setParameters([...parameters, {
+            id: uuidv4(), // Генерирует уникальный ID
             name: '',
             key: '',
             type: 'TEXT',
             default: ''
         }]);
     };
+
+    // const addParameter = () => {
+    //     setParameters([...parameters, {
+    //         name: '',
+    //         key: '',
+    //         type: 'TEXT',
+    //         default: ''
+    //     }]);
+    // };
 
     const removeLastParameter = () => {
         setParameters(prevParameters => {
@@ -179,17 +207,17 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
 
                             <div className="max-h-96 overflow-auto">
                                 {parameters.map((param, index) => (
-                                    <div key={index} className="flex flex-row py-0">
+                                    <div key={param.id} className="flex flex-row py-0">
                                         <input className={styleInputWithoutRounded + " font-medium mr-0 w-1/5"}
                                                value={param.name}
                                                onChange={(e) => {
-                                                   updateParameter(param.key, 'name', e.target.value);
+                                                   updateParameter(param.id, 'name', e.target.value);
                                                }}
                                                placeholder="Название параметра"
                                         />
                                         <input className={styleInputWithoutRounded + " font-medium mr-0 w-1/5"}
                                                value={param.key}
-                                               onChange={(e) => updateParameter(param.key, 'key', e.target.value)}
+                                               onChange={(e) => updateParameter(param.id, 'key', e.target.value)}
                                                placeholder="Параметр (:param)"
                                         />
 
@@ -199,7 +227,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                                     value: param.type,
                                                     label: options.find(option => option.value === param.type)?.label || null
                                                 }}
-                                                onChange={(e) => updateParameter(param.key, 'type', e)}
+                                                onChange={(e) => updateParameter(param.id, 'type', e)}
                                                 styles={CustomStyleWithoutRounded}
                                                 options={options}
                                                 menuPortalTarget={document.body}
@@ -211,7 +239,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                                 className={styleInputWithoutRounded + " font-medium w-2/5"}
                                                 type="text"
                                                 value={param.default}
-                                                onChange={(e) => updateParameter(param.key, 'default', e.target.value)}
+                                                onChange={(e) => updateParameter(param.id, 'default', e.target.value)}
                                             />
                                         }
 
@@ -220,7 +248,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                                 className={styleInputWithoutRounded + " font-medium w-2/5"}
                                                 type="number"
                                                 value={param.default}
-                                                onChange={(e) => updateParameter(param.key, 'default', e.target.value)}
+                                                onChange={(e) => updateParameter(param.id, 'default', e.target.value)}
                                             />
                                         }
 
@@ -230,7 +258,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                                 <input className={styleInputWithoutRounded + " w-[100%]"}
                                                        type="date"
                                                        value={param.default === true ? "" : param.default || ""}
-                                                       onChange={(e) => updateParameter(param.key, 'default', e.target.value || "")}
+                                                       onChange={(e) => updateParameter(param.id, 'default', e.target.value || "")}
                                                        style={{
                                                            paddingRight: '50%',
                                                        }}
@@ -244,7 +272,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                                 <input className={styleInputWithoutRounded}
                                                        type="checkbox"
                                                        checked={param.default === true}
-                                                       onChange={(e) => updateParameter(param.key, 'default', e.target.checked || "")}
+                                                       onChange={(e) => updateParameter(param.id, 'default', e.target.checked || "")}
                                                        style={{
                                                            marginLeft: '5px',
                                                            cursor: 'pointer',
@@ -260,7 +288,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                                     className="h-full w-[16px] cursor-pointer"
                                                     type="checkbox"
                                                     checked={param.default}
-                                                    onChange={(e) => updateParameter(param.key, 'default', e.target.checked)}
+                                                    onChange={(e) => updateParameter(param.id, 'default', e.target.checked)}
                                                 />
                                             </div>
                                         }
