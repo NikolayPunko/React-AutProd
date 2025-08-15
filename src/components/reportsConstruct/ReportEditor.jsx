@@ -93,6 +93,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         const [css, setCss] = useState("");
 
         const [isBookOrientation, setIsBookOrientation] = useState(true);
+        const widthPage = isBookOrientation? "794":"1123";
 
 
         pdfMake.addVirtualFileSystem(pdfFonts);
@@ -177,26 +178,30 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 if (isBookOrientation) {
                     canvasElement.style.width = '794px';
                     canvasElement.style.height = '1123px';
+                    canvasElement.style.marginLeft = '15%';
                     editor.Canvas.getBody().style.width = '794px';
                     editor.Canvas.getBody().style.height = '1123px';
                 } else {
                     canvasElement.style.width = '1123px';
                     canvasElement.style.height = '794px';
+                    canvasElement.style.padding = '20px'
                     editor.Canvas.getBody().style.width = '1123px';
                     editor.Canvas.getBody().style.height = '794px';
+                    editor.Canvas.getBody().style.margin = '20px';
+
                 }
 
 
-                canvasElement.style.margin = '0';
+                // canvasElement.style.margin = '10px';
                 // canvasElement.style.padding = '20px';
-                canvasElement.style.marginLeft = '15%';
-                canvasElement.style.marginTop = '20px';
+
+                // canvasElement.style.marginTop = '20px';
                 canvasElement.style.backgroundColor = '#949494';
                 canvasElement.style.border = '5px';
                 canvasElement.style.overflow = 'hidden';
 
 
-                editor.Canvas.getBody().style.margin = '0';
+                // editor.Canvas.getBody().style.margin = '20px';
                 editor.Canvas.getBody().style.backgroundColor = '#9a9a9a';
                 // editor.Canvas.getBody().style.padding = '20px';
                 editor.Canvas.getBody().style.backgroundColor = '#ffffff';
@@ -445,9 +450,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                 //     transform: `translate(${deltaX}px, ${deltaY}px)`,
                                 // });
 
-                                console.log("modelTopBefore: " + modelTopBefore)
-                                console.log("modelTopAfter: " + modelTopAfter)
-                                console.log("deltaY: " + deltaY)
+                                // console.log("modelTopBefore: " + modelTopBefore)
+                                // console.log("modelTopAfter: " + modelTopAfter)
+                                // console.log("deltaY: " + deltaY)
                                 model.addStyle({
                                     // position: 'relative',
                                     // top: `${deltaY}px`
@@ -1009,7 +1014,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                    font-size: 14px;
                                    pointer-events: none;
                               ">Главные данные: ${tableName}</div>
-                              <div data-band="true" id="${tableName}" data-gjs-type="locked-band" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
+                              <div data-band="true" id="${tableName}" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
                                  <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажите поле из запроса в двойных скобках: {{field_1}}</p>
                               </div>
                           `,
@@ -1055,7 +1060,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                font-size: 14px;
                                pointer-events: none;
                           ">Второстепенные данные: ${childName}</div>
-                          <div data-band-child="true" id="${childName}" data-gjs-type="locked-band" draggable="false" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
+                          <div data-band-child="true" id="${childName}" data-gjs-type="locked-band" draggable="false" style="height: 100px; width: ${widthPage}px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
                              <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px">Дочерний бэнд: {{field_1}}</p>
                           </div>
                        `,
@@ -1092,8 +1097,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                font-size: 14px;
                                pointer-events: none;
                           ">Заголовок страницы</div>
-                            <div band="true" id="pageHeader" data-gjs-type="locked-band" style="height: 100px; width: 794px; background: #fbfbfb; position: relative;
-                              border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+                            <div band="true" id="pageHeader" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; background: #fbfbfb; position: relative;
+                              border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
                                <h2 style="">Заголовок страницы</h2>
                             </div>
                           `,
@@ -1131,7 +1136,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                    font-size: 14px;
                                    pointer-events: none;
                             ">Заголовок отчета</div>
-                            <div band="true" id="reportTitle" data-gjs-type="locked-band" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+                            <div band="true" id="reportTitle" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
                                <h2 style="">Заголовок отчета</h2>
                             </div>
                                `,
@@ -1166,11 +1171,11 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                    pointer-events: none;
                                    position: absolute;
                                    bottom: 100px;
-                                   width: 794px;
+                                   width: ${widthPage}px;
                             ">Подвал страницы</div>
-                             <div band="true" id="pageFooter" data-gjs-type="locked-band" style="height: 100px; width: 794px; position: absolute; bottom: 0;
-                              background: #fbfbfb;  border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
-                               <h2 style="">Подвал страницы</h2>
+                             <div band="true" id="pageFooter" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; position: absolute; bottom: 0;
+                              background: #fbfbfb;  border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
+                               <h2 style="width: 250px;">Подвал страницы</h2>
                             </div>
                             `,
                     },
@@ -1203,7 +1208,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                    font-size: 14px;
                                    pointer-events: none;
                             ">Подвал отчета</div>
-                            <div band="true" id="reportSummary" data-gjs-type="locked-band" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
+                            <div band="true" id="reportSummary" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
                                <h2 style="">Подвал отчета</h2>
                             </div> `,
                     },
@@ -1476,11 +1481,14 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                     canvasElement.style.height = '1123px';
                     editorView.Canvas.getBody().style.width = '794px';
                     editorView.Canvas.getBody().style.height = '1123px';
+                    // editorView.Canvas.getBody().style.padding = '20px'
+                    canvasElement.style.marginLeft = '15%';
                 } else {
                     canvasElement.style.width = '1123px';
                     canvasElement.style.height = '794px';
                     editorView.Canvas.getBody().style.width = '1123px';
                     editorView.Canvas.getBody().style.height = '794px';
+                    canvasElement.style.marginLeft = '5%';
                 }
             }
         }, [isBookOrientation])

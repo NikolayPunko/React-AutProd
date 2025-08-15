@@ -48,7 +48,9 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
                             body, html {
                                 /*font-family: Arial, 'Times New Roman', sans-serif;*/
                                 margin: 0;
-                                padding: 0;
+                                /*padding: 20px;*/
+                                /*padding: 0;*/
+                               
                                 left: 0;
                                 right: 0;
                                 display: flex;
@@ -61,7 +63,11 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
                                  height: ${heightPage};
                                  overflow: hidden;
                                  margin: 0;
-                                 padding: 0;
+                                  padding-left: 20px;
+                                padding-right: 20px;
+                                /*Надо учитывать высоту при рендере еще*/
+                                padding-top: 10px; 
+                                padding-bottom: 10px;
                                  left: 0;
                                  right: 0;
                                  box-sizing: border-box;
@@ -144,9 +150,11 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
         // Находим все главные бэнды
         const dataBands = doc.querySelectorAll('[data-band="true"]');
 
+        let counterBand = 0;
+
         dataBands.forEach(band => {
             const bandId = band.getAttribute('id');
-            const bandHtml = band.innerHTML;
+            let bandHtml = band.innerHTML;
 
             // Находим все дочерние бэнды для текущего главного
             const childBands = Array.from(doc.querySelectorAll(`[data-band-child="true"][id^="${bandId}-child"]`));
@@ -157,6 +165,10 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
                         // Рендерим главный бэнд
                         let instanceHtml = replaceFieldsInHtml(bandHtml, tableData);
                         let bandCopy = band.cloneNode(true); // Глубокое клонирование
+
+                        counterBand++;
+                        instanceHtml = replaceFieldInHtml(instanceHtml, counterBand, "№")
+
                         bandCopy.innerHTML = instanceHtml;
                         doc.body.appendChild(bandCopy);
 
@@ -220,6 +232,11 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
         return html;
     }
 
+    function replaceFieldInHtml(html, value, field){
+        html = html.replaceAll(`{{${field}}}`, value);
+        return html;
+    }
+
     function splitIntoA4Pages(htmlString, css, bands) {
 
         return new Promise((resolve) => {
@@ -255,14 +272,17 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
             try {
                 let maxHeight;
                 if(isBookOrientation){
-                    maxHeight = 1123; // Высота A4
+                    // maxHeight = 1123; // Высота A4 обычная
+                    maxHeight = 1103; // Высота с padding top bottom
                 } else {
-                    maxHeight = 794; // Высота A4 горизонтально
+                    // maxHeight = 794; // Высота A4 горизонтально обычная
+                    maxHeight = 774; // Высота с padding top bottom
                 }
 
                 const currentBandsHeight = calculateCurrentBandsHeight(true, true, bandHeights);
                 const initialHeight = tempContainer.scrollHeight + currentBandsHeight;
-                insertBand(tempContainer, bands, true, true);
+                let bandsWithPage = insertNumbPage(1, bands);
+                insertBand(tempContainer, bandsWithPage, true, true);
 
                 if (initialHeight <= maxHeight) {
                     const result = removeStyle(tempContainer.innerHTML);
@@ -301,10 +321,11 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
 
                     // Если не помещается - сохраняем текущую страницу
                     if (totalHeight > maxHeight) {
-                        finalizePage(currentPage, pages, bands, false, false);
+                        bandsWithPage = insertNumbPage(pages.length + 1, bands);
+                        finalizePage(currentPage, pages, bandsWithPage, false, false);
                         currentPage = createPageTemplate(pages.length + 1, css);
                         currentPageHeight = 0;
-                        insertBand(currentPage.container, bands, false, false);
+                        insertBand(currentPage.container, bandsWithPage, false, false);
                     }
 
                     // Добавляем узел на страницу
@@ -318,8 +339,9 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
                     }
                 }
 
+                bandsWithPage = insertNumbPage(pages.length + 1, bands);
                 if (currentPage.container.querySelector('#body-container').childNodes.length > 0) {
-                    finalizePage(currentPage, pages, bands, false, false);
+                    finalizePage(currentPage, pages, bandsWithPage, false, false);
                 }
 
                 setPages(pages);
@@ -335,6 +357,17 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
                 // console.log(`Разбиение выполнено за ${duration.toFixed(3)} сек`);
             }
         });
+    }
+
+    function insertNumbPage(numbPage, bands) {
+        const bandsArray = Array.from(bands || []);
+        const footerIndex = bandsArray.findIndex(el => el.id === "pageFooter");
+        if (footerIndex === -1) return bandsArray;
+        const newBands = [...bandsArray]; // поверхностная копия массива
+        const footerClone = newBands[footerIndex].cloneNode(true); // клонируем только footer
+        footerClone.innerHTML = footerClone.innerHTML.replace(/{{page}}/g, numbPage);
+        newBands[footerIndex] = footerClone;
+        return newBands;
     }
 
     function safeRemove(element) {
