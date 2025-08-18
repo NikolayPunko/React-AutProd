@@ -476,31 +476,50 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
             function findTargetComponentAtPoint(components, x, y, ignoreEl) {
                 let target = null;
+                let topmostZIndex = -1;
 
                 components.each(comp => {
                     if (!comp.view || !comp.view.el) return;
                     const el = comp.view.el;
+
                     if (el === ignoreEl || !(el instanceof HTMLElement)) return;
-                    let rect;
-                    try {
-                        rect = el.getBoundingClientRect();
-                    } catch (e) {
-                        console.warn('Ошибка получения bounding rect:', e);
+
+                    // Пропускаем невидимые элементы
+                    if (el.style.display === 'none' || el.style.visibility === 'hidden' || el.style.opacity === '0') {
                         return;
                     }
 
-                    const isInside = x >= rect.left && x <= rect.right &&
-                        y >= rect.top && y <= rect.bottom;
+                    try {
+                        const rect = el.getBoundingClientRect();
+                        const computedStyle = window.getComputedStyle(el);
+                        const zIndex = parseInt(computedStyle.zIndex) || 0;
 
-                    if (isInside) {
-                        if (el.hasAttribute('data-band') || el.hasAttribute('band') || el.hasAttribute('data-band-child')) {
-                            target = comp;
+                        const isInside = x >= rect.left && x <= rect.right &&
+                            y >= rect.top && y <= rect.bottom;
+
+                        if (isInside && (el.hasAttribute('data-band') || el.hasAttribute('band') ||
+                            el.hasAttribute('data-band-child'))) {
+
+                            // Выбираем элемент с наибольшим z-index
+                            if (zIndex > topmostZIndex) {
+                                topmostZIndex = zIndex;
+                                target = comp;
+                            }
                         } else if (comp.components && !target) {
                             const nestedTarget = findTargetComponentAtPoint(comp.components(), x, y, ignoreEl);
-                            if (nestedTarget) target = nestedTarget;
+                            if (nestedTarget) {
+                                const nestedZIndex = parseInt(window.getComputedStyle(nestedTarget.view.el).zIndex) || 0;
+                                if (nestedZIndex > topmostZIndex) {
+                                    topmostZIndex = nestedZIndex;
+                                    target = nestedTarget;
+                                }
+                            }
                         }
+                    } catch (e) {
+                        console.warn('Ошибка проверки элемента:', e);
                     }
                 });
+
                 return target;
             }
 
