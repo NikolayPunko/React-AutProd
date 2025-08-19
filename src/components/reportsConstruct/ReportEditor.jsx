@@ -748,9 +748,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             }
         }, [pages, currentPage]);
 
-        // useEffect(() => {
-        //     setSql("from table1"); //временно для разработки
-        // }, []);
 
         const saveCurrentPage = async (editor) => {
             if (!editor) {
@@ -808,6 +805,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                     document.body.removeChild(link);
                 } catch (error) {
                     console.error("Ошибка при сохранении и экспорте:", error);
+                    setModalMsg("Ошибка при экспорте отчета! Попробуйте еще раз.")
+                    showModalNotif();
                 }
             })
         };
@@ -852,7 +851,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
                     };
                 } catch (error) {
-                    alert("Ошибка загрузки JSON");
+                    console.error(error)
+                    setModalMsg("Ошибка иморта отчета! Попробуйте еще раз.")
+                    showModalNotif();
                 }
 
                 reader.readAsText(file);
@@ -1249,13 +1250,10 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                     encryptData(dbPassword), dbDriver, sql, content, styles, parameters, script, isSqlMode);
                 return response.data;
             } catch (e) {
-                setError(e.response.data.message)
+                setError("Ошибка получения данных отчета: "+e.response.data.message)
                 setIsModalError(true);
             } finally {
-                setTimeout(() => {
-                    setIsLoading(false);
-                }, 500);
-
+                // setIsLoading(false);
             }
         }
 
@@ -1271,6 +1269,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         }
 
         async function enterPreviewMode(parameters) {
+            let startTime = performance.now();
             setIsModalParameter(false);
             const data = await fetchReportData("", "", settingDB.url, settingDB.username,
                 settingDB.password, settingDB.driverClassName, sql, "", "", parameters, script, isSqlMode)
@@ -1285,6 +1284,15 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
             setIsJavaEditor(false)
             setIsViewMode(true)
+
+            setTimeout(()=>{
+                setIsLoading(false)
+
+                let endTime = performance.now();
+                const seconds = (endTime - startTime) / 1000; // Преобразуем миллисекунды в секунды
+                console.log("Рендер + данные: " + seconds.toFixed(3))
+            }, 1300)
+
         }
 
         function defineBands(html) {
@@ -1467,7 +1475,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
 
         useEffect(() => {
-            extractTablesAndCheckSQL();
+            if(isSqlMode){
+                extractTablesAndCheckSQL();
+            }
         }, [sql]);
 
 
@@ -1500,7 +1510,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                     canvasElement.style.height = '1123px';
                     editorView.Canvas.getBody().style.width = '794px';
                     editorView.Canvas.getBody().style.height = '1123px';
-                    // editorView.Canvas.getBody().style.padding = '20px'
                     canvasElement.style.marginLeft = '15%';
                 } else {
                     canvasElement.style.width = '1123px';
@@ -1694,12 +1703,14 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
 
                 {isViewMode &&
-                    <ViewReport data={data} html={html} css={css} dataParam={dataParam}
-                                isBookOrientation={isBookOrientation}
-                                onClose={() => {
-                                    setIsViewMode(false)
-                                }}
-                    />
+                    <div className={isLoading ? "hidden" : ""}>
+                        <ViewReport data={data} html={html} css={css} dataParam={dataParam}
+                                    isBookOrientation={isBookOrientation}
+                                    onClose={() => {
+                                        setIsViewMode(false)
+                                    }}
+                        />
+                    </div>
                 }
 
 

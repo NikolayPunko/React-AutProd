@@ -19,15 +19,10 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
     let heightPage = isBookOrientation? "297mm": "210mm";
     let size = isBookOrientation? "A4": "A4 landscape"
 
-    const [usedBands, setUsedBands] = useState({
-        reportTitle: false,
-        headerPage: false,
-        footerPage: false,
-        reportSummary: false,
-    });
 
     useEffect(() => {
         render(data, dataParam, html, css)
+        console.log(isBookOrientation)
     }, [])
 
 
@@ -128,8 +123,6 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
 
         let startTime = performance.now();
 
-        defineBands(html);
-
         css = transformIDs(css);
         setUniqueStyles(css);
         renderDataBand(data, dataParam, html, css);
@@ -209,7 +202,6 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
         })
 
 
-        // console.log(bands) //придумать как вставлять номера страниц
         // Разбиваем на страницы
         splitIntoA4Pages(doc.body.innerHTML, css, bands);
 
@@ -301,6 +293,7 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
                 for (let i = 0; i < childNodes.length; i++) {
 
                     const node = childNodes[i];
+
                     const isLastNode = i === childNodes.length - 1;
 
                     // Измеряем высоту узла
@@ -513,27 +506,6 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
         return css.replace(/(?<!:)\#([a-zA-Z_][\w-]+)/g, (match, id) => {
             return `[id^='${id}']`; // заменяем #id на [id^='id']
         });
-    }
-
-    function defineBands(html) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        doc.getElementById('pageHeader') ? setUsedBands(prevState => ({
-            ...prevState,
-            headerPage: true
-        })) : setUsedBands(prevState => ({...prevState, headerPage: false}))
-        doc.getElementById('reportTitle') ? setUsedBands(prevState => ({
-            ...prevState,
-            reportTitle: true
-        })) : setUsedBands(prevState => ({...prevState, reportTitle: false}))
-        doc.getElementById('reportSummary') ? setUsedBands(prevState => ({
-            ...prevState,
-            reportSummary: true
-        })) : setUsedBands(prevState => ({...prevState, reportSummary: false}))
-        doc.getElementById('pageFooter') ? setUsedBands(prevState => ({
-            ...prevState,
-            footerPage: true
-        })) : setUsedBands(prevState => ({...prevState, footerPage: false}))
     }
 
     const zoomIn = () => {

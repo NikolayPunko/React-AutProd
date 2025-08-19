@@ -11,16 +11,6 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
     };
 
     const handleSubmit = () => {
-        // Проверка обязательных полей
-        // const missing = parameters
-        //     .filter(p => p.required && !values[p.key])
-        //     .map(p => p.name);
-
-        // if (missing.length > 0) {
-        //     alert(`Заполните обязательные поля: ${missing.join(', ')}`);
-        //     return;
-        // }
-        // console.log(values)
         onSubmit(values);
     };
 
@@ -49,10 +39,6 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
     }, []);
 
 
-    // useEffect(() => {
-    //     console.log(values)
-    // }, [values]);
-
     return (
 
         <>
@@ -61,7 +47,7 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
                 onClick={onClose}
             />
             <div
-                className="w-full md:w-auto  lg:w-min-[600px]  p-5 z-30 rounded bg-white absolute top-1/4 left-1/2 -translate-x-1/2 px-8">
+                className=" min-w-2xl p-5 z-30 rounded bg-white absolute top-48 left-1/2 -translate-x-1/2 px-8">
                 <h1 className="text-2xl font-medium text-start mb-5">Параметры отчета</h1>
 
                 {parameters.length === 0 &&
@@ -69,7 +55,7 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
                 }
                 {parameters.length > 0 &&
                     <>
-                        <div className="grid grid-rows-2 grid-cols-5 gap-4 mb-2 justify-center ">
+                        <div className="grid grid-rows-1 grid-cols-6 mb-2 justify-center ">
                             {parameters.map(param => {
                                 switch (param.type) {
                                     case "TEXT":
