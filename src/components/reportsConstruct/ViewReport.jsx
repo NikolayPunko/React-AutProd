@@ -290,27 +290,46 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
                 let currentPageHeight = 0;
                 const childNodes = Array.from(bodyContainer.childNodes);
 
+
+                //Почему-то не работает бэнд футера отчета
                 for (let i = 0; i < childNodes.length; i++) {
-
                     const node = childNodes[i];
-
                     const isLastNode = i === childNodes.length - 1;
 
-                    // Измеряем высоту узла
+                    // Пропускаем style элементы
+                    if (node.nodeName === "STYLE") {
+                        continue;
+                    }
+
+                    // Пропускаем дочерние элементы (они будут обработаны вместе с родительскими)
+                    if (node.getAttribute("id")?.includes('-child')) {
+                        continue;
+                    }
+
                     measureDiv.innerHTML = '';
                     measureDiv.appendChild(node.cloneNode(true));
-                    const nodeHeight = measureDiv.offsetHeight;
 
+                    // Собираем все дочерние элементы для текущего родителя
+                    const childElements = [];
+                    let j = i + 1;
+
+                    // Собираем все последующие дочерние элементы
+                    while (j < childNodes.length && childNodes[j].getAttribute("id")?.includes('-child')) {
+                        childElements.push(childNodes[j]);
+                        j++;
+                    }
+
+                    // Добавляем все дочерние элементы в measureDiv для расчета общей высоты
+                    childElements.forEach(child => {
+                        measureDiv.appendChild(child.cloneNode(true));
+                    });
+
+                    const totalNodeHeight = measureDiv.offsetHeight;
 
                     // Рассчитываем высоту с учетом бэндов
                     const isFirstPage = currentPage.id === 1;
-                    //Улучшить рендер когда остается последний бэнд и за ним бэнд футер отчета, перепрыгивают вместе на след страницу, хотя обычный бэнд еще помещается на текущую
                     const currentBandsHeight = calculateCurrentBandsHeight(isFirstPage, isLastNode, bandHeights);
-                    // console.log("BandsHeight" + currentBandsHeight)
-                    // console.log("PageHeight" + currentPageHeight)
-                    // console.log("nodeHeight" + nodeHeight)
-                    // const totalHeight = currentPageHeight + nodeHeight + currentBandsHeight;
-                    const totalHeight = currentPageHeight + nodeHeight + currentBandsHeight;
+                    const totalHeight = currentPageHeight + totalNodeHeight + currentBandsHeight;
 
                     // Если не помещается - сохраняем текущую страницу
                     if (totalHeight > maxHeight) {
@@ -321,16 +340,133 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
                         insertBand(currentPage.container, bandsWithPage, false, false);
                     }
 
-                    // Добавляем узел на страницу
+                    // Добавляем родительский элемент
                     currentPage.container.querySelector('#body-container').appendChild(node.cloneNode(true));
-                    currentPageHeight += nodeHeight;
 
+                    // Добавляем все дочерние элементы
+                    childElements.forEach(child => {
+                        currentPage.container.querySelector('#body-container').appendChild(child.cloneNode(true));
+                    });
+
+                    currentPageHeight += totalNodeHeight;
+
+
+                    i += childElements.length;
                     // Если это последний узел - добавляем report footer
-                    if (isLastNode) {
+                    if (i >= childNodes.length-1) {  //Проверить или починилось
                         insertBand(currentPage.container, bands, false, true);
                         currentPageHeight += bandHeights.reportFooter;
                     }
+                    // Пропускаем индексы дочерних элементов, которые уже обработаны
+
                 }
+
+
+
+                // for (let i = 0; i < childNodes.length; i++) {
+                //
+                //     const node = childNodes[i];
+                //     // console.log(node)
+                //     const isLastNode = i === childNodes.length - 1;
+                //
+                //     // Измеряем высоту узла
+                //     measureDiv.innerHTML = '';
+                //     measureDiv.appendChild(node.cloneNode(true));
+                //
+                //     if(node.nodeName === "STYLE"){
+                //         continue;
+                //     }
+                //
+                //     if(childNodes[i].getAttribute("id").includes('-child')){
+                //         continue;
+                //     }
+                //
+                //
+                //
+                //     let hasChild = false;
+                //
+                //     console.log(childNodes)
+                //     if(i+1 < childNodes.length){
+                //
+                //         // if(!childNodes[i].getAttribute("id").includes('-child') ){
+                //         // // if(childNodes[i].getAttribute("id")?.endsWith('mca')){
+                //         // //     console.log(childNodes[i+1].id)
+                //         //     try { //нужно сделать цикл чтобы добавлялись пока есть дочерние, если наступил обычный то стоп
+                //         //         if(childNodes[i+1].getAttribute("id").includes('-child')){
+                //         //             measureDiv.appendChild(childNodes[i+1].cloneNode(true));
+                //         //             hasChild = true;
+                //         //         }
+                //         //     } catch (e){
+                //         //
+                //         //     }
+                //         //
+                //         //
+                //         // } else {
+                //         //     continue
+                //         // }
+                //
+                //         if(!childNodes[i].getAttribute("id").includes('-child') ){
+                //             // if(childNodes[i].getAttribute("id")?.endsWith('mca')){
+                //             //     console.log(childNodes[i+1].id)
+                //             try { //нужно сделать цикл чтобы добавлялись пока есть дочерние, если наступил обычный то стоп
+                //                 if(childNodes[i+1].getAttribute("id").includes('-child')){
+                //                     measureDiv.appendChild(childNodes[i+1].cloneNode(true));
+                //                     hasChild = true;
+                //                 }
+                //             } catch (e){
+                //
+                //             }
+                //
+                //
+                //         } else {
+                //             continue
+                //         }
+                //
+                //
+                //     }
+                //
+                //
+                //     const nodeHeight = measureDiv.offsetHeight;
+                //
+                //
+                //     // Рассчитываем высоту с учетом бэндов
+                //     const isFirstPage = currentPage.id === 1;
+                //     //Улучшить рендер когда остается последний бэнд и за ним бэнд футер отчета, перепрыгивают вместе на след страницу, хотя обычный бэнд еще помещается на текущую
+                //     const currentBandsHeight = calculateCurrentBandsHeight(isFirstPage, isLastNode, bandHeights);
+                //     // console.log("BandsHeight" + currentBandsHeight)
+                //     // console.log("PageHeight" + currentPageHeight)
+                //     // console.log("nodeHeight" + nodeHeight)
+                //     // const totalHeight = currentPageHeight + nodeHeight + currentBandsHeight;
+                //     const totalHeight = currentPageHeight + nodeHeight + currentBandsHeight;
+                //
+                //     // Если не помещается - сохраняем текущую страницу
+                //     if (totalHeight > maxHeight) {
+                //         bandsWithPage = insertNumbPage(pages.length + 1, bands);
+                //         finalizePage(currentPage, pages, bandsWithPage, false, false);
+                //         currentPage = createPageTemplate(pages.length + 1, css);
+                //         currentPageHeight = 0;
+                //         insertBand(currentPage.container, bandsWithPage, false, false);
+                //     }
+                //
+                //     // Добавляем узел на страницу
+                //     currentPage.container.querySelector('#body-container').appendChild(node.cloneNode(true));
+                //     if(hasChild){
+                //         try {
+                //             currentPage.container.querySelector('#body-container').appendChild(childNodes[i+1].cloneNode(true));
+                //         } catch (e){
+                //
+                //         }
+                //     }
+                //
+                //
+                //     currentPageHeight += nodeHeight;
+                //
+                //     // Если это последний узел - добавляем report footer
+                //     if (isLastNode) {
+                //         insertBand(currentPage.container, bands, false, true);
+                //         currentPageHeight += bandHeights.reportFooter;
+                //     }
+                // }
 
                 bandsWithPage = insertNumbPage(pages.length + 1, bands);
                 if (currentPage.container.querySelector('#body-container').childNodes.length > 0) {
