@@ -796,7 +796,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                     const blob = new Blob([json], {type: "application/json"});
                     const link = document.createElement("a");
                     link.href = URL.createObjectURL(blob);
-                    link.download = "report.json";
+                    link.download = reportName + ".json";
                     document.body.appendChild(link);
                     link.click();
                     setTimeout(() => {
@@ -848,7 +848,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         setScript(importedPages.script)
                         setDataBandsOpt(JSON.parse(importedPages.dataBands))
                         setIsBookOrientation(importedPages.bookOrientation);
-
+                        defineBands(importedPages.content);
                     };
                 } catch (error) {
                     console.error(error)
@@ -1016,6 +1016,12 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         }
 
         function addDataBand(tableName) {
+
+            //Ограничение на один бэнд с данными пока что
+            if(editorView.getHtml().includes("data-band=\"true\"")) {
+                return;
+            }
+
             editorView.Components.addType('data-band-block', {
                 model: {
                     defaults: {

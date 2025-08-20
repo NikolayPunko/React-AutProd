@@ -11,22 +11,8 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
     const editorRef = useRef(null);
 
 
-    // const updateParameter = (key, field, value) => {
-    //     if (field === "type") {
-    //         setParameters(parameters.map(p =>
-    //             p.key === key ? {...p, [field]: value.value} : p
-    //         ));
-    //         return;
-    //     }
-    //
-    //     setParameters(parameters.map(p =>
-    //         p.key === key ? {...p, [field]: value} : p
-    //     ));
-    // };
-
     // Обновление по id
     const updateParameter = (id, field, value) => {
-
         if (field === "type") {
             setParameters(parameters.map(p =>
                     p.id === id ? {...p, [field]: value.value} : p
@@ -39,8 +25,6 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
         ));
     };
 
-
-//затестить изменения, паарметры должны добавляться нормально
     const addParameter = () => {
         setParameters([...parameters, {
             id: uuidv4(), // Генерирует уникальный ID
@@ -51,14 +35,6 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
         }]);
     };
 
-    // const addParameter = () => {
-    //     setParameters([...parameters, {
-    //         name: '',
-    //         key: '',
-    //         type: 'TEXT',
-    //         default: ''
-    //     }]);
-    // };
 
     const removeLastParameter = () => {
         setParameters(prevParameters => {
@@ -68,6 +44,10 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
     };
 
     const addDataBand = () => {
+        if (dataBandsOpt.length >=1){ //Ограничиваем до одного бэнда
+            return
+        }
+
         setDataBandsOpt([...dataBandsOpt, ""]);
     };
 
@@ -208,20 +188,20 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                             <div className="max-h-96 overflow-auto">
                                 {parameters.map((param, index) => (
                                     <div key={param.id} className="flex flex-row py-0">
-                                        <input className={styleInputWithoutRounded + " font-medium mr-0 w-1/5"}
+                                        <input className={styleInputWithoutRounded + " font-medium mr-0 w-[30%]"}
                                                value={param.name}
                                                onChange={(e) => {
                                                    updateParameter(param.id, 'name', e.target.value);
                                                }}
                                                placeholder="Название параметра"
                                         />
-                                        <input className={styleInputWithoutRounded + " font-medium mr-0 w-1/5"}
+                                        <input className={styleInputWithoutRounded + " font-medium mr-0 w-[20%]"}
                                                value={param.key}
                                                onChange={(e) => updateParameter(param.id, 'key', e.target.value)}
                                                placeholder="Параметр (:param)"
                                         />
 
-                                        <Select className="text-sm font-medium w-1/5 mr-0"
+                                        <Select className="text-sm font-medium w-[20%] mr-0"
                                                 placeholder={"Тип параметра"}
                                                 value={{
                                                     value: param.type,
@@ -236,7 +216,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
 
                                         {param.type === "TEXT" &&
                                             <input
-                                                className={styleInputWithoutRounded + " font-medium w-2/5"}
+                                                className={styleInputWithoutRounded + " font-medium w-[30%]"}
                                                 type="text"
                                                 value={param.default}
                                                 onChange={(e) => updateParameter(param.id, 'default', e.target.value)}
@@ -245,7 +225,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
 
                                         {param.type === "NUMBER" &&
                                             <input
-                                                className={styleInputWithoutRounded + " font-medium w-2/5"}
+                                                className={styleInputWithoutRounded + " font-medium w-[30%]"}
                                                 type="number"
                                                 value={param.default}
                                                 onChange={(e) => updateParameter(param.id, 'default', e.target.value)}
@@ -254,7 +234,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
 
                                         {param.type === "DATE" &&
                                             <div style={{display: 'flex', alignItems: 'center'}}
-                                                 className="font-medium w-2/5">
+                                                 className="font-medium w-[30%]">
                                                 <input className={styleInputWithoutRounded + " w-[100%]"}
                                                        type="date"
                                                        value={param.default === true ? "" : param.default || ""}
@@ -283,7 +263,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                         }
 
                                         {param.type === "BOOLEAN" &&
-                                            <div className=" w-2/5 text-center border border-slate-400">
+                                            <div className=" w-[30%] text-center border border-slate-400">
                                                 <input
                                                     className="h-full w-[16px] cursor-pointer"
                                                     type="checkbox"
