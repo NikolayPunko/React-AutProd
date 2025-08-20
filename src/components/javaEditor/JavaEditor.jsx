@@ -160,7 +160,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                         />
                     </div>
                     <div className="flex flex-col w-1/3">
-                        <div className=" flex-row px-8 h-2/3">
+                        <div className=" flex-row px-8 h-3/4">
 
                             <div className="flex justify-between items-center">
                                 <div className="flex text-2xl text-nowrap font-medium text-start mt-2 mb-3">Параметры</div>
@@ -185,7 +185,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                 <span className="text-sm text-center font-medium w-2/5">Знач. по умолчанию</span>
                             </div>
 
-                            <div className="max-h-96 overflow-auto">
+                            <div className="max-h-[500px] overflow-auto">
                                 {parameters.map((param, index) => (
                                     <div key={param.id} className="flex flex-row py-0">
                                         <input className={styleInputWithoutRounded + " font-medium mr-0 w-[30%]"}
@@ -277,7 +277,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                 ))}
                             </div>
                         </div>
-                        <div className=" flex-row px-8 mt-4 h-1/3">
+                        <div className=" flex-row px-8 mt-4 h-1/4">
 
                             <div className="flex justify-between items-center">
                                 <div className="flex text-2xl font-medium text-start mt-2 mb-3">Бэнды данных</div>

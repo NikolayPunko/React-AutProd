@@ -262,11 +262,9 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
             try {
                 let maxHeight;
                 if(isBookOrientation){
-                    // maxHeight = 1123; // Высота A4 обычная
-                    maxHeight = 1103; // Высота с padding top bottom
+                    maxHeight = 1103; // Высота с padding top bottom, обычная - 1123
                 } else {
-                    // maxHeight = 794; // Высота A4 горизонтально обычная
-                    maxHeight = 774; // Высота с padding top bottom
+                    maxHeight = 774; // Высота с padding top bottom, обычная - 794
                 }
 
                 const currentBandsHeight = calculateCurrentBandsHeight(true, true, bandHeights);
@@ -291,7 +289,7 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
 
                 for (let i = 0; i < childNodes.length; i++) {
                     const node = childNodes[i];
-                    const isLastNode = i === childNodes.length - 1;
+
 
                     // Пропускаем style элементы
                     if (node.nodeName === "STYLE") {
@@ -325,7 +323,13 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
 
                     // Рассчитываем высоту с учетом бэндов
                     const isFirstPage = currentPage.id === 1;
-                    const currentBandsHeight = calculateCurrentBandsHeight(isFirstPage, isLastNode, bandHeights);
+
+                    // Пропускаем индексы дочерних элементов, которые уже обработаны
+                    i += childElements.length;
+
+                    const isLastNode = i === childNodes.length - 1;
+                    let currentBandsHeight = calculateCurrentBandsHeight(isFirstPage, isLastNode, bandHeights);
+
                     const totalHeight = currentPageHeight + totalNodeHeight + currentBandsHeight;
 
                     // Если не помещается - сохраняем текущую страницу
@@ -347,8 +351,7 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
 
                     currentPageHeight += totalNodeHeight;
 
-                    // Пропускаем индексы дочерних элементов, которые уже обработаны
-                    i += childElements.length;
+
 
                     // Если это последний узел - добавляем report footer
                     if (i >= childNodes.length-1) {  //Проверить или починилось

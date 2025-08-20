@@ -1016,7 +1016,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         }
 
         function addDataBand(tableName) {
-
             //Ограничение на один бэнд с данными пока что
             if(editorView.getHtml().includes("data-band=\"true\"")) {
                 return;
