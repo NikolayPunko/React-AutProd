@@ -865,7 +865,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
         };
 
-
         const updateCanvasZoom = (newZoom) => {
             if (!editorView) return;
             const frame = editorView.Canvas.getElement();
@@ -1016,7 +1015,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         }
 
         function addDataBand(tableName) {
-
             //Ограничение на один бэнд с данными пока что
             if(editorView.getHtml().includes("data-band=\"true\"")) {
                 return;
@@ -1087,7 +1085,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                pointer-events: none;
                           ">Второстепенные данные: ${childName}</div>
                           <div data-band-child="true" id="${childName}" data-gjs-type="locked-band" draggable="false" style="height: 100px; width: ${widthPage}px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
-                             <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px">Дочерний бэнд: {{field_1}}</p>
+                             <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px; z-index: 9999">Дочерний бэнд: {{field_1}}</p>
                           </div>
                        `,
                     },
@@ -1125,7 +1123,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                           ">Заголовок страницы</div>
                             <div band="true" id="pageHeader" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; background: #fbfbfb; position: relative;
                               border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
-                               <h2 style="">Заголовок страницы</h2>
+                               <h2 style="position: absolute; top: 30px; left: 20px; margin: 0px; z-index: 9999">Заголовок страницы</h2>
                             </div>
                           `,
                     },
@@ -1163,7 +1161,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                    pointer-events: none;
                             ">Заголовок отчета</div>
                             <div band="true" id="reportTitle" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
-                               <h2 style="">Заголовок отчета</h2>
+                               <h2 style="position: absolute; top: 30px; left: 20px; margin: 0px; z-index: 9999">Заголовок отчета</h2>
                             </div>
                                `,
                     },
@@ -1201,7 +1199,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                             ">Подвал страницы</div>
                              <div band="true" id="pageFooter" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; position: absolute; bottom: 0;
                               background: #fbfbfb;  border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
-                               <h2 style="width: 250px;">Подвал страницы</h2>
+                               <h2 style="position: absolute; top: 30px; left: 20px; margin: 0px; width: 250px; z-index: 9999">Подвал страницы</h2>
                             </div>
                             `,
                     },
@@ -1235,7 +1233,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                    pointer-events: none;
                             ">Подвал отчета</div>
                             <div band="true" id="reportSummary" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
-                               <h2 style="">Подвал отчета</h2>
+                               <h2 style="position: absolute; top: 30px; left: 20px; margin: 0px; z-index: 9999">Подвал отчета</h2>
                             </div> `,
                     },
                 },
