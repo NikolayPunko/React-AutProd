@@ -11,16 +11,6 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
     };
 
     const handleSubmit = () => {
-        // Проверка обязательных полей
-        // const missing = parameters
-        //     .filter(p => p.required && !values[p.key])
-        //     .map(p => p.name);
-
-        // if (missing.length > 0) {
-        //     alert(`Заполните обязательные поля: ${missing.join(', ')}`);
-        //     return;
-        // }
-        // console.log(values)
         onSubmit(values);
     };
 
@@ -49,10 +39,6 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
     }, []);
 
 
-    // useEffect(() => {
-    //     console.log(values)
-    // }, [values]);
-
     return (
 
         <>
@@ -61,7 +47,7 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
                 onClick={onClose}
             />
             <div
-                className="w-full md:w-auto  lg:w-[700px]  p-5 z-30 rounded bg-white absolute top-1/4 left-1/2 -translate-x-1/2 px-8">
+                className=" min-w-2xl p-5 z-30 rounded bg-white absolute top-48 left-1/2 -translate-x-1/2 px-8">
                 <h1 className="text-2xl font-medium text-start mb-5">Параметры отчета</h1>
 
                 {parameters.length === 0 &&
@@ -69,59 +55,59 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
                 }
                 {parameters.length > 0 &&
                     <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-2">
-
-                            {parameters.filter(param => param.type === "TEXT").map(param => (
-                                <div key={param.key} className=" rounded-lg p-2 flex flex-col">
-                                    {/*<div key={param.key} className="border rounded-lg p-2 flex flex-col">*/}
-                                    <label className={styleLabelInput}>{param.name}</label>
-                                    <input
-                                        className={styleInput}
-                                        type="text"
-                                        value={values[param.key] || param.defaultValue || ''}
-                                        onChange={(e) => handleChange(param.key, e.target.value)}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-2">
-                            {parameters.filter(param => param.type === "NUMBER").map(param => (
-                                <div key={param.key} className=" rounded-lg p-2 flex flex-col">
-                                    <label className={styleLabelInput}>{param.name}</label>
-                                    <input
-                                        className={styleInput}
-                                        type="number"
-                                        value={values[param.key] || param.defaultValue || ''}
-                                        onChange={(e) => handleChange(param.key, e.target.value)}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-2">
-                            {parameters.filter(param => param.type === "DATE").map(param => (
-                                <div key={param.key} className="rounded-lg p-2 flex flex-col">
-                                    <label className={styleLabelInput}>{param.name}</label>
-                                    <input
-                                        className={styleInput}
-                                        type="date"
-                                        value={values[param.key] || ''}
-                                        onChange={(e) => handleChange(param.key, e.target.value)}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {parameters.filter(param => param.type === "BOOLEAN").map(param => (
-                                <div key={param.key} className=" rounded-lg p-2 inline-flex">
-                                    <label className={styleLabelInput}>{param.name}</label>
-                                    <input
-                                        className={"hover:border-blue-800 bg-blue-800 hover:bg-blue-800 outline-blue-800  w-[20px] ml-2"}
-                                        type="checkbox"
-                                        checked={values[param.key] || param.defaultValue === false}
-                                        onChange={(e) => handleChange(param.key, e.target.checked)}
-                                    />
-                                </div>
-                            ))}
+                        <div className="grid grid-rows-1 grid-cols-6 mb-2 justify-center ">
+                            {parameters.map(param => {
+                                switch (param.type) {
+                                    case "TEXT":
+                                        return (
+                                            <div key={param.key} className="col-span-2 rounded-lg p-2 flex flex-col">
+                                                <label className={styleLabelInput}>{param.name}</label>
+                                                <input
+                                                    className={styleInput}
+                                                    type="text"
+                                                    value={values[param.key] || param.defaultValue || ''}
+                                                    onChange={(e) => handleChange(param.key, e.target.value)}
+                                                />
+                                            </div>
+                                        );
+                                    case "NUMBER":
+                                        return (
+                                            <div key={param.key} className=" rounded-lg p-2 flex flex-col">
+                                                <label className={styleLabelInput}>{param.name}</label>
+                                                <input
+                                                    className={styleInput}
+                                                    type="number"
+                                                    value={values[param.key] || param.defaultValue || ''}
+                                                    onChange={(e) => handleChange(param.key, e.target.value)}
+                                                />
+                                            </div>
+                                        )
+                                    case "DATE":
+                                        return (
+                                            <div key={param.key} className="col-span-2 rounded-lg p-2 flex flex-col">
+                                                <label className={styleLabelInput}>{param.name}</label>
+                                                <input
+                                                    className={styleInput}
+                                                    type="date"
+                                                    value={values[param.key] || ''}
+                                                    onChange={(e) => handleChange(param.key, e.target.value)}
+                                                />
+                                            </div>
+                                        )
+                                    case "BOOLEAN":
+                                        return (
+                                            <div key={param.key} className=" rounded-lg p-2 flex flex-col ">
+                                                <label className={styleLabelInput}>{param.name}</label>
+                                                <input
+                                                    className={"hover:border-blue-800 bg-blue-800 hover:bg-blue-800 outline-blue-800 h-[16px] w-[30px] ml-2"}
+                                                    type="checkbox"
+                                                    checked={values[param.key] || param.defaultValue === false}
+                                                    onChange={(e) => handleChange(param.key, e.target.checked)}
+                                                />
+                                            </div>
+                                        )
+                                }
+                            })}
                         </div>
                     </>
                 }

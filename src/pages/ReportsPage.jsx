@@ -23,6 +23,7 @@ function ReportsPage() {
     const [reportsName, setReportsName] = useState([]);
     const [selectName, setSelectName] = useState("unknown")
     const [parametersMeta, setParametersMeta] = useState([]);
+    const [parameters, setParameters] = useState([]);
 
 
     async function fetchReportTemplate(reportName) {
@@ -76,10 +77,10 @@ function ReportsPage() {
     useEffect(() => {
         if
         (reportData && reportTemplate) {
+            setIsShowReport(true)
             setTimeout(() => {
-                setIsShowReport(true)
                 setIsLoading(false);
-            }, 1500);
+            }, 3000);
         }
     }, [reportTemplate, reportData]);
 
@@ -95,10 +96,10 @@ function ReportsPage() {
     async function onSubmitParameters(parameters) {
         setIsModalParameter(false);
         setIsLoading(true);
+        setParameters(parameters);
         await fetchReportTemplate(selectName);
         await fetchReportData(selectName, parameters);
     }
-
 
     return (<>
 
@@ -143,10 +144,10 @@ function ReportsPage() {
                 </>}
 
 
-                {isShowReport && !isLoading &&
-                    <div>
-                        <ViewReport data={reportData} html={reportTemplate.content} css={reportTemplate.styles}
-                                    onClose={() => setIsShowReport(false)}/>
+                {isShowReport  &&
+                    <div className={isLoading? "hidden":""}>
+                        <ViewReport data={reportData} dataParam={parameters} html={reportTemplate.content} css={reportTemplate.styles}
+                                    onClose={() => setIsShowReport(false)} isBookOrientation={reportTemplate.bookOrientation}/>
                     </div>
                 }
 

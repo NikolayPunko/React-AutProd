@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Dropdown.css';
 
-const Dropdown = ({ options, onSelect }) => {
+const Dropdown = ({ options, onSelect, label }) => {
     const [isOpen, setIsOpen] = useState(false);
 
 
@@ -17,7 +17,7 @@ const Dropdown = ({ options, onSelect }) => {
     return (
         <div className="dropdown">
             <button onClick={toggleDropdown} className="text-xs font-medium w-24">
-                Бэнды
+                {label}
             </button>
             {isOpen && (
                 <div className="dropdown-menu text-xs font-medium">

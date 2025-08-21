@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from "react";
 
 
-export function ViewReport({data, dataParam, html, css, onClose}) {
+export function ViewReport({data, dataParam, html, css, onClose, isBookOrientation}) {
 
     const [printContent, setPrintContent] = useState("");
     const [uniqueStyles, setUniqueStyles] = useState("");
@@ -9,19 +9,15 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
     const iframeRef = useRef(null);
     const [iframeScale, setIframeScale] = useState(1); // Начальный масштаб 1 (100%)
 
-//На большом тестовом отчете не срабатывают скрипты потому что это еще старые элементы без data-field=true
 
 
     const [pages, setPages] = useState([
         {id: 1, content: "", styles: ""}
     ]);
 
-    const [usedBands, setUsedBands] = useState({
-        reportTitle: false,
-        headerPage: false,
-        footerPage: false,
-        reportSummary: false,
-    });
+    let heightPage = isBookOrientation? "297mm": "210mm";
+    let size = isBookOrientation? "A4": "A4 landscape"
+
 
     useEffect(() => {
         render(data, dataParam, html, css)
@@ -39,13 +35,15 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
                     <style>
                         <style>
                             @page { 
-                                size: A4;
+                                size: ${size};
                                 margin: 0;
                             }
                             body, html {
                                 /*font-family: Arial, 'Times New Roman', sans-serif;*/
                                 margin: 0;
-                                padding: 0;
+                                /*padding: 20px;*/
+                                /*padding: 0;*/
+                               
                                 left: 0;
                                 right: 0;
                                 display: flex;
@@ -55,10 +53,14 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
                             .page-container {
                                  position: relative;
                                  page-break-after: always;
-                                 height: 297mm;
+                                 height: ${heightPage};
                                  overflow: hidden;
                                  margin: 0;
-                                 padding: 0;
+                                  padding-left: 20px;
+                                padding-right: 20px;
+                                /*Надо учитывать высоту при рендере еще*/
+                                padding-top: 10px; 
+                                padding-bottom: 10px;
                                  left: 0;
                                  right: 0;
                                  box-sizing: border-box;
@@ -82,36 +84,32 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
     }, [printContent]);
 
     function prepareHtmlAndCss() {
-        const uniqueStyles = [...new Set(pages.map(p => p.styles || ''))].join('\n');
-        // console.log(pages)
         let pagesHtml = "";
         for (let i = 0; i < pages.length; i++) {
             pagesHtml += "<div class='page-container'>";
             pagesHtml += pages[i].content;
             pagesHtml += "</div> ";
-            pagesHtml += "<script>\n" +
-                "        document.addEventListener('DOMContentLoaded', function() {\n" +
-                "            // Получаем все элементы с data-field=\"true\"\n" +
-                "            const fields = document.querySelectorAll('[data-field=\"true\"]');\n" +
-                "            let clickTimeout;\n" +
-                "            \n" +
-                "            fields.forEach(field => {\n" +
-                "                // Одинарный клик - скрываем поле\n" +
-                "                field.addEventListener('click', function(e) {\n" +
-                "                    clearTimeout(clickTimeout);\n" +
-                "                    \n" +
-                "                    clickTimeout = setTimeout(() => {\n" +
-                "                        this.style.visibility = 'hidden';\n" +
-                "                    }, 250);\n" +
-                "                });\n" +
-                "            });\n" +
-                "        });\n" +
-                "    </script>";
+            // pagesHtml += "<script>\n" +
+            //     "        document.addEventListener('DOMContentLoaded', function() {\n" +
+            //     "            // Получаем все элементы с data-field=\"true\"\n" +
+            //     "            const fields = document.querySelectorAll('[data-field=\"true\"]');\n" +
+            //     "            let clickTimeout;\n" +
+            //     "            \n" +
+            //     "            fields.forEach(field => {\n" +
+            //     "                // Одинарный клик - скрываем поле\n" +
+            //     "                field.addEventListener('click', function(e) {\n" +
+            //     "                    clearTimeout(clickTimeout);\n" +
+            //     "                    \n" +
+            //     "                    clickTimeout = setTimeout(() => {\n" +
+            //     "                        this.style.visibility = 'hidden';\n" +
+            //     "                    }, 250);\n" +
+            //     "                });\n" +
+            //     "            });\n" +
+            //     "        });\n" +
+            //     "    </script>";
         }
 
-        // console.log(pagesHtml)
         setPrintContent(pagesHtml)
-        // setUniqueStyles(uniqueStyles)
     }
 
     useEffect(() => {
@@ -123,92 +121,19 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
 
         let startTime = performance.now();
 
-        defineBands(html);
-
         css = transformIDs(css);
         setUniqueStyles(css);
-
-        renderDataBand(data.tableData, dataParam, html, css);
+        renderDataBand(data, dataParam, html, css);
 
         let endTime = performance.now();
         const seconds = (endTime - startTime) / 1000; // Преобразуем миллисекунды в секунды
-        // console.log("Рендер: " + seconds.toFixed(3))
+        console.log("Рендер: " + seconds.toFixed(3))
     }
 
-
-    // function renderDataBand(htmlTemplate, dataArray, css) {
-    //
-    //     const parser = new DOMParser();
-    //     const doc = parser.parseFromString(htmlTemplate, 'text/html');
-    //
-    //     const dataBands = doc.querySelectorAll('[data-band="true"]');
-    //     const dataChildBands = doc.querySelectorAll('[data-band-child="true"]');
-    //
-    //     const descriptionBands = doc.querySelectorAll('[description-band="true"]');
-    //     descriptionBands.forEach(description => {
-    //         description.remove();
-    //     })
-    //
-    //     dataBands.forEach(band => {
-    //         const bandHtml = band.innerHTML;
-    //
-    //         const bandId = band.getAttribute('id');
-    //         const childs = doc.ge
-    //
-    //
-    //         dataArray.forEach(item => {
-    //             if (bandId.toLowerCase().startsWith(item.tableName.toLowerCase())) {
-    //
-    //                 item.data.forEach(tableData => {
-    //                     let instanceHtml = bandHtml;
-    //
-    //                     Object.keys(tableData).forEach(field => {
-    //                         const value = tableData[field];
-    //                         const style = tableData.style?.[field] || ''; // Получаем стиль для текущего поля
-    //
-    //                         // Если есть стиль для поля - оборачиваем в span
-    //                         if (style) {
-    //                             instanceHtml = instanceHtml.replaceAll(
-    //                                 `{{${field}}}`,
-    //                                 `<span style="${style}">${value}</span>`
-    //                             );
-    //                         }
-    //                         // Без стиля - просто подставляем значение
-    //                         else {
-    //                             instanceHtml = instanceHtml.replaceAll(
-    //                                 `{{${field}}}`,
-    //                                 value
-    //                             );
-    //                         }
-    //                     });
-    //
-    //                     // Создаем копию бэнда с новыми данными
-    //                     let bandCopy = band.cloneNode();
-    //                     bandCopy.innerHTML = instanceHtml;
-    //                     doc.body.appendChild(bandCopy);
-    //                 });
-    //             }
-    //         });
-    //
-    //         doc.body.removeChild(band.parentNode)
-    //     });
-    //
-    //     const bands = doc.querySelectorAll('[band="true"]');
-    //
-    //     bands.forEach(band => {
-    //         doc.body.removeChild(band.parentNode)
-    //     })
-    //
-    //
-    //     splitIntoA4Pages(doc.body.innerHTML, css, bands)
-    //
-    //     return doc.body.innerHTML;
-    // }
-
-    function renderDataBand(dataArray, dataParam, htmlTemplate, css) {
+    function renderDataBand(data, dataParam, htmlTemplate, css) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlTemplate, 'text/html');
-
+        const dataArray = data.tableData;
         // Удаляем описательные бэнды
         const descriptionBands = doc.querySelectorAll('[description-band="true"]');
         descriptionBands.forEach(description => description.remove());
@@ -216,9 +141,11 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
         // Находим все главные бэнды
         const dataBands = doc.querySelectorAll('[data-band="true"]');
 
+        let counterBand = 0;
+
         dataBands.forEach(band => {
             const bandId = band.getAttribute('id');
-            const bandHtml = band.innerHTML;
+            let bandHtml = band.innerHTML;
 
             // Находим все дочерние бэнды для текущего главного
             const childBands = Array.from(doc.querySelectorAll(`[data-band-child="true"][id^="${bandId}-child"]`));
@@ -229,6 +156,10 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
                         // Рендерим главный бэнд
                         let instanceHtml = replaceFieldsInHtml(bandHtml, tableData);
                         let bandCopy = band.cloneNode(true); // Глубокое клонирование
+
+                        counterBand++;
+                        instanceHtml = replaceFieldInHtml(instanceHtml, counterBand, "№")
+
                         bandCopy.innerHTML = instanceHtml;
                         doc.body.appendChild(bandCopy);
 
@@ -263,6 +194,12 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
         const bands = doc.querySelectorAll('[band="true"]');
         bands.forEach(band => doc.body.removeChild(band.parentNode));
 
+        //Вставляем глобальные данные в бэнды
+        bands.forEach(band => {
+            band.innerHTML = replaceFieldsInHtml(band.innerHTML, data.globalVar)
+        })
+
+
         // Разбиваем на страницы
         splitIntoA4Pages(doc.body.innerHTML, css, bands);
 
@@ -285,6 +222,11 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
         return html;
     }
 
+    function replaceFieldInHtml(html, value, field){
+        html = html.replaceAll(`{{${field}}}`, value);
+        return html;
+    }
+
     function splitIntoA4Pages(htmlString, css, bands) {
 
         return new Promise((resolve) => {
@@ -302,16 +244,12 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
             bodyContainer.innerHTML = `<style>${css}</style>${htmlString}`;
             document.body.appendChild(tempContainer);
 
-
             const bandHeights = {
                 header: getBandHeight(bands, 'pageHeader'),
                 footer: getBandHeight(bands, 'pageFooter'),
                 reportHeader: getBandHeight(bands, 'reportTitle'),
                 reportFooter: getBandHeight(bands, 'reportSummary')
             };
-
-            // console.log(bandHeights)
-
 
             const measureDiv = createTempContainer();
             measureDiv.style.cssText = `
@@ -322,16 +260,22 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
             document.body.appendChild(measureDiv);
 
             try {
-                insertBand(tempContainer, bands, true, true);
+                let maxHeight;
+                if(isBookOrientation){
+                    maxHeight = 1103; // Высота с padding top bottom, обычная - 1123
+                } else {
+                    maxHeight = 774; // Высота с padding top bottom, обычная - 794
+                }
 
-                const maxHeight = 1123; // Высота A4
-                const initialHeight = tempContainer.scrollHeight;
+                const currentBandsHeight = calculateCurrentBandsHeight(true, true, bandHeights);
+                const initialHeight = tempContainer.scrollHeight + currentBandsHeight;
+                let bandsWithPage = insertNumbPage(1, bands);
+                insertBand(tempContainer, bandsWithPage, true, true);
 
                 if (initialHeight <= maxHeight) {
                     const result = removeStyle(tempContainer.innerHTML);
                     resolve(result);
                     let page = [{id: 1, content: result, styles: css}];
-                    console.log(page)
                     setPages(page)
                     return;
                 }
@@ -342,49 +286,85 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
                 let currentPageHeight = 0;
                 const childNodes = Array.from(bodyContainer.childNodes);
 
+
                 for (let i = 0; i < childNodes.length; i++) {
-
                     const node = childNodes[i];
-                    const isLastNode = i === childNodes.length - 1;
 
-                    // Измеряем высоту узла
+
+                    // Пропускаем style элементы
+                    if (node.nodeName === "STYLE") {
+                        continue;
+                    }
+
+                    // Пропускаем дочерние элементы (они будут обработаны вместе с родительскими)
+                    if (node.getAttribute("id")?.includes('-child')) {
+                        continue;
+                    }
+
                     measureDiv.innerHTML = '';
                     measureDiv.appendChild(node.cloneNode(true));
-                    const nodeHeight = measureDiv.offsetHeight;
 
+                    // Собираем все дочерние элементы для текущего родителя
+                    const childElements = [];
+                    let j = i + 1;
+
+                    // Собираем все последующие дочерние элементы
+                    while (j < childNodes.length && childNodes[j].getAttribute("id")?.includes('-child')) {
+                        childElements.push(childNodes[j]);
+                        j++;
+                    }
+
+                    // Добавляем все дочерние элементы в measureDiv для расчета общей высоты
+                    childElements.forEach(child => {
+                        measureDiv.appendChild(child.cloneNode(true));
+                    });
+
+                    const totalNodeHeight = measureDiv.offsetHeight;
 
                     // Рассчитываем высоту с учетом бэндов
                     const isFirstPage = currentPage.id === 1;
-                    const currentBandsHeight = calculateCurrentBandsHeight(isFirstPage, isLastNode, bandHeights);
-                    // console.log("BandsHeight" + currentBandsHeight)
-                    // console.log("PageHeight" + currentPageHeight)
-                    // console.log("nodeHeight" + nodeHeight)
-                    // const totalHeight = currentPageHeight + nodeHeight + currentBandsHeight;
-                    const totalHeight = currentPageHeight + nodeHeight + currentBandsHeight;
+
+                    // Пропускаем индексы дочерних элементов, которые уже обработаны
+                    i += childElements.length;
+
+                    const isLastNode = i === childNodes.length - 1;
+                    let currentBandsHeight = calculateCurrentBandsHeight(isFirstPage, isLastNode, bandHeights);
+
+                    const totalHeight = currentPageHeight + totalNodeHeight + currentBandsHeight;
 
                     // Если не помещается - сохраняем текущую страницу
                     if (totalHeight > maxHeight) {
-                        finalizePage(currentPage, pages, bands, false, false);
-
+                        bandsWithPage = insertNumbPage(pages.length + 1, bands);
+                        finalizePage(currentPage, pages, bandsWithPage, false, false);
                         currentPage = createPageTemplate(pages.length + 1, css);
                         currentPageHeight = 0;
-
-                        insertBand(currentPage.container, bands, false, false);
+                        insertBand(currentPage.container, bandsWithPage, false, false);
                     }
 
-                    // Добавляем узел на страницу
+                    // Добавляем родительский элемент
                     currentPage.container.querySelector('#body-container').appendChild(node.cloneNode(true));
-                    currentPageHeight += nodeHeight;
+
+                    // Добавляем все дочерние элементы
+                    childElements.forEach(child => {
+                        currentPage.container.querySelector('#body-container').appendChild(child.cloneNode(true));
+                    });
+
+                    currentPageHeight += totalNodeHeight;
+
+
 
                     // Если это последний узел - добавляем report footer
-                    if (isLastNode) {
+                    if (i >= childNodes.length-1) {  //Проверить или починилось
                         insertBand(currentPage.container, bands, false, true);
                         currentPageHeight += bandHeights.reportFooter;
                     }
+
+
                 }
 
+                bandsWithPage = insertNumbPage(pages.length + 1, bands);
                 if (currentPage.container.querySelector('#body-container').childNodes.length > 0) {
-                    finalizePage(currentPage, pages, bands, false, false);
+                    finalizePage(currentPage, pages, bandsWithPage, false, false);
                 }
 
                 setPages(pages);
@@ -400,6 +380,17 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
                 // console.log(`Разбиение выполнено за ${duration.toFixed(3)} сек`);
             }
         });
+    }
+
+    function insertNumbPage(numbPage, bands) {
+        const bandsArray = Array.from(bands || []);
+        const footerIndex = bandsArray.findIndex(el => el.id === "pageFooter");
+        if (footerIndex === -1) return bandsArray;
+        const newBands = [...bandsArray]; // поверхностная копия массива
+        const footerClone = newBands[footerIndex].cloneNode(true); // клонируем только footer
+        footerClone.innerHTML = footerClone.innerHTML.replace(/{{page}}/g, numbPage);
+        newBands[footerIndex] = footerClone;
+        return newBands;
     }
 
     function safeRemove(element) {
@@ -519,7 +510,11 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
     function createTempContainer() {
         const tempDiv = document.createElement("div");
         tempDiv.style.position = 'relative';
-        tempDiv.style.height = "297mm"
+        if(isBookOrientation){
+            tempDiv.style.height = "297mm"
+        } else {
+            tempDiv.style.height = "210mm"
+        }
 
         const headerContainer = document.createElement('div');
         headerContainer.id = 'header-container';
@@ -541,27 +536,6 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
         return css.replace(/(?<!:)\#([a-zA-Z_][\w-]+)/g, (match, id) => {
             return `[id^='${id}']`; // заменяем #id на [id^='id']
         });
-    }
-
-    function defineBands(html) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        doc.getElementById('pageHeader') ? setUsedBands(prevState => ({
-            ...prevState,
-            headerPage: true
-        })) : setUsedBands(prevState => ({...prevState, headerPage: false}))
-        doc.getElementById('reportTitle') ? setUsedBands(prevState => ({
-            ...prevState,
-            reportTitle: true
-        })) : setUsedBands(prevState => ({...prevState, reportTitle: false}))
-        doc.getElementById('reportSummary') ? setUsedBands(prevState => ({
-            ...prevState,
-            reportSummary: true
-        })) : setUsedBands(prevState => ({...prevState, reportSummary: false}))
-        doc.getElementById('pageFooter') ? setUsedBands(prevState => ({
-            ...prevState,
-            footerPage: true
-        })) : setUsedBands(prevState => ({...prevState, footerPage: false}))
     }
 
     const zoomIn = () => {
@@ -590,6 +564,7 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
         URL.revokeObjectURL(url);
     };
 
+    let iframeSize = isBookOrientation?  "w-[215mm] h-[297mm]" : "w-[302mm] h-[210mm]";
 
     return (
         <>
@@ -643,7 +618,7 @@ export function ViewReport({data, dataParam, html, css, onClose}) {
                         ref={iframeRef}
                         title="report-preview"
                         style={{transform: `scale(${iframeScale})`}}
-                        className="w-[215mm] h-[297mm] origin-top border shadow-lg bg-white"
+                        className={iframeSize + " origin-top border shadow-lg bg-white"}
                         // sandbox="allow-same-origin allow-scripts"
                     />
 

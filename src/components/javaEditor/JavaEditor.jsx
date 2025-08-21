@@ -3,6 +3,7 @@ import {Editor, loader} from "@monaco-editor/react";
 import {styleInputWithoutRounded} from "../../data/styles";
 import Select from "react-select";
 import {CustomStyleWithoutRounded} from "../../data/styleForSelect";
+import { v4 as uuidv4 } from 'uuid';
 
 
 export function JavaEditor({script, parameters, setScript, onClose, setParameters, dataBandsOpt, setDataBandsOpt}) {
@@ -10,27 +11,30 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
     const editorRef = useRef(null);
 
 
-    const updateParameter = (key, field, value) => {
+    // Обновление по id
+    const updateParameter = (id, field, value) => {
         if (field === "type") {
             setParameters(parameters.map(p =>
-                p.key === key ? {...p, [field]: value.value} : p
+                    p.id === id ? {...p, [field]: value.value} : p
             ));
             return;
         }
 
-        setParameters(parameters.map(p =>
-            p.key === key ? {...p, [field]: value} : p
+        setParameters(prev => prev.map(item =>
+            item.id === id ? { ...item, [field]: value } : item
         ));
     };
 
     const addParameter = () => {
         setParameters([...parameters, {
+            id: uuidv4(), // Генерирует уникальный ID
             name: '',
             key: '',
             type: 'TEXT',
             default: ''
         }]);
     };
+
 
     const removeLastParameter = () => {
         setParameters(prevParameters => {
@@ -40,6 +44,10 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
     };
 
     const addDataBand = () => {
+        if (dataBandsOpt.length >=1){ //Ограничиваем до одного бэнда
+            return
+        }
+
         setDataBandsOpt([...dataBandsOpt, ""]);
     };
 
@@ -152,7 +160,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                         />
                     </div>
                     <div className="flex flex-col w-1/3">
-                        <div className=" flex-row px-8 h-2/3">
+                        <div className=" flex-row px-8 h-3/4">
 
                             <div className="flex justify-between items-center">
                                 <div className="flex text-2xl text-nowrap font-medium text-start mt-2 mb-3">Параметры</div>
@@ -177,29 +185,29 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                 <span className="text-sm text-center font-medium w-2/5">Знач. по умолчанию</span>
                             </div>
 
-                            <div className="max-h-96 overflow-auto">
+                            <div className="max-h-[500px] overflow-auto">
                                 {parameters.map((param, index) => (
-                                    <div key={index} className="flex flex-row py-0">
-                                        <input className={styleInputWithoutRounded + " font-medium mr-0 w-1/5"}
+                                    <div key={param.id} className="flex flex-row py-0">
+                                        <input className={styleInputWithoutRounded + " font-medium mr-0 w-[30%]"}
                                                value={param.name}
                                                onChange={(e) => {
-                                                   updateParameter(param.key, 'name', e.target.value);
+                                                   updateParameter(param.id, 'name', e.target.value);
                                                }}
                                                placeholder="Название параметра"
                                         />
-                                        <input className={styleInputWithoutRounded + " font-medium mr-0 w-1/5"}
+                                        <input className={styleInputWithoutRounded + " font-medium mr-0 w-[20%]"}
                                                value={param.key}
-                                               onChange={(e) => updateParameter(param.key, 'key', e.target.value)}
+                                               onChange={(e) => updateParameter(param.id, 'key', e.target.value)}
                                                placeholder="Параметр (:param)"
                                         />
 
-                                        <Select className="text-sm font-medium w-1/5 mr-0"
+                                        <Select className="text-sm font-medium w-[20%] mr-0"
                                                 placeholder={"Тип параметра"}
                                                 value={{
                                                     value: param.type,
                                                     label: options.find(option => option.value === param.type)?.label || null
                                                 }}
-                                                onChange={(e) => updateParameter(param.key, 'type', e)}
+                                                onChange={(e) => updateParameter(param.id, 'type', e)}
                                                 styles={CustomStyleWithoutRounded}
                                                 options={options}
                                                 menuPortalTarget={document.body}
@@ -208,29 +216,29 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
 
                                         {param.type === "TEXT" &&
                                             <input
-                                                className={styleInputWithoutRounded + " font-medium w-2/5"}
+                                                className={styleInputWithoutRounded + " font-medium w-[30%]"}
                                                 type="text"
                                                 value={param.default}
-                                                onChange={(e) => updateParameter(param.key, 'default', e.target.value)}
+                                                onChange={(e) => updateParameter(param.id, 'default', e.target.value)}
                                             />
                                         }
 
                                         {param.type === "NUMBER" &&
                                             <input
-                                                className={styleInputWithoutRounded + " font-medium w-2/5"}
+                                                className={styleInputWithoutRounded + " font-medium w-[30%]"}
                                                 type="number"
                                                 value={param.default}
-                                                onChange={(e) => updateParameter(param.key, 'default', e.target.value)}
+                                                onChange={(e) => updateParameter(param.id, 'default', e.target.value)}
                                             />
                                         }
 
                                         {param.type === "DATE" &&
                                             <div style={{display: 'flex', alignItems: 'center'}}
-                                                 className="font-medium w-2/5">
+                                                 className="font-medium w-[30%]">
                                                 <input className={styleInputWithoutRounded + " w-[100%]"}
                                                        type="date"
                                                        value={param.default === true ? "" : param.default || ""}
-                                                       onChange={(e) => updateParameter(param.key, 'default', e.target.value || "")}
+                                                       onChange={(e) => updateParameter(param.id, 'default', e.target.value || "")}
                                                        style={{
                                                            paddingRight: '50%',
                                                        }}
@@ -244,7 +252,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                                 <input className={styleInputWithoutRounded}
                                                        type="checkbox"
                                                        checked={param.default === true}
-                                                       onChange={(e) => updateParameter(param.key, 'default', e.target.checked || "")}
+                                                       onChange={(e) => updateParameter(param.id, 'default', e.target.checked || "")}
                                                        style={{
                                                            marginLeft: '5px',
                                                            cursor: 'pointer',
@@ -255,12 +263,12 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                         }
 
                                         {param.type === "BOOLEAN" &&
-                                            <div className=" w-2/5 text-center border border-slate-400">
+                                            <div className=" w-[30%] text-center border border-slate-400">
                                                 <input
                                                     className="h-full w-[16px] cursor-pointer"
                                                     type="checkbox"
                                                     checked={param.default}
-                                                    onChange={(e) => updateParameter(param.key, 'default', e.target.checked)}
+                                                    onChange={(e) => updateParameter(param.id, 'default', e.target.checked)}
                                                 />
                                             </div>
                                         }
@@ -269,7 +277,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                 ))}
                             </div>
                         </div>
-                        <div className=" flex-row px-8 mt-4 h-1/3">
+                        <div className=" flex-row px-8 mt-4 h-1/4">
 
                             <div className="flex justify-between items-center">
                                 <div className="flex text-2xl font-medium text-start mt-2 mb-3">Бэнды данных</div>

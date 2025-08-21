@@ -1,4 +1,4 @@
-import React, {forwardRef, useEffect, useImperativeHandle, useRef, useState} from 'react';
+import React, {forwardRef, useEffect, useRef, useState} from 'react';
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./../reportsConstruct/ReportEditor.css";
 
@@ -10,30 +10,21 @@ import jsPDF from "jspdf";
 import grapesjs from "grapesjs";
 
 import grapesjspresetwebpage from 'grapesjs-preset-webpage/dist/index.js';
-// import grapesjstable from 'grapesjs-table/src/blocks.js';
 
 import ru from 'grapesjs/locale/ru';
 
-import htmlToPdfmake from "html-to-pdfmake"; // Импортируем html-to-pdfmake
-
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
-import {CustomStyle} from "../../data/styleForSelect";
-import Select from "react-select";
 import Dropdown from "../dropdown/Dropdown";
-import {dataReportTest} from "../../data/dataReport";
 import {ModalInput} from "../modal/ModalInput";
 import ReportService from "../../services/ReportService";
 import {ModalNotify} from "../modal/ModalNotify";
 import {ModalSelect} from "../modal/ModalSelect";
 import {ModalSettingDB} from "./ModalSettingDB";
 import {ModalSQL} from "./ModalSQL";
-import {Parser} from "node-sql-parser";
 import Loading from "../loading/Loading";
 import {decryptData, encryptData} from "../../utils/Сrypto";
 import {ModalParameter} from "./ModalParameter";
-import {API_URL} from "../../http";
-import {Editor} from "@monaco-editor/react";
 import {JavaEditor} from "../javaEditor/JavaEditor";
 import {ViewReport} from "./ViewReport";
 
@@ -101,6 +92,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         const [html, setHtml] = useState("");
         const [css, setCss] = useState("");
 
+        const [isBookOrientation, setIsBookOrientation] = useState(true);
+        const widthPage = isBookOrientation? "794":"1123";
+
 
         pdfMake.addVirtualFileSystem(pdfFonts);
 
@@ -110,7 +104,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 container: editorRef.current,
                 telemetry: false,
                 fromElement: true,
-                height: "1200px",
+                // height: "1200px",
                 width: 'auto',
                 default_locale: 'ru',
                 // cssComposer: false,
@@ -141,30 +135,29 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 // panels: { defaults: [] }, // Убираем стандартные панелиnpm
                 plugins: [grapesjspresetwebpage],
                 pluginsOpts: {
-                    blocks: [],
+                    "plugin": ['map']
                 },
-                style: [`  .gjs-selected {
-    outline: none !important;
-    outline-offset: -1px;
-}`],
+                style: [
+                    //     `
+                    //  .gjs-selected {
+                    //     outline: none !important;
+                    //     outline-offset: -1px;
+                    // }`
+                ],
                 canvas: {
-                    styles: [`
-          body {
-            overflow: hidden; 
-          }
-          .gjs-cv-canvas {
-            width: 210mm;  
-            height: 297mm; 
-            margin: auto;
-           
-            overflow: hidden; 
-          }
-          
-        
-          
-        `]
+                    //  styles: [`
+                    //    body {
+                    //      overflow: hidden;
+                    //    }
+                    //    .gjs-cv-canvas {
+                    //      width: 210mm;
+                    //      height: 297mm;
+                    //      margin: auto;
+                    //
+                    //      overflow: hidden;
+                    //    }
+                    // `]
                 },
-
 
                 // Очищаем список устройств
                 deviceManager: {
@@ -174,8 +167,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 //         // Отображаем только необходимые настройки стилей
                 //     ]
                 // }
-
-
             });
 
 
@@ -184,24 +175,33 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 const canvasElement = editor.Canvas.getElement()
 
                 // Устанавливаем размеры канваса (формат A4)
-                canvasElement.style.width = '794px';
-                canvasElement.style.height = '1123px';
-                // editor.Canvas.getBody().style.width = '1123px';
-                // editor.Canvas.getBody().style.height = '1587px';
-                canvasElement.style.margin = '0';
+                if (isBookOrientation) {
+                    canvasElement.style.width = '794px';
+                    canvasElement.style.height = '1123px';
+                    canvasElement.style.marginLeft = '15%';
+                    editor.Canvas.getBody().style.width = '794px';
+                    editor.Canvas.getBody().style.height = '1123px';
+                } else {
+                    canvasElement.style.width = '1123px';
+                    canvasElement.style.height = '794px';
+                    canvasElement.style.padding = '20px'
+                    editor.Canvas.getBody().style.width = '1123px';
+                    editor.Canvas.getBody().style.height = '794px';
+                    editor.Canvas.getBody().style.margin = '20px';
+
+                }
+
+
+                // canvasElement.style.margin = '10px';
                 // canvasElement.style.padding = '20px';
-                canvasElement.style.marginLeft = '15%';
-                canvasElement.style.marginTop = '20px';
+
+                // canvasElement.style.marginTop = '20px';
                 canvasElement.style.backgroundColor = '#949494';
                 canvasElement.style.border = '5px';
                 canvasElement.style.overflow = 'hidden';
 
 
-                editor.Canvas.getBody().style.width = '794px';
-                editor.Canvas.getBody().style.height = '1123px';
-                // editor.Canvas.getBody().style.width = '1123px';
-                // editor.Canvas.getBody().style.height = '1587px';
-                editor.Canvas.getBody().style.margin = '0';
+                // editor.Canvas.getBody().style.margin = '20px';
                 editor.Canvas.getBody().style.backgroundColor = '#9a9a9a';
                 // editor.Canvas.getBody().style.padding = '20px';
                 editor.Canvas.getBody().style.backgroundColor = '#ffffff';
@@ -213,9 +213,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
             editor.setComponents(pages[0].content);
 
-            editor.setStyle({
-                'background-color': '#ad4bbc', // Цвет фона
-            });
 
             // editor.setComponents(`<span style="text-align:center; padding: 10px; width:300px; left: 60px;
             //   position: absolute; top:60px; font-size: larger;font-weight: 700;">Начните создание отчета...</span>`);
@@ -223,54 +220,51 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
             // Добавляем стили для блоков
             editor.Css.addRules(`
-        .report-page {
-          width: 210mm;
-          height: 297mm;
-          padding: 20mm;
-          border: 1px solid #000;
-          margin-bottom: 20px;
-          background: #fff;
-       
-          display: flex;
-          flex-direction: column;
-        }
-        .band {
-          width: 100%;
-          padding: 10px;
-          border: 1px dashed #000;
-          margin-bottom: 10px;
-          background: #f0f0f0;
-          min-height: 50px;
-          display: flex;
-          flex-direction: column;
-          justify-content: flex-start;
-          position: relative;
-        }
-        .band-content {
-          flex-grow: 1;
-        }
-
-        /* Стили для визуальной индикации */
-        .droppable-hover {
-          border: 2px solid #00ff00 !important; /* Зеленая рамка при наведении */
-          background-color: rgba(0, 255, 0, 0.2);
-        }
-      `);
+                .report-page {
+                  width: 297mm;
+                  height: 210mm;
+                  padding: 20mm;
+                  border: 1px solid #000;
+                  margin-bottom: 20px;
+                  background: #fff;
+               
+                  display: flex;
+                  flex-direction: column;
+                }
+                .band {
+                  width: 100%;
+                  padding: 10px;
+                  border: 1px dashed #000;
+                  margin-bottom: 10px;
+                  background: #f0f0f0;
+                  min-height: 50px;
+                  display: flex;
+                  flex-direction: column;
+                  justify-content: flex-start;
+                  position: relative;
+                }
+                .band-content {
+                  flex-grow: 1;
+                }
+        
+                /* Стили для визуальной индикации */
+                .droppable-hover {
+                  border: 2px solid #00ff00 !important; /* Зеленая рамка при наведении */
+                  background-color: rgba(0, 255, 0, 0.2);
+                }
+              `);
 
             // Добавляем блоки для перетаскивания
             const blocks = [
-
                 {
                     id: "text-block",
-                    label: "Text Block",
-                    content: '<div class="band-content" style="word-wrap: break-word;">This is some text.</div>',
-                    category: "Text",
+                    label: "Текстовое поле",
+                    content: '<div class="band-content" style="word-wrap: break-word; font-size: 14px; z-index:100">Введите текст...</div>',
+                    category: "Текст",
                     draggable: true,
                     droppable: false,
                     //Нужно разрешить перемещать только в элементы котиорые являются бэндами!
                 },
-
-
             ];
 
             blocks.forEach((block) => editor.BlockManager.add(block.id, block));
@@ -414,7 +408,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 const modelRect = modelEl.getBoundingClientRect();
 
                 const initialTop = modelRect.top - parentRect.top;
-                // console.log("")
                 // console.log("initialTop " + initialTop)
 
                 const modelRectBefore = modelEl.getBoundingClientRect();
@@ -457,9 +450,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                 //     transform: `translate(${deltaX}px, ${deltaY}px)`,
                                 // });
 
-                                console.log("modelTopBefore: " + modelTopBefore)
-                                console.log("modelTopAfter: " + modelTopAfter)
-                                console.log("deltaY: " + deltaY)
+                                // console.log("modelTopBefore: " + modelTopBefore)
+                                // console.log("modelTopAfter: " + modelTopAfter)
+                                // console.log("deltaY: " + deltaY)
                                 model.addStyle({
                                     // position: 'relative',
                                     // top: `${deltaY}px`
@@ -473,7 +466,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                     });
                                 });
 
-                                console.log(`Компенсировано смещение: X=${deltaX}px, Y=${deltaY}px`);
+                                // console.log(`Компенсировано смещение: X=${deltaX}px, Y=${deltaY}px`);
                             });
                         }
                     }
@@ -483,31 +476,50 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
             function findTargetComponentAtPoint(components, x, y, ignoreEl) {
                 let target = null;
+                let topmostZIndex = -1;
 
                 components.each(comp => {
                     if (!comp.view || !comp.view.el) return;
                     const el = comp.view.el;
+
                     if (el === ignoreEl || !(el instanceof HTMLElement)) return;
-                    let rect;
-                    try {
-                        rect = el.getBoundingClientRect();
-                    } catch (e) {
-                        console.warn('Ошибка получения bounding rect:', e);
+
+                    // Пропускаем невидимые элементы
+                    if (el.style.display === 'none' || el.style.visibility === 'hidden' || el.style.opacity === '0') {
                         return;
                     }
 
-                    const isInside = x >= rect.left && x <= rect.right &&
-                        y >= rect.top && y <= rect.bottom;
+                    try {
+                        const rect = el.getBoundingClientRect();
+                        const computedStyle = window.getComputedStyle(el);
+                        const zIndex = parseInt(computedStyle.zIndex) || 0;
 
-                    if (isInside) {
-                        if (el.hasAttribute('data-band') || el.hasAttribute('band') || el.hasAttribute('data-band-child')) {
-                            target = comp;
+                        const isInside = x >= rect.left && x <= rect.right &&
+                            y >= rect.top && y <= rect.bottom;
+
+                        if (isInside && (el.hasAttribute('data-band') || el.hasAttribute('band') ||
+                            el.hasAttribute('data-band-child'))) {
+
+                            // Выбираем элемент с наибольшим z-index
+                            if (zIndex > topmostZIndex) {
+                                topmostZIndex = zIndex;
+                                target = comp;
+                            }
                         } else if (comp.components && !target) {
                             const nestedTarget = findTargetComponentAtPoint(comp.components(), x, y, ignoreEl);
-                            if (nestedTarget) target = nestedTarget;
+                            if (nestedTarget) {
+                                const nestedZIndex = parseInt(window.getComputedStyle(nestedTarget.view.el).zIndex) || 0;
+                                if (nestedZIndex > topmostZIndex) {
+                                    topmostZIndex = nestedZIndex;
+                                    target = nestedTarget;
+                                }
+                            }
                         }
+                    } catch (e) {
+                        console.warn('Ошибка проверки элемента:', e);
                     }
                 });
+
                 return target;
             }
 
@@ -516,7 +528,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             editor.on('component:remove', (component) => {
 
                 if (component.attributes?.band === 'true' ||
-                    component.getAttributes?.()?.band === 'true' || component.attributes?.['data-band'] === 'true' || component.getAttributes?.()?.['data-band'] === 'true') {
+                    component.getAttributes?.()?.band === 'true' || component.attributes?.['data-band'] === 'true' || component.getAttributes?.()?.['data-band'] === 'true'
+                    || component.attributes?.['data-band-child'] === 'true' || component.getAttributes?.()?.['data-band-child'] === 'true') {
                     const parent = component.parent();
                     if (parent) {
                         // Ищем description-band в том же родителе
@@ -603,6 +616,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             });
 
 
+            editor.Panels.getButton('options', 'sw-visibility').set('active', true);
+
             // Добавляем кнопки для экспорта
             editor.Panels.addButton('options', [
                 {
@@ -618,15 +633,30 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 },
             ]);
 
-
-            addDeviceManager(editor);
+            // Тип для заблокированного бэнда
+            editor.Components.addType('locked-band', {
+                model: {
+                    defaults: {
+                        draggable: false,
+                        droppable: true,
+                        copyable: false,
+                        removable: true,
+                        attributes: {
+                            'data-locked-band': 'true'
+                        },
+                    },
+                    isDraggable() {
+                        return false;
+                    }
+                },
+                view: {
+                    onRender() {
+                        // this.el.style.pointerEvents = 'none';
+                    }
+                }
+            });
 
             addBlocks(editor);
-
-            // editor.DataSources.add({
-            //     id: 'my_data_source_id', records: [{id: 'id1', name: 'value1'}, {id: 'id2', name: 'value2'}]
-            // });
-
 
             const restrictDragToCanvas = (component) => {
                 const el = component.view?.el;
@@ -659,55 +689,54 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
             // console.log(editor.Panels.getPanel('options'))
 
-
             editor.Panels.removeButton('options', 'preview');
             editor.Panels.removeButton('options', 'gjs-open-import-webpage');
 
-
             setEditorView(editor);
 
-            editor.BlockManager.add('abs-container', {
-                label: 'Контейнер',
-                content: {
-                    tagName: 'div',
-                    type: 'default',
-                    droppable: true,
-                    style: {
-                        position: 'relative',
-                        width: '400px',
-                        height: '400px',
-                        border: '2px dashed #aaa',
-                        margin: '20px',
-                    }
-                }
-            });
-
-            editor.BlockManager.add('abs-child', {
-                label: 'Абсолютный блок',
-                content: {
-                    tagName: 'div',
-                    type: 'default',
-                    draggable: true,
-                    droppable: true,
-                    style: {
-                        position: 'absolute',
-                        top: '50px',
-                        left: '50px',
-                        width: '100px',
-                        height: '100px',
-                        background: '#ffc',
-                        border: '1px solid #333',
-                    }
-                }
-            });
+            // editor.BlockManager.add('abs-container', {
+            //     label: 'Контейнер',
+            //     content: {
+            //         tagName: 'div',
+            //         type: 'default',
+            //         droppable: true,
+            //         style: {
+            //             position: 'relative',
+            //             width: '400px',
+            //             height: '400px',
+            //             border: '2px dashed #aaa',
+            //             margin: '20px',
+            //         }
+            //     }
+            // });
+            //
+            // editor.BlockManager.add('abs-child', {
+            //     label: 'Абсолютный блок',
+            //     content: {
+            //         tagName: 'div',
+            //         type: 'default',
+            //         draggable: true,
+            //         droppable: true,
+            //         style: {
+            //             position: 'absolute',
+            //             top: '50px',
+            //             left: '50px',
+            //             width: '100px',
+            //             height: '100px',
+            //             background: '#ffc',
+            //             border: '1px solid #333',
+            //         }
+            //     }
+            // });
 
             document.querySelector('.gjs-pn-devices-c').querySelector('.gjs-pn-buttons').innerHTML = "" // удаляем дефолтный div с девайсами
 
             setEditorView(editor);
 
-
             setIsLoading(false);
         }, []);
+
+        const orientationOpt = ["Книжная", "Альбомная"]
 
 
         useEffect(() => {
@@ -719,30 +748,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             }
         }, [pages, currentPage]);
 
-        useEffect(() => {
-            setSql("from table1"); //временно для разработки
-        }, []);
-
-
-        // const switchPage = (id) => {
-        //     const editor = editorView
-        //     // if (!editor) {
-        //     //     return;
-        //     // }
-        //     saveCurrentPage(editor);
-        //
-        //     setTimeout(() => {
-        //
-        //
-        //         const page = pages.find((p) => p.id === id);
-        //         if (page) {
-        //             editor.setComponents(page.content);
-        //             editor.setStyle(page.styles);
-        //             setCurrentPage(id);
-        //             console.log(page.content)
-        //         }
-        //     }, 100);
-        // };
 
         const saveCurrentPage = async (editor) => {
             if (!editor) {
@@ -768,7 +773,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
         const exportJSON = async () => {
             saveCurrentPage(editorView).then((updatedPages) => {
-
+                let css = cleanCSS(updatedPages[0].styles)
                 let result = {
                     dbUrl: settingDB.url,
                     dbUsername: settingDB.username,
@@ -778,19 +783,20 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                     reportName: reportName,
                     reportCategory: reportCategory,
                     content: updatedPages[0].content,
-                    styles: updatedPages[0].styles,
+                    styles: css,
                     parameters: parameters,
                     sqlMode: isSqlMode,
-                    script: script
+                    script: script,
+                    dataBands: JSON.stringify(dataBandsOpt),
+                    bookOrientation: isBookOrientation
                 }
 
                 try {
-                    // const updatedPages = await saveCurrentPage();
                     const json = JSON.stringify(result, null, 2);
                     const blob = new Blob([json], {type: "application/json"});
                     const link = document.createElement("a");
                     link.href = URL.createObjectURL(blob);
-                    link.download = "report.json";
+                    link.download = reportName + ".json";
                     document.body.appendChild(link);
                     link.click();
                     setTimeout(() => {
@@ -799,9 +805,10 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                     document.body.removeChild(link);
                 } catch (error) {
                     console.error("Ошибка при сохранении и экспорте:", error);
+                    setModalMsg("Ошибка при экспорте отчета! Попробуйте еще раз.")
+                    showModalNotif();
                 }
             })
-
         };
 
 
@@ -839,10 +846,14 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         setParameters(importedPages.parameters);
                         setIsSqlMode(importedPages.sqlMode);
                         setScript(importedPages.script)
-
+                        setDataBandsOpt(JSON.parse(importedPages.dataBands))
+                        setIsBookOrientation(importedPages.bookOrientation);
+                        defineBands(importedPages.content);
                     };
                 } catch (error) {
-                    alert("Ошибка загрузки JSON");
+                    console.error(error)
+                    setModalMsg("Ошибка иморта отчета! Попробуйте еще раз.")
+                    showModalNotif();
                 }
 
                 reader.readAsText(file);
@@ -876,7 +887,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             if (editorView) updateCanvasZoom(zoom);
         }, [zoom]);
 
-
         function downloadFile(content, filename) {
             const blob = new Blob([content], {type: 'text/html;charset=utf-8'});
             const url = URL.createObjectURL(blob);
@@ -892,49 +902,36 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             }, 100);
         }
 
-        function addDeviceManager(editor) {
-            // const deviceManager = editor.Devices;
-            // const device1 = deviceManager.add({
-            //     // Without an explicit ID, the `name` will be taken. In case of missing `name`, a random ID will be created.
-            //     id: 'A4',
-            //     name: 'A4',
-            //     width: '110mm', // This width will be applied on the canvas frame and for the CSS media
-            //     // width: '210px',
-            //     // height: '297px'
-            // });
-            // // deviceManager.select(device1);
-        }
-
         function addBlocks(editor) {
 
             editor.BlockManager.add("h1", {
                 label: "<i class=\"fa-solid fa-heading\"></i>1 Заголовок h1",
-                content: "<div style='padding:10px; font-size:2em; font-weight:bold; z-index:100 '>Заголовок h1</div>",
+                content: "<div style='padding:0; font-size:2em; font-weight:bold; z-index:100 '>Заголовок h1</div>",
                 category: "Заголовки",
             });
             editor.BlockManager.add("h2", {
                 label: "<i class=\"fa-solid fa-heading\"></i>2 Заголовок h2",
-                content: "<div style='padding:10px; font-size:1.5em; font-weight:bold; z-index:100 '>Заголовок h2</div>",
+                content: "<div style='padding:0; font-size:1.5em; font-weight:bold; z-index:100 '>Заголовок h2</div>",
                 category: "Заголовки",
             });
             editor.BlockManager.add("h3", {
                 label: "<i class=\"fa-solid fa-heading\"></i>3 Заголовок h3",
-                content: "<div style='padding:10px; font-size:1.17em; font-weight:bold; z-index:100 '>Заголовок h3</div>",
+                content: "<div style='padding:0; font-size:1.17em; font-weight:bold; z-index:100 '>Заголовок h3</div>",
                 category: "Заголовки",
             });
             editor.BlockManager.add("h4", {
                 label: "<i class=\"fa-solid fa-heading\"></i>4 Заголовок h4",
-                content: "<div style='padding:10px; font-size:1em; font-weight:bold; z-index:100 '>Заголовок h4</div>",
+                content: "<div style='padding:0; font-size:1em; font-weight:bold; z-index:100 '>Заголовок h4</div>",
                 category: "Заголовки",
             });
             editor.BlockManager.add("h5", {
                 label: "<i class=\"fa-solid fa-heading\"></i>5 Заголовок h5",
-                content: "<div style='padding:10px; font-size:0.83em; font-weight:bold; z-index:100 '>Заголовок h5</div>",
+                content: "<div style='padding:0; font-size:0.83em; font-weight:bold; z-index:100 '>Заголовок h5</div>",
                 category: "Заголовки",
             });
             editor.BlockManager.add("h6", {
                 label: "<i class=\"fa-solid fa-heading\"></i>6 Заголовок h6",
-                content: "<div style='padding:10px; font-size:0.67em; font-weight:bold; z-index:100 '>Заголовок h6</div>",
+                content: "<div style='padding:0; font-size:0.67em; font-weight:bold; z-index:100 '>Заголовок h6</div>",
                 category: "Заголовки",
             });
 
@@ -975,49 +972,54 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 category: "Линии",
             });
 
-            editor.Blocks.add('icon-block', {
-                label: '<i class="fas fa-camera"></i> Иконка', // Иконка Font Awesome
-                content: {
-                    type: 'text', // Тип контента
-                    tagName: 'div',
-                    content: 'Это блок с иконкой',
-                    style: {'padding': '10px', 'border': '1px solid #ccc'}
-                },
-                category: 'Мои блоки', // Категория блока
-                attributes: {class: 'gjs-fonts gjs-f-icon-block'}, // Атрибуты блока
-                icon: '<i class="fas fa-camera"></i>', // Используйте нужный HTML-код иконки
-            });
+            // editor.Blocks.add('icon-block', {
+            //     label: '<i class="fas fa-camera"></i> Иконка', // Иконка Font Awesome
+            //     content: {
+            //         type: 'text', // Тип контента
+            //         tagName: 'div',
+            //         content: 'Это блок с иконкой',
+            //         style: {'padding': '10px', 'border': '1px solid #ccc'}
+            //     },
+            //     category: 'Мои блоки', // Категория блока
+            //     attributes: {class: 'gjs-fonts gjs-f-icon-block'}, // Атрибуты блока
+            //     icon: '<i class="fas fa-camera"></i>', // Используйте нужный HTML-код иконки
+            // });
 
 
-            editor.BlockManager.add("paragraph", {
-                label: "Абзац", content: "<p style=\"font-size: 14px; z-index:100\">Введите текст отчета...</p>",
-            });
-            editor.BlockManager.add("table", {
-                label: "Таблица",
-                content: `
-                <table class="table table-bordered" style="">
-<!--                  <thead>-->
-<!--                    <tr><th><div>Заголовок 1</div></th><th><div>Заголовок 2</div></th></tr>-->
-<!--                  </thead>-->
-                  <tbody>
-                    <tr>
-                       <td><div>Данные 1</div></td>
-                       <td><div>Данные 2</div></td>
-                       <td><div>Данные 3</div></td>
-                       <td><div>Данные 4</div></td>
-                       <td><div>Данные 5</div></td>
-                    </tr>
-                  </tbody>
-                </table>
-              `,
-                category: "Text",
-                draggable: false,
-                droppable: false,
-            });
+            // editor.BlockManager.add("paragraph", {
+            //     label: "Абзац", content: "<p style=\"font-size: 14px; z-index:100\">Введите текст отчета...</p>",
+            // });
+
+//             editor.BlockManager.add("table", {
+//                 label: "Таблица",
+//                 content: `
+//                 <table class="table table-bordered" style="">
+// <!--                  <thead>-->
+// <!--                    <tr><th><div>Заголовок 1</div></th><th><div>Заголовок 2</div></th></tr>-->
+// <!--                  </thead>-->
+//                   <tbody>
+//                     <tr>
+//                        <td><div>Данные 1</div></td>
+//                        <td><div>Данные 2</div></td>
+//                        <td><div>Данные 3</div></td>
+//                        <td><div>Данные 4</div></td>
+//                        <td><div>Данные 5</div></td>
+//                     </tr>
+//                   </tbody>
+//                 </table>
+//               `,
+//                 category: "Text",
+//                 draggable: false,
+//                 droppable: false,
+//             });
 
         }
 
         function addDataBand(tableName) {
+            //Ограничение на один бэнд с данными пока что
+            if(editorView.getHtml().includes("data-band=\"true\"")) {
+                return;
+            }
 
             editorView.Components.addType('data-band-block', {
                 model: {
@@ -1026,22 +1028,21 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         draggable: false,
                         droppable: true,
                         highlightable: true,
+                        copyable: false,
+                        removable: true,
                         components: `
-                      <div description-band="true" style="
-                           background: #f8b159;
-                           padding: 2px 8px;
-                           font-weight: bold;
-                           font-size: 14px;
-                           pointer-events: none;
-                      ">Бэнд данных: ${tableName}</div>
-
-                      <div data-band="true" id="${tableName}" draggable="false" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
-        <!--                 <h2 style="position: absolute; top: 20px; left: 20px; margin: 0px">Начни создание отчета</h2>-->
-        <!--                 <p data-field="true" class="data-band-field" style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажи поле из запроса в двойных скобках: {{field_1}}</p>-->
-                         <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажи поле из запроса в двойных скобках: {{field_1}}</p>
-        <!--                 <p class="data-band-field" style="position: absolute; top: 60px; left: 500px; margin: 0px">Повтори действие: {{field_2}}</p>-->
-                      </div>
-                   `,
+                              <div description-band="true" style="
+                                   background: #f8b159;
+                                   color: #434343;
+                                   padding: 2px 8px;
+                                   font-weight: bolder;
+                                   font-size: 14px;
+                                   pointer-events: none;
+                              ">Главные данные: ${tableName}</div>
+                              <div data-band="true" id="${tableName}" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
+                                 <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px">Укажите поле из запроса в двойных скобках: {{field_1}}</p>
+                              </div>
+                          `,
                         // script: function () {
                         //     this.querySelector('.data-band-field').addEventListener('click', function () {
                         //         alert('Будущее окно выбора поля из БД');
@@ -1073,19 +1074,21 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         draggable: false,
                         droppable: true,
                         highlightable: true,
+                        copyable: false,
+                        removable: true,
                         components: `
-                      <div description-band="true" style="
-                           background: #ed7060;
-                           padding: 2px 8px;
-                           font-weight: bold;
-                           font-size: 14px;
-                           pointer-events: none;
-                      ">Дочерний бэнд данных: ${childName}</div>
-
-                      <div data-band-child="true" id="${childName}" draggable="false" style="height: 100px; width: 794px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
-                         <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px">Дочерний бэнд: {{field_1}}</p>
-                      </div>
-                   `,
+                          <div description-band="true" style="
+                               background: #cdcdcd;
+                               color: #434343;
+                               padding: 2px 8px;
+                               font-weight: bold;
+                               font-size: 14px;
+                               pointer-events: none;
+                          ">Второстепенные данные: ${childName}</div>
+                          <div data-band-child="true" id="${childName}" data-gjs-type="locked-band" draggable="false" style="height: 100px; width: ${widthPage}px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
+                             <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px">Дочерний бэнд: {{field_1}}</p>
+                          </div>
+                       `,
                     },
                 },
             });
@@ -1108,19 +1111,22 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         draggable: false,
                         droppable: true,
                         highlightable: true,
+                        copyable: false,
+                        removable: false,
                         components: `
-                <div description-band="true" style="
-                   background: #ededed;
-                   padding: 2px 8px;
-                   font-weight: bold;
-                   font-size: 14px;
-                   pointer-events: none;
-              ">Шапка страницы</div>
-                <div band="true" id="pageHeader" style="height: 100px; width: 794px; background: #fbfbfb; position: relative;
-                  border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
-                   <h2 style="">Шапка страницы</h2>
-                </div>
-      `,
+                            <div description-band="true" style="
+                               background: #cdcdcd;
+                               color: #434343;
+                               padding: 2px 8px;
+                               font-weight: bold;
+                               font-size: 14px;
+                               pointer-events: none;
+                          ">Заголовок страницы</div>
+                            <div band="true" id="pageHeader" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; background: #fbfbfb; position: relative;
+                              border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
+                               <h2 style="">Заголовок страницы</h2>
+                            </div>
+                          `,
                     },
                 },
             });
@@ -1141,21 +1147,24 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 model: {
                     defaults: {
                         tagName: 'div',
-                        draggable: true,
+                        draggable: false,
                         droppable: true,
                         highlightable: true,
+                        copyable: false,
+                        removable: false,
                         components: `
-            <div description-band="true" style="
-                   background: #ededed;
-                   padding: 2px 8px;
-                   font-weight: bold;
-                   font-size: 14px;
-                   pointer-events: none;
-            ">Шапка отчета</div>
-            <div band="true" id="reportTitle" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
-               <h2 style="">Шапка отчета</h2>
-            </div>
-               `,
+                            <div description-band="true" style="
+                                   background: #cdcdcd;
+                                   color: #434343;
+                                   padding: 2px 8px;
+                                   font-weight: bold;
+                                   font-size: 14px;
+                                   pointer-events: none;
+                            ">Заголовок отчета</div>
+                            <div band="true" id="reportTitle" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
+                               <h2 style="">Заголовок отчета</h2>
+                            </div>
+                               `,
                     },
                 },
             });
@@ -1172,26 +1181,28 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 model: {
                     defaults: {
                         tagName: 'div',
-                        draggable: true,
+                        draggable: false,
+                        droppable: true,
                         highlightable: true,
+                        copyable: false,
+                        removable: false,
                         components: `
-<!--<div style="position: absolute; bottom: 0">-->
-             <div description-band="true" id="lablePageFooter" style="
-                   background: #ededed;
-                   padding: 2px 8px;
-                   font-weight: bold;
-                   font-size: 14px;
-                   pointer-events: none;
-                   position: absolute;
-                   bottom: 100px;
-                   width: 794px;
-            ">Подвал страницы</div>
-             <div band="true" id="pageFooter" style="height: 100px; width: 794px; position: absolute; bottom: 0;
-              background: #fbfbfb;  border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
-               <h2 style="">Подвал страницы</h2>
-            </div>
-<!--  </div>-->
-            `,
+                             <div description-band="true" id="lablePageFooter" style="
+                                   background: #cdcdcd;
+                                   color: #434343;
+                                   padding: 2px 8px;
+                                   font-weight: bold;
+                                   font-size: 14px;
+                                   pointer-events: none;
+                                   position: absolute;
+                                   bottom: 100px;
+                                   width: ${widthPage}px;
+                            ">Подвал страницы</div>
+                             <div band="true" id="pageFooter" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; position: absolute; bottom: 0;
+                              background: #fbfbfb;  border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
+                               <h2 style="width: 250px;">Подвал страницы</h2>
+                            </div>
+                            `,
                     },
                 },
             });
@@ -1208,19 +1219,23 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 model: {
                     defaults: {
                         tagName: 'div',
-                        draggable: true,
+                        draggable: false,
+                        droppable: true,
                         highlightable: true,
+                        copyable: false,
+                        removable: false,
                         components: `
-            <div description-band="true" style="
-                   background: #ededed;
-                   padding: 2px 8px;
-                   font-weight: bold;
-                   font-size: 14px;
-                   pointer-events: none;
-            ">Подвал отчета</div>
-            <div band="true" id="reportSummary" style="height: 100px; width: 794px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 30px 10px 10px 10px; overflow: visible;">
-               <h2 style="">Подвал отчета</h2>
-            </div> `,
+                            <div description-band="true" style="
+                                   background: #cdcdcd;
+                                   color: #434343;
+                                   padding: 2px 8px;
+                                   font-weight: bold;
+                                   font-size: 14px;
+                                   pointer-events: none;
+                            ">Подвал отчета</div>
+                            <div band="true" id="reportSummary" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
+                               <h2 style="">Подвал отчета</h2>
+                            </div> `,
                     },
                 },
             });
@@ -1240,13 +1255,10 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                     encryptData(dbPassword), dbDriver, sql, content, styles, parameters, script, isSqlMode);
                 return response.data;
             } catch (e) {
-                setError(e.response.data.message)
+                setError("Ошибка получения данных отчета: "+e.response.data.message)
                 setIsModalError(true);
             } finally {
-                setTimeout(() => {
-                    setIsLoading(false);
-                }, 500);
-
+                // setIsLoading(false);
             }
         }
 
@@ -1262,6 +1274,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         }
 
         async function enterPreviewMode(parameters) {
+            let startTime = performance.now();
             setIsModalParameter(false);
             const data = await fetchReportData("", "", settingDB.url, settingDB.username,
                 settingDB.password, settingDB.driverClassName, sql, "", "", parameters, script, isSqlMode)
@@ -1276,14 +1289,16 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
             setIsJavaEditor(false)
             setIsViewMode(true)
-        }
 
-        function disableEditor() {
-            document.querySelector('.gjs-pn-panels').style.display = 'none';
-            document.querySelector('.gjs-pn-views-container').style.display = 'none';
-            editorView.getWrapper().view.$el.css('pointer-events', 'none');
-        }
+            setTimeout(()=>{
+                setIsLoading(false)
 
+                let endTime = performance.now();
+                const seconds = (endTime - startTime) / 1000; // Преобразуем миллисекунды в секунды
+                console.log("Рендер + данные: " + seconds.toFixed(3))
+            }, 1300)
+
+        }
 
         function defineBands(html) {
             const parser = new DOMParser();
@@ -1307,7 +1322,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         }
 
         const handleSelectTableBand = (option) => {
-            if(option.endsWith("-child")){
+            if (option.endsWith("-child")) {
                 addChildDataBand(option)
             } else {
                 addDataBand(option);
@@ -1322,10 +1337,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             setIsModalNotif(!isModalNotify)
         }
 
-        function showModalDownloadReport() {
-            setIsModalDownloadReport(!isModalDownloadReport)
-        }
-
         function showModalSettingDB() {
             setIsModalSettingDB(!isModalSettingDB)
         }
@@ -1338,16 +1349,53 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             setIsModalDownloadReport(!isModalDownloadReport)
         }
 
+        function cleanCSS(css) { //Для того чтобы убрать дубликаты стилей body и *
+            const globalRules = {
+                '*': new Set(),
+                'body': new Set()
+            };
+            let otherRules = [];
+            const rules = css.split('}');
+            rules.forEach(rule => {
+                const cleanedRule = rule.trim();
+                if (!cleanedRule) return;
+                const [selectorPart, ...propsParts] = cleanedRule.split('{');
+                const selector = selectorPart.trim();
+                const props = propsParts.join('{').trim();
+
+                if (selector === '*' || selector === 'body') {
+                    // Разбиваем свойства на отдельные декларации
+                    props.split(';').forEach(prop => {
+                        const cleanedProp = prop.trim();
+                        if (cleanedProp) {
+                            globalRules[selector].add(cleanedProp);
+                        }
+                    });
+                } else {
+                    // Сохраняем все другие правила
+                    if (selector && props) {
+                        otherRules.push(`${selector} { ${props} }`);
+                    }
+                }
+            });
+            const uniqueGlobalRules = [
+                `* { ${Array.from(globalRules['*']).join('; ')} }`,
+                `body { ${Array.from(globalRules['body']).join('; ')} }`
+            ].filter(rule => !rule.endsWith('{ }')); // Удаляем пустые правила
+            return [...uniqueGlobalRules, ...otherRules].join('\n');
+        }
+
         async function saveReport(reportName) {
             showModalSaveReport();
 
             saveCurrentPage(editorView).then(async (updatedPages) => {
+                let css = cleanCSS(updatedPages[0].styles)
                 try {
                     await ReportService.createReportTemplate(reportName, reportCategory,
                         settingDB.url, settingDB.username, encryptData(settingDB.password), settingDB.driverClassName, sql,
                         parameters,
-                        updatedPages[0].content, updatedPages[0].styles,
-                        script, isSqlMode);
+                        updatedPages[0].content, css,
+                        script, isSqlMode, dataBandsOpt, isBookOrientation);
                     setModalMsg("Документ успешно отправлен!");
 
                 } catch (error) {
@@ -1376,6 +1424,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 setScript(response.data.script);
                 setIsSqlMode(response.data.sqlMode);
                 defineBands(response.data.content);
+                setDataBandsOpt(JSON.parse(response.data.dataBands));
+                setIsBookOrientation(response.data.bookOrientation);
             } catch (error) {
                 console.error(error)
                 setModalMsg("Ошибка загрузки отчета с сервера! Попробуйте еще раз.")
@@ -1408,7 +1458,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             const foundTables = new Set();
 
             try {
-                const parser = new Parser();
                 sql.split(';').forEach(query => {
                     let match;
                     while ((match = tableRegex.exec(query)) !== null) {
@@ -1418,6 +1467,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
                         if (tableName) {
                             foundTables.add(tableName);
+                            foundTables.add(tableName + "-child");
                         }
                     }
                 });
@@ -1430,7 +1480,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
 
         useEffect(() => {
-            extractTablesAndCheckSQL();
+            if(isSqlMode){
+                extractTablesAndCheckSQL();
+            }
         }, [sql]);
 
 
@@ -1441,6 +1493,38 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         const selectSQLMethod = () => {
             setIsSqlMode(true);
         }
+
+        function handleSelectOrientation(option) {
+            switch (option) {
+                case "Книжная": {
+                    setIsBookOrientation(true);
+                    break;
+                }
+                case "Альбомная": {
+                    setIsBookOrientation(false);
+                    break;
+                }
+            }
+        }
+
+        useEffect(() => {
+            const canvasElement = editorView?.Canvas?.getElement()
+            if (canvasElement) {
+                if (isBookOrientation) {
+                    canvasElement.style.width = '794px';
+                    canvasElement.style.height = '1123px';
+                    editorView.Canvas.getBody().style.width = '794px';
+                    editorView.Canvas.getBody().style.height = '1123px';
+                    canvasElement.style.marginLeft = '15%';
+                } else {
+                    canvasElement.style.width = '1123px';
+                    canvasElement.style.height = '794px';
+                    editorView.Canvas.getBody().style.width = '1123px';
+                    editorView.Canvas.getBody().style.height = '794px';
+                    canvasElement.style.marginLeft = '5%';
+                }
+            }
+        }, [isBookOrientation])
 
 
         return (
@@ -1455,6 +1539,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 />}
 
                 {!isViewMode && !isLoading && !isJavaEditor &&
+
                     <div className=" gjs-two-color gjs-one-bg flex flex-row justify-between py-1 gjs-pn-commands">
                         <div className="flex justify-start text-center ml-2 w-1/3">
                             <span className="gjs-pn-btn font-medium">Конструктор отчетов</span>
@@ -1482,7 +1567,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         </div>
                     </div>}
 
-                {!isViewMode && !isJavaEditor &&
+                {!isViewMode && !isLoading && !isJavaEditor &&
                     <div
                         className="pl-2 gjs-two-color gjs-one-bg flex flex-row justify-between py-1 gjs-pn-commands ">
                         <div className="flex flex-row gap-x-2">
@@ -1516,7 +1601,15 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                             </div>
                             <div className="p-1 hover:bg-gray-200 flex-col justify-center justify-items-center">
                                 <img src="/icons/DataBand.png" className="icon-band" alt="Data band"/>
-                                <Dropdown options={dataBandsOpt} onSelect={handleSelectTableBand}/>
+                                <Dropdown options={dataBandsOpt} onSelect={handleSelectTableBand} label={"Бэнды"}/>
+                            </div>
+                            <div className=" hover:bg-gray-200 flex flex-col justify-center justify-items-center">
+
+                                <span className=" hover:bg-gray-200 flex justify-center ">
+                                    <i className="fa-regular fa-copy pt-1"></i>
+                                </span>
+                                <Dropdown options={orientationOpt} onSelect={handleSelectOrientation}
+                                          label={"Ориентация"}/>
                             </div>
                         </div>
                         <div className="flex flex-row gap-x-2 pr-2">
@@ -1546,9 +1639,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                 <div className="hover:bg-gray-200 flex-col justify-center justify-items-center">
                                     <button onClick={() => setIsJavaEditor(true)}
                                             className="flex flex-col justify-between justify-items-center">
-                                <span className="gjs-pn-btn hover:bg-gray-200 flex justify-center ">
-                                        <i className="fa-lg fa-solid fa-keyboard pt-3"></i>
-                                </span>
+                                        <span className="gjs-pn-btn hover:bg-gray-200 flex justify-center ">
+                                                <i className="fa-lg fa-solid fa-keyboard pt-3"></i>
+                                        </span>
                                         <span className="text-xs font-medium px-1">Java редактор</span>
                                     </button>
                                 </div>
@@ -1568,7 +1661,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         </div>
                     </div>}
 
-                <div className={!isViewMode && !isJavaEditor ? 'block' : 'hidden'}>
+                <div className={!isViewMode && !isLoading && !isJavaEditor ? 'block' : 'hidden'}>
                     <div id="editor" ref={editorRef}/>
                 </div>
 
@@ -1614,11 +1707,16 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 />}
 
 
-                {isViewMode && <ViewReport data={data} html={html} css={css} dataParam={dataParam}
-                                           onClose={() => {
-                                               setIsViewMode(false)
-                                           }}
-                />}
+                {isViewMode &&
+                    <div className={isLoading ? "hidden" : ""}>
+                        <ViewReport data={data} html={html} css={css} dataParam={dataParam}
+                                    isBookOrientation={isBookOrientation}
+                                    onClose={() => {
+                                        setIsViewMode(false)
+                                    }}
+                        />
+                    </div>
+                }
 
 
             </div>
