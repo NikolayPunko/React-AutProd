@@ -5,58 +5,34 @@ import ReportService from "../services/ReportService";
 import Loading from "../components/loading/Loading";
 import {ModalNotify} from "../components/modal/ModalNotify";
 import {ModalParameter} from "../components/reportsConstruct/ModalParameter";
-import {ViewReport} from "../components/reportsConstruct/ViewReport";
+import {useNavigate} from "react-router-dom";
 
 
 function ReportsPage() {
 
+    const navigate = useNavigate();
+
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
-
-    const [isShowReport, setIsShowReport] = useState(false);
     const [isModalError, setIsModalError] = useState(false);
     const [isModalParameter, setIsModalParameter] = useState(false);
 
-    const [reportTemplate, setReportTemplate] = useState(null);
-    const [reportData, setReportData] = useState(null);
     const [reportsName, setReportsName] = useState([]);
     const [selectName, setSelectName] = useState("unknown")
     const [parametersMeta, setParametersMeta] = useState([]);
-    const [parameters, setParameters] = useState([]);
 
-
-    async function fetchReportTemplate(reportName) {
-        try {
-            const response = await ReportService.getReportTemplateByReportName(reportName);
-            setReportTemplate(response.data);
-        } catch (e) {
-            setReportTemplate(null);
-            setIsLoading(false);
-            setError(e.response.data.message);
-            setIsModalError(true);
-        }
-    }
-
-    async function fetchReportData(reportName, parameters) {
-        try {
-            const response = await ReportService.getDataByReportName(reportName, parameters);
-            setReportData(response.data);
-        } catch (e) {
-            setReportData(null);
-            setIsLoading(false);
-            setError(e.response.data.message);
-            setIsModalError(true);
-        }
-    }
 
     async function fetchReportsName() {
         try {
+            setIsLoading(true);
             const response = await ReportService.getReportsNameGroupCategory();
             setReportsName(response.data);
         } catch (e) {
             setError(e.response.data.message);
             setIsModalError(true);
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -74,20 +50,9 @@ function ReportsPage() {
         fetchReportsName();
     }, []);
 
-    useEffect(() => {
-        if
-        (reportData && reportTemplate) {
-            setIsShowReport(true)
-            setTimeout(() => {
-                setIsLoading(false);
-            }, 3000);
-        }
-    }, [reportTemplate, reportData]);
 
     async function handleReportClick(reportName) {
         await fetchParametersMeta(reportName);
-        setReportTemplate(null);
-        setReportData(null);
         setSelectName(reportName);
         setIsModalParameter(true);
     }
@@ -95,14 +60,12 @@ function ReportsPage() {
 
     async function onSubmitParameters(parameters) {
         setIsModalParameter(false);
-        setIsLoading(true);
-        setParameters(parameters);
-        await fetchReportTemplate(selectName);
-        await fetchReportData(selectName, parameters);
+        const encodedParams = encodeURIComponent(JSON.stringify(parameters));
+        const url = `/report?name=${selectName}&params=${encodedParams}`;
+        navigate(url);
     }
 
     return (<>
-
 
         <Navigation isHiddenMenu={false} isOpenMenu={false} setOpenMenu={() => {
         }}/>
@@ -112,11 +75,9 @@ function ReportsPage() {
             </div>
             <div className="flex flex-col w-full">
 
-                {isLoading && <Loading/>
+                {isLoading && <Loading/>}
 
-                }
-
-                {!isShowReport && !isLoading && <>
+                {!isLoading && <>
                     <div className="px-24 py-16">
                         <span className="text-2xl font-bold">Сервер отчётов АСУТП</span>
                     </div>
@@ -143,13 +104,6 @@ function ReportsPage() {
                     </div>
                 </>}
 
-
-                {isShowReport  &&
-                    <div className={isLoading? "hidden":""}>
-                        <ViewReport data={reportData} dataParam={parameters} html={reportTemplate.content} css={reportTemplate.styles}
-                                    onClose={() => setIsShowReport(false)} isBookOrientation={reportTemplate.bookOrientation}/>
-                    </div>
-                }
 
                 {isModalError &&
                     <ModalNotify title={"Ошибка"} message={error} onClose={() => setIsModalError(false)}/>}
