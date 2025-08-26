@@ -20,6 +20,7 @@
     "crypto-js": "^4.2.0",
     "devextreme": "^24.2.3",
     "grapesjs": "^0.22.12",
+    "grapesjs-blocks-basic": "^1.0.2",
     "grapesjs-preset-webpage": "^1.0.3",
     "grapesjs-table": "^1.0.8",
     "html-to-pdfmake": "^2.5.20",

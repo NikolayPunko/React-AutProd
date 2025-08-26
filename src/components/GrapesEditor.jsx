@@ -12,10 +12,10 @@ const GrapesEditor = () => {
             fromElement: true,
             height: '100vh',
             width: 'auto',
-            // dragMode: 'absolute',
-            // storageManager: false, // Отключаем локальное сохранение
-            // plugins: ["gjs-preset-webpage"], // Используем предустановленный плагин
-            // panels: { defaults: [] },
+            dragMode: 'absolute',
+            storageManager: false, // Отключаем локальное сохранение
+            plugins: ["gjs-preset-webpage"], // Используем предустановленный плагин
+            panels: { defaults: [] },
         });
 
 

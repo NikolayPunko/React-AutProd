@@ -2,6 +2,8 @@ import React, {forwardRef, useEffect, useRef, useState} from 'react';
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./../reportsConstruct/ReportEditor.css";
 
+import plugin from 'grapesjs-blocks-basic';
+
 
 import * as XLSX from "xlsx";
 import html2canvas from "html2canvas";
@@ -93,7 +95,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         const [css, setCss] = useState("");
 
         const [isBookOrientation, setIsBookOrientation] = useState(true);
-        const widthPage = isBookOrientation? "794":"1123";
+        const widthPage = isBookOrientation ? "794" : "1123";
 
 
         pdfMake.addVirtualFileSystem(pdfFonts);
@@ -133,9 +135,12 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 selectorManager: {componentFirst: true},
                 storageManager: false, // Отключаем сохранение
                 // panels: { defaults: [] }, // Убираем стандартные панелиnpm
-                plugins: [grapesjspresetwebpage],
-                pluginsOpts: {
-                    "plugin": ['map']
+                plugins: [grapesjspresetwebpage, plugin],
+                // pluginsOpts: {
+                //     [plugin]: { /* options */ }
+                // },
+                blockManager:{
+                    blocks: []
                 },
                 style: [
                     //     `
@@ -191,24 +196,13 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
                 }
 
-
-                // canvasElement.style.margin = '10px';
-                // canvasElement.style.padding = '20px';
-
-                // canvasElement.style.marginTop = '20px';
                 canvasElement.style.backgroundColor = '#949494';
                 canvasElement.style.border = '5px';
                 canvasElement.style.overflow = 'hidden';
 
-
-                // editor.Canvas.getBody().style.margin = '20px';
                 editor.Canvas.getBody().style.backgroundColor = '#9a9a9a';
-                // editor.Canvas.getBody().style.padding = '20px';
                 editor.Canvas.getBody().style.backgroundColor = '#ffffff';
                 editor.Canvas.getBody().style.overflow = 'hidden';
-                // editor.Canvas.getBody().style.position = 'relative';
-
-
             }, 200);
 
             editor.setComponents(pages[0].content);
@@ -258,7 +252,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             const blocks = [
                 {
                     id: "text-block",
-                    label: "Текстовое поле",
+                    label: '<i class=\"fa-solid fa-font\"></i>Текстовое поле',
                     content: '<div class="band-content" style="word-wrap: break-word; font-size: 14px; z-index:100">Введите текст...</div>',
                     category: "Текст",
                     draggable: true,
@@ -274,6 +268,23 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             editor.BlockManager.remove('quote')
             editor.BlockManager.remove('link-block')
             editor.BlockManager.remove('text-basic')
+            editor.BlockManager.remove('column1')
+            editor.BlockManager.remove('column2')
+            editor.BlockManager.remove('column3')
+            editor.BlockManager.remove('column3-7')
+            editor.BlockManager.remove('text')
+            editor.BlockManager.remove('link')
+            editor.BlockManager.remove('video')
+            editor.BlockManager.remove('map')
+
+
+            // Переименовываем категории у базового блока изобюражения
+            editor.BlockManager.getAll().forEach(block => {
+                if (block.getCategoryLabel() === 'Basic') {
+                    block.set('category', 'Графика');
+                    block.set('label', 'Изображение');
+                }
+            });
 
 
             editor.on('component:add', component => {
@@ -574,7 +585,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
             // Обработчик события перемещения компонента
             editor.on("component:drag:stop", (model) => {
-                console.log("Перетаскивание завершено:", model);
+                // console.log("Перетаскивание завершено:", model);
                 // Убираем индикатор с контейнера
                 editor.getComponents().forEach((comp) => {
                     comp.removeClass("droppable-hover");
@@ -886,20 +897,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             if (editorView) updateCanvasZoom(zoom);
         }, [zoom]);
 
-        function downloadFile(content, filename) {
-            const blob = new Blob([content], {type: 'text/html;charset=utf-8'});
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            setTimeout(() => {
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            }, 100);
-        }
 
         function addBlocks(editor) {
 
@@ -970,53 +967,11 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 },
                 category: "Линии",
             });
-
-            // editor.Blocks.add('icon-block', {
-            //     label: '<i class="fas fa-camera"></i> Иконка', // Иконка Font Awesome
-            //     content: {
-            //         type: 'text', // Тип контента
-            //         tagName: 'div',
-            //         content: 'Это блок с иконкой',
-            //         style: {'padding': '10px', 'border': '1px solid #ccc'}
-            //     },
-            //     category: 'Мои блоки', // Категория блока
-            //     attributes: {class: 'gjs-fonts gjs-f-icon-block'}, // Атрибуты блока
-            //     icon: '<i class="fas fa-camera"></i>', // Используйте нужный HTML-код иконки
-            // });
-
-
-            // editor.BlockManager.add("paragraph", {
-            //     label: "Абзац", content: "<p style=\"font-size: 14px; z-index:100\">Введите текст отчета...</p>",
-            // });
-
-//             editor.BlockManager.add("table", {
-//                 label: "Таблица",
-//                 content: `
-//                 <table class="table table-bordered" style="">
-// <!--                  <thead>-->
-// <!--                    <tr><th><div>Заголовок 1</div></th><th><div>Заголовок 2</div></th></tr>-->
-// <!--                  </thead>-->
-//                   <tbody>
-//                     <tr>
-//                        <td><div>Данные 1</div></td>
-//                        <td><div>Данные 2</div></td>
-//                        <td><div>Данные 3</div></td>
-//                        <td><div>Данные 4</div></td>
-//                        <td><div>Данные 5</div></td>
-//                     </tr>
-//                   </tbody>
-//                 </table>
-//               `,
-//                 category: "Text",
-//                 draggable: false,
-//                 droppable: false,
-//             });
-
         }
 
         function addDataBand(tableName) {
             //Ограничение на один бэнд с данными пока что
-            if(editorView.getHtml().includes("data-band=\"true\"")) {
+            if (editorView.getHtml().includes("data-band=\"true\"")) {
                 return;
             }
 
@@ -1254,10 +1209,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                     encryptData(dbPassword), dbDriver, sql, content, styles, parameters, script, isSqlMode);
                 return response.data;
             } catch (e) {
-                setError("Ошибка получения данных отчета: "+e.response.data.message)
+                setError("Ошибка получения данных отчета: " + e.response.data.message)
                 setIsModalError(true);
-            } finally {
-                // setIsLoading(false);
+                setIsLoading(false);
             }
         }
 
@@ -1289,7 +1243,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             setIsJavaEditor(false)
             setIsViewMode(true)
 
-            setTimeout(()=>{
+            setTimeout(() => {
                 setIsLoading(false)
 
                 let endTime = performance.now();
@@ -1479,7 +1433,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
 
         useEffect(() => {
-            if(isSqlMode){
+            if (isSqlMode) {
                 extractTablesAndCheckSQL();
             }
         }, [sql]);

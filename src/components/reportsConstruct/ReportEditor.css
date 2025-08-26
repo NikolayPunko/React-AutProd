@@ -89,6 +89,31 @@
     outline-offset: -2px !important;
 }
 
+svg {
+    text-align: center;
+    align-content: center;
+}
+
+.gjs-block {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    height: auto;
+    align-items: center;
+}
+
+.gjs-block-label {
+    font-size: 12px !important;
+}
+
+.gjs-block__media {
+    margin-right: 6px;
+    margin-bottom: 0px !important;
+    pointer-events: none;
+    text-align: center;
+    align-content: center;
+    width: 22px;
+}
 
 
 
