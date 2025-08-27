@@ -11,8 +11,58 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
     };
 
     const handleSubmit = () => {
-        onSubmit(values);
+        onSubmit(identifyNonDefault(values, parameters));
     };
+
+    //Выбираем параметры которые отличаются от дефолтных
+    function identifyNonDefault(params, paramDefinitions) {
+        const defaultsMap = {};
+        const typesMap = {};
+
+        paramDefinitions.forEach(def => {
+            defaultsMap[def.key] = def.default;
+            typesMap[def.key] = def.type;
+        });
+
+        const filteredParams = {};
+
+        for (const [key, value] of Object.entries(params)) {
+            if (defaultsMap.hasOwnProperty(key)) {
+                const defaultValue = defaultsMap[key];
+                const type = typesMap[key];
+
+                let shouldInclude = false;
+
+                switch (type) {
+                    case 'BOOLEAN':
+                        const currentBool = value === true || value === 'true' || value === '1';
+                        const defaultBool = defaultValue === true || defaultValue === 'true' || defaultValue === '1';
+                        shouldInclude = currentBool !== defaultBool;
+                        break;
+
+                    case 'NUMBER':
+                        const currentNum = typeof value === 'string' ? parseFloat(value) : value;
+                        const defaultNum = typeof defaultValue === 'string' ? parseFloat(defaultValue) : defaultValue;
+                        shouldInclude = currentNum !== defaultNum;
+                        break;
+
+                    case 'DATE':
+                        shouldInclude = String(value) !== String(defaultValue);
+                        break;
+
+                    default:
+                        shouldInclude = String(value) !== String(defaultValue);
+                }
+
+                if (shouldInclude) {
+                    filteredParams[key] = value;
+                }
+            } else {
+                filteredParams[key] = value;
+            }
+        }
+        return filteredParams;
+    }
 
     useEffect(() => {
         // console.log(parameters)

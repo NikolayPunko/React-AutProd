@@ -943,7 +943,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         'background-color': '#000',
                         'z-index': '100',
                         'margin': '0',
-
                     }
                 },
                 category: "Линии",
@@ -962,7 +961,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         'z-index': '99',
                         'margin': '0',
                         'display': 'inline-block',
-
                     }
                 },
                 category: "Линии",

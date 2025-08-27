@@ -7,10 +7,12 @@ import {ViewReport} from "../components/reportsConstruct/ViewReport";
 import ReportService from "../services/ReportService";
 import {ModalNotify} from "../components/modal/ModalNotify";
 import Loading from "../components/loading/Loading";
+import {useNavigate} from "react-router-dom";
 
 
 function ViewReportPage() {
 
+    const navigate = useNavigate();
 
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -18,9 +20,10 @@ function ViewReportPage() {
     const [isModalError, setIsModalError] = useState(false);
     const [isShowReport, setIsShowReport] = useState(false);
 
-    const [reportTemplate, setReportTemplate] = useState({content: "", styles: ""});
+    // const [reportTemplate, setReportTemplate] = useState({content: "", styles: ""});
+    const [reportTemplate, setReportTemplate] = useState(undefined);
     const [reportData, setReportData] = useState(null);
-    const [parameters, setParameters] = useState([]);
+    const [parameters, setParameters] = useState(undefined);
 
 
     useEffect(() => {
@@ -33,6 +36,7 @@ function ViewReportPage() {
         if (paramsJson) {
             try {
                 parameters = JSON.parse(decodeURIComponent(paramsJson));
+
                 setParameters(parameters);
             } catch (error) {
                 setIsLoading(false);
@@ -42,8 +46,14 @@ function ViewReportPage() {
         }
 
         viewReport(parameters, reportName);
-
     }, [])
+
+    function ensureArray(item) {
+        if (Array.isArray(item)) {
+            return item;
+        }
+        return item ? [item] : [];
+    }
 
     useEffect(() => {
         if (reportData && reportTemplate) {
@@ -51,11 +61,34 @@ function ViewReportPage() {
             setTimeout(() => {
                 setIsLoading(false);
             }, 1500);
+            // console.log(JSON.parse(reportTemplate.parameters))
+            // console.log(parameters)
         }
     }, [reportTemplate, reportData]);
 
+    //Добавляем параметры которые не были заданы
+    function addDefaultParameters(params, paramDescriptions) {
+        const result = { ...params };
+        console.log(result)
+        paramDescriptions.forEach(description => {
+            const { key, default: defaultValue } = description;
+            if (!(key in result) || result[key] === undefined || result[key] === null) {
+                if(description.type === "DATE" && defaultValue === true){
+                    // console.log("DATE1")
+                    // console.log(defaultValue)
+                    result[key] = new Date().toISOString().split('T')[0];
+                } else {
+                    result[key] = defaultValue;
+                }
+            }
+        });
+
+        return result;
+    }
+
     async function viewReport(parameters, reportName) {
-        await fetchReportTemplate(reportName);
+        let template = await fetchReportTemplate(reportName);
+        parameters = addDefaultParameters(parameters, JSON.parse(template.parameters));
         await fetchReportData(reportName, parameters);
     }
 
@@ -63,6 +96,7 @@ function ViewReportPage() {
         try {
             const response = await ReportService.getReportTemplateByReportName(reportName);
             setReportTemplate(response.data);
+            return response.data;
         } catch (e) {
             setReportTemplate(null);
             setIsLoading(false);
@@ -100,7 +134,7 @@ function ViewReportPage() {
                         <div className={isLoading? "hidden":""}>
                             <ViewReport data={reportData} dataParam={parameters} html={reportTemplate.content}
                                         css={reportTemplate.styles}
-                                        isBookOrientation={reportTemplate.bookOrientation}/>
+                                        isBookOrientation={reportTemplate.bookOrientation} onClose={() => navigate("/")}/>
                         </div>
                     }
 
