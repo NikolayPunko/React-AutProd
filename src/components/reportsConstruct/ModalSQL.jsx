@@ -30,7 +30,7 @@ export function ModalSQL({value, parameters, isValid, onChange, onClose, setPara
 
 
     const findAndAddParameters = (inputString) => {
-        const wordsStartingWithColon = inputString.match(/(?<=\s|^):\w+/g) || [];
+        const wordsStartingWithColon = inputString.match(/@(\w+)/g) || [];
         const keys = wordsStartingWithColon.map(word => word.substring(1));
         keys.forEach(key => {
             const keyExists = parameters.some(param => param.key === key);
@@ -41,7 +41,7 @@ export function ModalSQL({value, parameters, isValid, onChange, onClose, setPara
     };
 
     const removeUnusedParameters = (sqlString) => {
-        const usedKeys = (sqlString.match(/(?<=\s|^):\w+/g) || []).map(word => word.substring(1));
+        const usedKeys = (sqlString.match(/@(\w+)/g) || []).map(word => word.substring(1));
         setParameters(prevParams =>
             prevParams.filter(param => usedKeys.includes(param.key))
         );
@@ -82,8 +82,8 @@ export function ModalSQL({value, parameters, isValid, onChange, onClose, setPara
                 className="w-full max-w-[900px] lg:w-[900px] p-5 z-30 rounded bg-white absolute top-[15%] left-1/2 -translate-x-1/2 px-8">
                 <h1 className="text-2xl font-medium text-start mb-5">Запрос SQL для данных отчета</h1>
                 <div className="flex flex-col">
-                    <span className="text-xs font-medium text-gray-500 mb-2">Можно вводить несколько SQL запросов, отделенных точкой с запятой. Далее запрашиваемые данные могут быть использованы в отчете.
-                    Параметры задаются с помощью символа доеточия ':parameter', затем их требуется настроить. Пример - SELECT * FROM PRODUCT WHERE ID = :id;
+                    <span className="text-xs font-medium text-gray-500 mb-2">В текстовом поле требуется ввести SQL запрос. Далее запрашиваемые данные могут быть использованы в отчете.
+                    Параметры задаются с помощью символа собака '@parameter', затем требуется настроить описание этих параметров в окне "Параметры запроса". Пример - SELECT * FROM PRODUCT WHERE ID = @id;
                     </span>
 
                     <div className="flex flex-col ">
