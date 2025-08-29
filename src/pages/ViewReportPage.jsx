@@ -20,7 +20,6 @@ function ViewReportPage() {
     const [isModalError, setIsModalError] = useState(false);
     const [isShowReport, setIsShowReport] = useState(false);
 
-    // const [reportTemplate, setReportTemplate] = useState({content: "", styles: ""});
     const [reportTemplate, setReportTemplate] = useState(undefined);
     const [reportData, setReportData] = useState(null);
     const [parameters, setParameters] = useState(undefined);
@@ -61,21 +60,16 @@ function ViewReportPage() {
             setTimeout(() => {
                 setIsLoading(false);
             }, 1500);
-            // console.log(JSON.parse(reportTemplate.parameters))
-            // console.log(parameters)
         }
     }, [reportTemplate, reportData]);
 
     //Добавляем параметры которые не были заданы
     function addDefaultParameters(params, paramDescriptions) {
         const result = { ...params };
-        console.log(result)
         paramDescriptions.forEach(description => {
             const { key, default: defaultValue } = description;
             if (!(key in result) || result[key] === undefined || result[key] === null) {
                 if(description.type === "DATE" && defaultValue === true){
-                    // console.log("DATE1")
-                    // console.log(defaultValue)
                     result[key] = new Date().toISOString().split('T')[0];
                 } else {
                     result[key] = defaultValue;

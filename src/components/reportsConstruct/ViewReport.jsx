@@ -127,7 +127,7 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
 
         let endTime = performance.now();
         const seconds = (endTime - startTime) / 1000; // Преобразуем миллисекунды в секунды
-        console.log("Рендер: " + seconds.toFixed(3))
+        // console.log("Рендер: " + seconds.toFixed(3))
     }
 
     function renderDataBand(data, dataParam, htmlTemplate, css) {

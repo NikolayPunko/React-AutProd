@@ -106,72 +106,34 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 container: editorRef.current,
                 telemetry: false,
                 fromElement: true,
-                // height: "1200px",
+                height: 1200+"px",
                 width: 'auto',
                 default_locale: 'ru',
-                // cssComposer: false,
-                // allowScripts: true,
-                // avoidInlineStyle: false,
-                // cleanHtml: false,
-                // domComponents: {
-                //     parser: {
-                //         html: {
-                //             allowScripts: true,
-                //             allowUnsafeAttr: true,
-                //             keepUnusedStyles: true,
-                //             keepInlineStyles: true  // Критически важный параметр
-                //         }
-                //     }
-                // },
-
                 i18n: {
-                    locale: 'ru', // default locale
-                    detectLocale: true, // by default, the editor will detect the language
-                    localeFallback: 'ru', // default fallback
+                    locale: 'ru',
+                    detectLocale: true,
+                    localeFallback: 'ru',
                     messages: {ru},
                 },
                 dragMode: 'absolute',  //https://github.com/GrapesJS/grapesjs/issues/1936 почитать, полезные вещи
-                // dragMode: 'transition',
                 selectorManager: {componentFirst: true},
                 storageManager: false, // Отключаем сохранение
-                // panels: { defaults: [] }, // Убираем стандартные панелиnpm
+
                 plugins: [grapesjspresetwebpage, plugin],
-                // pluginsOpts: {
-                //     [plugin]: { /* options */ }
-                // },
+
                 blockManager:{
                     blocks: []
                 },
                 style: [
-                    //     `
-                    //  .gjs-selected {
-                    //     outline: none !important;
-                    //     outline-offset: -1px;
-                    // }`
+
                 ],
                 canvas: {
-                    //  styles: [`
-                    //    body {
-                    //      overflow: hidden;
-                    //    }
-                    //    .gjs-cv-canvas {
-                    //      width: 210mm;
-                    //      height: 297mm;
-                    //      margin: auto;
-                    //
-                    //      overflow: hidden;
-                    //    }
-                    // `]
-                },
 
+                },
                 // Очищаем список устройств
                 deviceManager: {
                     devices: [], // Полностью убираем все предустановленные размеры
-                }, // styleManager: {
-                //     sectors: [
-                //         // Отображаем только необходимые настройки стилей
-                //     ]
-                // }
+                },
             });
 
 
@@ -206,10 +168,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             }, 200);
 
             editor.setComponents(pages[0].content);
-
-
-            // editor.setComponents(`<span style="text-align:center; padding: 10px; width:300px; left: 60px;
-            //   position: absolute; top:60px; font-size: larger;font-weight: 700;">Начните создание отчета...</span>`);
 
 
             // Добавляем стили для блоков
@@ -299,71 +257,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 }
             });
 
-
-            // function findTargetComponentAtPoint(components, x, y, ignoreEl) {
-            //     let target = null;
-            //
-            //     components.each(comp => {
-            //
-            //         const view = comp.view;
-            //         if (!view || !view.el || view.el === ignoreEl) return;
-            //
-            //
-            //         const rect = view.el.getBoundingClientRect();
-            //         if (
-            //             x >= rect.left &&
-            //             x <= rect.right &&
-            //             y >= rect.top &&
-            //             y <= rect.bottom
-            //         ) {
-            //             target = comp;
-            //             const nested = findTargetComponentAtPoint(comp.components(), x, y, ignoreEl);
-            //             if (nested) target = nested;
-            //         }
-            //     });
-            //
-            //     return target;
-            // }
-            //
-            // editor.on('component:drag:end', (model) => {
-            // // editor.on('component:add', (model) => {
-            //     console.log(model)
-            //
-            //     setTimeout(() => {
-            //         console.log('component:drag:end')
-            //         const view = model.target.view;
-            //         if (!view || !view.el) return;
-            //         console.log('прошел проверку')
-            //         const el = view.el;
-            //
-            //
-            //
-            //         const rect = el.getBoundingClientRect();
-            //         const x = rect.left + rect.width / 2;
-            //         const y = rect.top + rect.height / 2;
-            //
-            //         const all = editor.DomComponents.getComponents();
-            //         const target = findTargetComponentAtPoint(all, x, y, el);
-            //
-            //         if (target && target !== model.parent) {
-            //             const parent = model.parent;
-            //             // console.log(parent)
-            //             // parent.remove(model.target, { temporary: true });
-            //             target.append(model.target);
-            //             console.log('Добавлено в нового родителя:', target);
-            //         }
-            //
-            //     }, 0); // Небольшая задержка для обновления состояния
-            //
-            // });
-
-
-            // editor.on('component:update', (component) => {
-            //     // handleStyleChange(component);
-            //     console.log('change style')
-            //     console.log(component)
-            //
-            // });
 
             //для того чтобы сдвигать описание футера страницы при изменении высоты
             editor.on('component:styleUpdate:height', (component) => {
@@ -569,11 +462,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 }
             });
 
-            // // Событие добавления компонента
-            // editor.on("component:add", (model) => {
-            //     // console.log("Компонент добавлен:", model);
-            // });
-
             // Событие начала перетаскивания компонента
             editor.on("component:drag:start", (model) => {
                 // console.log("Началось перетаскивание компонента:", model);
@@ -596,27 +484,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 if (parent && parent.get("droppable")) {
                     parent.append(model); // Вставляем элемент внутрь родителя
                 }
-            });
-
-            // Логика добавления визуального индикатора при перетаскивании
-            editor.on("component:drag:start", (model) => {
-                // const componentEl = model.target.view.el;
-                // const canvasEl = editor.Canvas.getElement();
-                //
-                // // Перемещение элементов относительно канваса
-                // const offsetX = componentEl.getBoundingClientRect().left - canvasEl.getBoundingClientRect().left;
-                // const offsetY = componentEl.getBoundingClientRect().top - canvasEl.getBoundingClientRect().top;
-                //
-                //
-                // console.log("Offset X:", offsetX, "Offset Y:", offsetY);
-                //
-                // // Показать возможность вставки в контейнер
-                // editor.getComponents().forEach((component) => {
-                //     const {left, top, width, height} = component.getBoundingRect();
-                //     if (offsetX >= left && offsetX <= left + width && offsetY >= top && offsetY <= top + height) {
-                //         component.addClass("droppable-hover");
-                //     }
-                // });
             });
 
             // Визуальная индикация, что контейнер может принимать компоненты
@@ -704,41 +571,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             editor.Panels.removeButton('options', 'gjs-open-import-webpage');
 
             setEditorView(editor);
-
-            // editor.BlockManager.add('abs-container', {
-            //     label: 'Контейнер',
-            //     content: {
-            //         tagName: 'div',
-            //         type: 'default',
-            //         droppable: true,
-            //         style: {
-            //             position: 'relative',
-            //             width: '400px',
-            //             height: '400px',
-            //             border: '2px dashed #aaa',
-            //             margin: '20px',
-            //         }
-            //     }
-            // });
-            //
-            // editor.BlockManager.add('abs-child', {
-            //     label: 'Абсолютный блок',
-            //     content: {
-            //         tagName: 'div',
-            //         type: 'default',
-            //         draggable: true,
-            //         droppable: true,
-            //         style: {
-            //             position: 'absolute',
-            //             top: '50px',
-            //             left: '50px',
-            //             width: '100px',
-            //             height: '100px',
-            //             background: '#ffc',
-            //             border: '1px solid #333',
-            //         }
-            //     }
-            // });
 
             document.querySelector('.gjs-pn-devices-c').querySelector('.gjs-pn-buttons').innerHTML = "" // удаляем дефолтный div с девайсами
 
@@ -1246,7 +1078,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
                 let endTime = performance.now();
                 const seconds = (endTime - startTime) / 1000; // Преобразуем миллисекунды в секунды
-                console.log("Рендер + данные: " + seconds.toFixed(3))
+                // console.log("Рендер + данные: " + seconds.toFixed(3))
             }, 1300)
 
         }
@@ -1525,33 +1357,33 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                             <div className="p-1 hover:bg-gray-200">
                                 <button onClick={addReportTitleBand}
                                         className="flex-col justify-center justify-items-center">
-                                    <img src="/icons/ReportTitle.png" className="icon-band" alt="Report title"/>
+                                    <img src="/icons/ReportTitle.png" className="icon-band" alt="Report title" draggable="false"/>
                                     <span className="text-xs font-medium">Заголовок отчета</span>
                                 </button>
                             </div>
                             <div className="p-1 hover:bg-gray-200">
                                 <button onClick={addPageHeaderBand}
                                         className="flex-col justify-center justify-items-center">
-                                    <img src="/icons/PageHeader.png" className="icon-band" alt="Page header"/>
+                                    <img src="/icons/PageHeader.png" className="icon-band" alt="Page header" draggable="false"/>
                                     <span className="text-xs font-medium">Заголовок страницы</span>
                                 </button>
                             </div>
                             <div className="p-1 hover:bg-gray-200">
                                 <button onClick={addReportSummaryBand}
                                         className="flex-col justify-center justify-items-center">
-                                    <img src="/icons/ReportSummary.png" className="icon-band" alt="Report Summary"/>
+                                    <img src="/icons/ReportSummary.png" className="icon-band" alt="Report Summary" draggable="false"/>
                                     <span className="text-xs font-medium">Подвал отчета</span>
                                 </button>
                             </div>
                             <div className="p-1 hover:bg-gray-200">
                                 <button onClick={addPageFooterBand}
                                         className="flex-col justify-center justify-items-center">
-                                    <img src="/icons/PageFooter.png" className="icon-band" alt="Page footer"/>
+                                    <img src="/icons/PageFooter.png" className="icon-band" alt="Page footer" draggable="false"/>
                                     <span className="text-xs font-medium">Подвал страницы</span>
                                 </button>
                             </div>
                             <div className="p-1 hover:bg-gray-200 flex-col justify-center justify-items-center">
-                                <img src="/icons/DataBand.png" className="icon-band" alt="Data band"/>
+                                <img src="/icons/DataBand.png" className="icon-band" alt="Data band" draggable="false"/>
                                 <Dropdown options={dataBandsOpt} onSelect={handleSelectTableBand} label={"Бэнды"}/>
                             </div>
                             <div className=" hover:bg-gray-200 flex flex-col justify-center justify-items-center">
