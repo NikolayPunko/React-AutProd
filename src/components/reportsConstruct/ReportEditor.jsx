@@ -2,6 +2,8 @@ import React, {forwardRef, useEffect, useRef, useState} from 'react';
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./../reportsConstruct/ReportEditor.css";
 
+import plugin from 'grapesjs-blocks-basic';
+
 
 import * as XLSX from "xlsx";
 import html2canvas from "html2canvas";
@@ -93,7 +95,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
         const [css, setCss] = useState("");
 
         const [isBookOrientation, setIsBookOrientation] = useState(true);
-        const widthPage = isBookOrientation? "794":"1123";
+        const widthPage = isBookOrientation ? "794" : "1123";
 
 
         pdfMake.addVirtualFileSystem(pdfFonts);
@@ -104,69 +106,34 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 container: editorRef.current,
                 telemetry: false,
                 fromElement: true,
-                // height: "1200px",
+                height: 1200+"px",
                 width: 'auto',
                 default_locale: 'ru',
-                // cssComposer: false,
-                // allowScripts: true,
-                // avoidInlineStyle: false,
-                // cleanHtml: false,
-                // domComponents: {
-                //     parser: {
-                //         html: {
-                //             allowScripts: true,
-                //             allowUnsafeAttr: true,
-                //             keepUnusedStyles: true,
-                //             keepInlineStyles: true  // Критически важный параметр
-                //         }
-                //     }
-                // },
-
                 i18n: {
-                    locale: 'ru', // default locale
-                    detectLocale: true, // by default, the editor will detect the language
-                    localeFallback: 'ru', // default fallback
+                    locale: 'ru',
+                    detectLocale: true,
+                    localeFallback: 'ru',
                     messages: {ru},
                 },
                 dragMode: 'absolute',  //https://github.com/GrapesJS/grapesjs/issues/1936 почитать, полезные вещи
-                // dragMode: 'transition',
                 selectorManager: {componentFirst: true},
                 storageManager: false, // Отключаем сохранение
-                // panels: { defaults: [] }, // Убираем стандартные панелиnpm
-                plugins: [grapesjspresetwebpage],
-                pluginsOpts: {
-                    "plugin": ['map']
+
+                plugins: [grapesjspresetwebpage, plugin],
+
+                blockManager:{
+                    blocks: []
                 },
                 style: [
-                    //     `
-                    //  .gjs-selected {
-                    //     outline: none !important;
-                    //     outline-offset: -1px;
-                    // }`
+
                 ],
                 canvas: {
-                    //  styles: [`
-                    //    body {
-                    //      overflow: hidden;
-                    //    }
-                    //    .gjs-cv-canvas {
-                    //      width: 210mm;
-                    //      height: 297mm;
-                    //      margin: auto;
-                    //
-                    //      overflow: hidden;
-                    //    }
-                    // `]
-                },
 
+                },
                 // Очищаем список устройств
                 deviceManager: {
                     devices: [], // Полностью убираем все предустановленные размеры
-                }, // styleManager: {
-                //     sectors: [
-                //         // Отображаем только необходимые настройки стилей
-                //     ]
-                // }
+                },
             });
 
 
@@ -191,31 +158,16 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
                 }
 
-
-                // canvasElement.style.margin = '10px';
-                // canvasElement.style.padding = '20px';
-
-                // canvasElement.style.marginTop = '20px';
                 canvasElement.style.backgroundColor = '#949494';
                 canvasElement.style.border = '5px';
                 canvasElement.style.overflow = 'hidden';
 
-
-                // editor.Canvas.getBody().style.margin = '20px';
                 editor.Canvas.getBody().style.backgroundColor = '#9a9a9a';
-                // editor.Canvas.getBody().style.padding = '20px';
                 editor.Canvas.getBody().style.backgroundColor = '#ffffff';
                 editor.Canvas.getBody().style.overflow = 'hidden';
-                // editor.Canvas.getBody().style.position = 'relative';
-
-
             }, 200);
 
             editor.setComponents(pages[0].content);
-
-
-            // editor.setComponents(`<span style="text-align:center; padding: 10px; width:300px; left: 60px;
-            //   position: absolute; top:60px; font-size: larger;font-weight: 700;">Начните создание отчета...</span>`);
 
 
             // Добавляем стили для блоков
@@ -258,7 +210,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             const blocks = [
                 {
                     id: "text-block",
-                    label: "Текстовое поле",
+                    label: '<i class=\"fa-solid fa-font\"></i>Текстовое поле',
                     content: '<div class="band-content" style="word-wrap: break-word; font-size: 14px; z-index:100">Введите текст...</div>',
                     category: "Текст",
                     draggable: true,
@@ -274,6 +226,23 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             editor.BlockManager.remove('quote')
             editor.BlockManager.remove('link-block')
             editor.BlockManager.remove('text-basic')
+            editor.BlockManager.remove('column1')
+            editor.BlockManager.remove('column2')
+            editor.BlockManager.remove('column3')
+            editor.BlockManager.remove('column3-7')
+            editor.BlockManager.remove('text')
+            editor.BlockManager.remove('link')
+            editor.BlockManager.remove('video')
+            editor.BlockManager.remove('map')
+
+
+            // Переименовываем категории у базового блока изобюражения
+            editor.BlockManager.getAll().forEach(block => {
+                if (block.getCategoryLabel() === 'Basic') {
+                    block.set('category', 'Графика');
+                    block.set('label', 'Изображение');
+                }
+            });
 
 
             editor.on('component:add', component => {
@@ -288,71 +257,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 }
             });
 
-
-            // function findTargetComponentAtPoint(components, x, y, ignoreEl) {
-            //     let target = null;
-            //
-            //     components.each(comp => {
-            //
-            //         const view = comp.view;
-            //         if (!view || !view.el || view.el === ignoreEl) return;
-            //
-            //
-            //         const rect = view.el.getBoundingClientRect();
-            //         if (
-            //             x >= rect.left &&
-            //             x <= rect.right &&
-            //             y >= rect.top &&
-            //             y <= rect.bottom
-            //         ) {
-            //             target = comp;
-            //             const nested = findTargetComponentAtPoint(comp.components(), x, y, ignoreEl);
-            //             if (nested) target = nested;
-            //         }
-            //     });
-            //
-            //     return target;
-            // }
-            //
-            // editor.on('component:drag:end', (model) => {
-            // // editor.on('component:add', (model) => {
-            //     console.log(model)
-            //
-            //     setTimeout(() => {
-            //         console.log('component:drag:end')
-            //         const view = model.target.view;
-            //         if (!view || !view.el) return;
-            //         console.log('прошел проверку')
-            //         const el = view.el;
-            //
-            //
-            //
-            //         const rect = el.getBoundingClientRect();
-            //         const x = rect.left + rect.width / 2;
-            //         const y = rect.top + rect.height / 2;
-            //
-            //         const all = editor.DomComponents.getComponents();
-            //         const target = findTargetComponentAtPoint(all, x, y, el);
-            //
-            //         if (target && target !== model.parent) {
-            //             const parent = model.parent;
-            //             // console.log(parent)
-            //             // parent.remove(model.target, { temporary: true });
-            //             target.append(model.target);
-            //             console.log('Добавлено в нового родителя:', target);
-            //         }
-            //
-            //     }, 0); // Небольшая задержка для обновления состояния
-            //
-            // });
-
-
-            // editor.on('component:update', (component) => {
-            //     // handleStyleChange(component);
-            //     console.log('change style')
-            //     console.log(component)
-            //
-            // });
 
             //для того чтобы сдвигать описание футера страницы при изменении высоты
             editor.on('component:styleUpdate:height', (component) => {
@@ -558,11 +462,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 }
             });
 
-            // // Событие добавления компонента
-            // editor.on("component:add", (model) => {
-            //     // console.log("Компонент добавлен:", model);
-            // });
-
             // Событие начала перетаскивания компонента
             editor.on("component:drag:start", (model) => {
                 // console.log("Началось перетаскивание компонента:", model);
@@ -574,7 +473,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
             // Обработчик события перемещения компонента
             editor.on("component:drag:stop", (model) => {
-                console.log("Перетаскивание завершено:", model);
+                // console.log("Перетаскивание завершено:", model);
                 // Убираем индикатор с контейнера
                 editor.getComponents().forEach((comp) => {
                     comp.removeClass("droppable-hover");
@@ -585,27 +484,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 if (parent && parent.get("droppable")) {
                     parent.append(model); // Вставляем элемент внутрь родителя
                 }
-            });
-
-            // Логика добавления визуального индикатора при перетаскивании
-            editor.on("component:drag:start", (model) => {
-                // const componentEl = model.target.view.el;
-                // const canvasEl = editor.Canvas.getElement();
-                //
-                // // Перемещение элементов относительно канваса
-                // const offsetX = componentEl.getBoundingClientRect().left - canvasEl.getBoundingClientRect().left;
-                // const offsetY = componentEl.getBoundingClientRect().top - canvasEl.getBoundingClientRect().top;
-                //
-                //
-                // console.log("Offset X:", offsetX, "Offset Y:", offsetY);
-                //
-                // // Показать возможность вставки в контейнер
-                // editor.getComponents().forEach((component) => {
-                //     const {left, top, width, height} = component.getBoundingRect();
-                //     if (offsetX >= left && offsetX <= left + width && offsetY >= top && offsetY <= top + height) {
-                //         component.addClass("droppable-hover");
-                //     }
-                // });
             });
 
             // Визуальная индикация, что контейнер может принимать компоненты
@@ -693,41 +571,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             editor.Panels.removeButton('options', 'gjs-open-import-webpage');
 
             setEditorView(editor);
-
-            // editor.BlockManager.add('abs-container', {
-            //     label: 'Контейнер',
-            //     content: {
-            //         tagName: 'div',
-            //         type: 'default',
-            //         droppable: true,
-            //         style: {
-            //             position: 'relative',
-            //             width: '400px',
-            //             height: '400px',
-            //             border: '2px dashed #aaa',
-            //             margin: '20px',
-            //         }
-            //     }
-            // });
-            //
-            // editor.BlockManager.add('abs-child', {
-            //     label: 'Абсолютный блок',
-            //     content: {
-            //         tagName: 'div',
-            //         type: 'default',
-            //         draggable: true,
-            //         droppable: true,
-            //         style: {
-            //             position: 'absolute',
-            //             top: '50px',
-            //             left: '50px',
-            //             width: '100px',
-            //             height: '100px',
-            //             background: '#ffc',
-            //             border: '1px solid #333',
-            //         }
-            //     }
-            // });
 
             document.querySelector('.gjs-pn-devices-c').querySelector('.gjs-pn-buttons').innerHTML = "" // удаляем дефолтный div с девайсами
 
@@ -865,7 +708,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
         };
 
-
         const updateCanvasZoom = (newZoom) => {
             if (!editorView) return;
             const frame = editorView.Canvas.getElement();
@@ -887,20 +729,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             if (editorView) updateCanvasZoom(zoom);
         }, [zoom]);
 
-        function downloadFile(content, filename) {
-            const blob = new Blob([content], {type: 'text/html;charset=utf-8'});
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            setTimeout(() => {
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            }, 100);
-        }
 
         function addBlocks(editor) {
 
@@ -947,7 +775,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         'background-color': '#000',
                         'z-index': '100',
                         'margin': '0',
-
                     }
                 },
                 category: "Линии",
@@ -966,58 +793,15 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         'z-index': '99',
                         'margin': '0',
                         'display': 'inline-block',
-
                     }
                 },
                 category: "Линии",
             });
-
-            // editor.Blocks.add('icon-block', {
-            //     label: '<i class="fas fa-camera"></i> Иконка', // Иконка Font Awesome
-            //     content: {
-            //         type: 'text', // Тип контента
-            //         tagName: 'div',
-            //         content: 'Это блок с иконкой',
-            //         style: {'padding': '10px', 'border': '1px solid #ccc'}
-            //     },
-            //     category: 'Мои блоки', // Категория блока
-            //     attributes: {class: 'gjs-fonts gjs-f-icon-block'}, // Атрибуты блока
-            //     icon: '<i class="fas fa-camera"></i>', // Используйте нужный HTML-код иконки
-            // });
-
-
-            // editor.BlockManager.add("paragraph", {
-            //     label: "Абзац", content: "<p style=\"font-size: 14px; z-index:100\">Введите текст отчета...</p>",
-            // });
-
-//             editor.BlockManager.add("table", {
-//                 label: "Таблица",
-//                 content: `
-//                 <table class="table table-bordered" style="">
-// <!--                  <thead>-->
-// <!--                    <tr><th><div>Заголовок 1</div></th><th><div>Заголовок 2</div></th></tr>-->
-// <!--                  </thead>-->
-//                   <tbody>
-//                     <tr>
-//                        <td><div>Данные 1</div></td>
-//                        <td><div>Данные 2</div></td>
-//                        <td><div>Данные 3</div></td>
-//                        <td><div>Данные 4</div></td>
-//                        <td><div>Данные 5</div></td>
-//                     </tr>
-//                   </tbody>
-//                 </table>
-//               `,
-//                 category: "Text",
-//                 draggable: false,
-//                 droppable: false,
-//             });
-
         }
 
         function addDataBand(tableName) {
             //Ограничение на один бэнд с данными пока что
-            if(editorView.getHtml().includes("data-band=\"true\"")) {
+            if (editorView.getHtml().includes("data-band=\"true\"")) {
                 return;
             }
 
@@ -1086,7 +870,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                pointer-events: none;
                           ">Второстепенные данные: ${childName}</div>
                           <div data-band-child="true" id="${childName}" data-gjs-type="locked-band" draggable="false" style="height: 100px; width: ${widthPage}px; background: #f6f6f6; position: relative; border: 0px dashed #f4f4f4; padding: 0px 0px 0px 0px; overflow: visible;">
-                             <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px">Дочерний бэнд: {{field_1}}</p>
+                             <p data-field="true"  style="position: absolute; top: 60px; left: 20px; margin: 0px; z-index: 9999">Дочерний бэнд: {{field_1}}</p>
                           </div>
                        `,
                     },
@@ -1124,7 +908,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                           ">Заголовок страницы</div>
                             <div band="true" id="pageHeader" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; background: #fbfbfb; position: relative;
                               border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
-                               <h2 style="">Заголовок страницы</h2>
+                               <h2 style="position: absolute; top: 30px; left: 20px; margin: 0px; z-index: 9999">Заголовок страницы</h2>
                             </div>
                           `,
                     },
@@ -1162,7 +946,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                    pointer-events: none;
                             ">Заголовок отчета</div>
                             <div band="true" id="reportTitle" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
-                               <h2 style="">Заголовок отчета</h2>
+                               <h2 style="position: absolute; top: 30px; left: 20px; margin: 0px; z-index: 9999">Заголовок отчета</h2>
                             </div>
                                `,
                     },
@@ -1200,7 +984,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                             ">Подвал страницы</div>
                              <div band="true" id="pageFooter" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; position: absolute; bottom: 0;
                               background: #fbfbfb;  border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
-                               <h2 style="width: 250px;">Подвал страницы</h2>
+                               <h2 style="position: absolute; top: 30px; left: 20px; margin: 0px; width: 250px; z-index: 9999">Подвал страницы</h2>
                             </div>
                             `,
                     },
@@ -1234,7 +1018,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                                    pointer-events: none;
                             ">Подвал отчета</div>
                             <div band="true" id="reportSummary" data-gjs-type="locked-band" style="height: 100px; width: ${widthPage}px; background: #fbfbfb; position: relative; border: 0px dashed #3b82f6; padding: 0px 0px 0px 0px; overflow: visible;">
-                               <h2 style="">Подвал отчета</h2>
+                               <h2 style="position: absolute; top: 30px; left: 20px; margin: 0px; z-index: 9999">Подвал отчета</h2>
                             </div> `,
                     },
                 },
@@ -1255,10 +1039,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                     encryptData(dbPassword), dbDriver, sql, content, styles, parameters, script, isSqlMode);
                 return response.data;
             } catch (e) {
-                setError("Ошибка получения данных отчета: "+e.response.data.message)
+                setError("Ошибка получения данных отчета: " + e.response.data.message)
                 setIsModalError(true);
-            } finally {
-                // setIsLoading(false);
+                setIsLoading(false);
             }
         }
 
@@ -1290,12 +1073,12 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             setIsJavaEditor(false)
             setIsViewMode(true)
 
-            setTimeout(()=>{
+            setTimeout(() => {
                 setIsLoading(false)
 
                 let endTime = performance.now();
                 const seconds = (endTime - startTime) / 1000; // Преобразуем миллисекунды в секунды
-                console.log("Рендер + данные: " + seconds.toFixed(3))
+                // console.log("Рендер + данные: " + seconds.toFixed(3))
             }, 1300)
 
         }
@@ -1480,7 +1263,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
 
         useEffect(() => {
-            if(isSqlMode){
+            if (isSqlMode) {
                 extractTablesAndCheckSQL();
             }
         }, [sql]);
@@ -1574,33 +1357,33 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                             <div className="p-1 hover:bg-gray-200">
                                 <button onClick={addReportTitleBand}
                                         className="flex-col justify-center justify-items-center">
-                                    <img src="/icons/ReportTitle.png" className="icon-band" alt="Report title"/>
+                                    <img src="/icons/ReportTitle.png" className="icon-band" alt="Report title" draggable="false"/>
                                     <span className="text-xs font-medium">Заголовок отчета</span>
                                 </button>
                             </div>
                             <div className="p-1 hover:bg-gray-200">
                                 <button onClick={addPageHeaderBand}
                                         className="flex-col justify-center justify-items-center">
-                                    <img src="/icons/PageHeader.png" className="icon-band" alt="Page header"/>
+                                    <img src="/icons/PageHeader.png" className="icon-band" alt="Page header" draggable="false"/>
                                     <span className="text-xs font-medium">Заголовок страницы</span>
                                 </button>
                             </div>
                             <div className="p-1 hover:bg-gray-200">
                                 <button onClick={addReportSummaryBand}
                                         className="flex-col justify-center justify-items-center">
-                                    <img src="/icons/ReportSummary.png" className="icon-band" alt="Report Summary"/>
+                                    <img src="/icons/ReportSummary.png" className="icon-band" alt="Report Summary" draggable="false"/>
                                     <span className="text-xs font-medium">Подвал отчета</span>
                                 </button>
                             </div>
                             <div className="p-1 hover:bg-gray-200">
                                 <button onClick={addPageFooterBand}
                                         className="flex-col justify-center justify-items-center">
-                                    <img src="/icons/PageFooter.png" className="icon-band" alt="Page footer"/>
+                                    <img src="/icons/PageFooter.png" className="icon-band" alt="Page footer" draggable="false"/>
                                     <span className="text-xs font-medium">Подвал страницы</span>
                                 </button>
                             </div>
                             <div className="p-1 hover:bg-gray-200 flex-col justify-center justify-items-center">
-                                <img src="/icons/DataBand.png" className="icon-band" alt="Data band"/>
+                                <img src="/icons/DataBand.png" className="icon-band" alt="Data band" draggable="false"/>
                                 <Dropdown options={dataBandsOpt} onSelect={handleSelectTableBand} label={"Бэнды"}/>
                             </div>
                             <div className=" hover:bg-gray-200 flex flex-col justify-center justify-items-center">

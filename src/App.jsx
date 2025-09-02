@@ -34,7 +34,7 @@ function App() {
                     <Route path="/" element={<ReportsPage/>}/>
                     <Route path="/scheduler" element={<SchedulePage/>}/>
                     <Route path="/designer" element={<ReportDesignerPage/>}/>
-                    <Route path="/view" element={<ViewReportPage/>}/>
+                    <Route path="/report" element={<ViewReportPage/>}/>
                     <Route path="/" element={<PrivateRoute  />}>
 
                     </Route>
