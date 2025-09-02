@@ -67,4 +67,21 @@ export default class ReportService {
         return options;
     }
 
+    //Добавляем параметры которые не были заданы
+    static addDefaultParameters(params, paramDescriptions) {
+        const result = {...params};
+        paramDescriptions.forEach(description => {
+            const {key, default: defaultValue} = description;
+            if (!(key in result) || result[key] === undefined || result[key] === null) {
+                if (description.type === "DATE" && defaultValue === true) {
+                    result[key] = new Date().toISOString().split('T')[0];
+                } else {
+                    result[key] = defaultValue;
+                }
+            }
+        });
+
+        return result;
+    }
+
 }

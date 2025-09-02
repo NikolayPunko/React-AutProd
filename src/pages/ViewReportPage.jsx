@@ -63,26 +63,10 @@ function ViewReportPage() {
         }
     }, [reportTemplate, reportData]);
 
-    //Добавляем параметры которые не были заданы
-    function addDefaultParameters(params, paramDescriptions) {
-        const result = { ...params };
-        paramDescriptions.forEach(description => {
-            const { key, default: defaultValue } = description;
-            if (!(key in result) || result[key] === undefined || result[key] === null) {
-                if(description.type === "DATE" && defaultValue === true){
-                    result[key] = new Date().toISOString().split('T')[0];
-                } else {
-                    result[key] = defaultValue;
-                }
-            }
-        });
-
-        return result;
-    }
 
     async function viewReport(parameters, reportName) {
         let template = await fetchReportTemplate(reportName);
-        parameters = addDefaultParameters(parameters, JSON.parse(template.parameters));
+        parameters = ReportService.addDefaultParameters(parameters, JSON.parse(template.parameters));
         await fetchReportData(reportName, parameters);
     }
 
