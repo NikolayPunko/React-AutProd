@@ -10,7 +10,6 @@ import ViewReportPage from "./pages/ViewReportPage";
 import SchedulePage from "./pages/SchedulePage";
 
 
-
 function App() {
 
     const {store} = useContext(Context);
@@ -18,11 +17,13 @@ function App() {
     const [isCheckAuth, setIsCheckAuth] = useState(false);
 
     useEffect(() => {
-        if (sessionStorage.getItem('tokenAutomationProduction')) {
+        // if (sessionStorage.getItem('tokenAutomationProduction')) {
+        if (localStorage.getItem('tokenAutomationProduction')) {
             store.checkAuth().then(() => setIsCheckAuth(true));
         } else {
             setIsCheckAuth(true)
         }
+        console.log(store)
     }, [])
 
 
@@ -32,12 +33,14 @@ function App() {
                 <Routes>
 
                     <Route path="/" element={<ReportsPage/>}/>
-                    <Route path="/scheduler" element={<SchedulePage/>}/>
-                    <Route path="/designer" element={<ReportDesignerPage/>}/>
                     <Route path="/report" element={<ViewReportPage/>}/>
-                    <Route path="/" element={<PrivateRoute  />}>
 
+
+                    <Route path="/" element={<PrivateRoute requiredRoles={['ROLE_ADMIN']} />}>
+                        <Route path="/designer" element={<ReportDesignerPage/>}/>
+                        <Route path="/scheduler" element={<SchedulePage/>}/>
                     </Route>
+
 
 
 

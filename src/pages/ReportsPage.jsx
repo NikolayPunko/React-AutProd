@@ -6,6 +6,7 @@ import Loading from "../components/loading/Loading";
 import {ModalNotify} from "../components/modal/ModalNotify";
 import {ModalParameter} from "../components/reportsConstruct/ModalParameter";
 import {useNavigate} from "react-router-dom";
+import RoleGuard from "../components/RoleGuard";
 
 
 function ReportsPage() {

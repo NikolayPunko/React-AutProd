@@ -12,4 +12,31 @@ export default class AuthService {
         return $api.get(`${API_URL}/api/user/profile`);
     }
 
+    static decodeToken = (token) => {
+        try {
+            const payload = token.split('.')[1];
+            return JSON.parse(atob(payload));
+        } catch (error) {
+            return null;
+        }
+    };
+
+    static getUserRoles = () => {
+        const token = sessionStorage.getItem('tokenAutomationProduction');
+        if (!token) return [];
+
+        const decoded = AuthService.decodeToken(token);
+        return decoded?.roles || [];
+    };
+
+    static getUserRolesByToken = (token) => {
+        if (!token) return [];
+
+        const decoded = AuthService.decodeToken(token);
+        console.log(decoded)
+        return decoded?.roles || [];
+    };
+
+
+
 }
