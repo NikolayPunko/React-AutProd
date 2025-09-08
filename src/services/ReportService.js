@@ -30,6 +30,14 @@ export default class ReportService {
         return $api.post(`${API_URL}/api/report/data/` + reportName, {parameters})
     }
 
+    static async updateReportTemplate(report) {
+        return $api.patch(`${API_URL}/api/report/` + report.id, {
+            id: report.id,
+            reportName: report.reportName,
+            reportCategory: report.reportCategory
+        })
+    }
+
     static async getDataForReport(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, content, styles, parameters, script, sqlMode) {
         return $api.post(`${API_URL}/api/report/data`,  {
             reportTemplateDTO: {

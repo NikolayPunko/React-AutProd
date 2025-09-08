@@ -17,13 +17,11 @@ function App() {
     const [isCheckAuth, setIsCheckAuth] = useState(false);
 
     useEffect(() => {
-        // if (sessionStorage.getItem('tokenAutomationProduction')) {
         if (localStorage.getItem('tokenAutomationProduction')) {
             store.checkAuth().then(() => setIsCheckAuth(true));
         } else {
             setIsCheckAuth(true)
         }
-        console.log(store)
     }, [])
 
 

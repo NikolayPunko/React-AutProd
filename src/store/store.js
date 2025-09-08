@@ -26,11 +26,12 @@ export default class Store {
     async login(username, password){
         this.isAuthInProgress = true;
         try {
+            localStorage.removeItem('tokenAutomationProduction');
             const response = await AuthService.login(username,password);
             localStorage.setItem('tokenAutomationProduction', response.data.uuid);
             await this.checkAuth()
         } catch (e){
-            console.log(e.response?.data?.message)
+            throw e;
         } finally {
             this.isAuthInProgress = false;
         }

@@ -8,6 +8,8 @@ function Authorization() {
 
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [errorMessage, setErrorMessage] = useState("Неверные логин или пароль!");
+    const [isError, setIsError] = useState(false);
     const {store} = useContext(Context);
 
     const navigate = useNavigate();
@@ -18,9 +20,6 @@ function Authorization() {
     const [hidePassword, setHidePassword] = useState(true);
 
 
-    const btnClass1 = ['px-2 w-1/2 rounded-l text-sm font-medium', defaultInput ? 'bg-blue-700 text-white' : 'hover:bg-gray-100'];
-    const btnClass2 = ['px-2 w-1/2 rounded-r text-sm font-medium', defaultInput ? 'hover:bg-gray-100' : 'bg-blue-700 text-white'];
-
     const textMsg = defaultInput ? "Авторизация пользователя с использованием логина и пароля." : "Для авторизации необходимо привязать Вашу ЭЦП в настройках профиля (Настройки > Мой профиль) личного кабинета.";
 
     function login() {
@@ -28,9 +27,9 @@ function Authorization() {
             if (store.isAuth) {
                 navigate(from, {replace: true});
             }
-
+        }).catch(() => {
+            setIsError(true);
         });
-
     }
 
     useEffect(() => {
@@ -97,6 +96,14 @@ function Authorization() {
                                 </div>
                             </div>
                         </div>
+
+                        <div className="h-0 text-center">
+                            {isError &&
+                                <span className="text-red-600">{errorMessage}</span>
+                            }
+                        </div>
+
+
                     </>
                 }
 
@@ -104,7 +111,7 @@ function Authorization() {
                 <div className="flex flex-col pt-8 items-center">
 
                     <button
-                        className="w-[140px] h-[40px] text-white rounded shadow-inner bg-blue-800 hover:bg-blue-700"
+                        className="w-[140px] h-[40px] text-white rounded shadow-inner bg-blue-800 hover:bg-blue-700 "
                         onClick={login}>
                         Войти
                     </button>
