@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import ReportsPage from "./pages/ReportsPage";
 import ViewReportPage from "./pages/ViewReportPage";
 import SchedulePage from "./pages/SchedulePage";
+import AdminPanelPage from "./pages/AdminPanelPage";
 
 
 function App() {
@@ -34,12 +35,18 @@ function App() {
                     <Route path="/report" element={<ViewReportPage/>}/>
 
 
-                    <Route path="/" element={<PrivateRoute requiredRoles={['ROLE_ADMIN']} />}>
-                        <Route path="/designer" element={<ReportDesignerPage/>}/>
-                        <Route path="/scheduler" element={<SchedulePage/>}/>
+
+                    <Route path="/designer" element={<PrivateRoute requiredRoles={['ROLE_ADMIN', 'ROLE_EDITOR']} />}>
+                        <Route index element={<ReportDesignerPage/>}/>
                     </Route>
 
+                    <Route path="/scheduler" element={<PrivateRoute requiredRoles={['ROLE_ADMIN']} />}>
+                        <Route index element={<SchedulePage/>}/>
+                    </Route>
 
+                    <Route path="/admin" element={<PrivateRoute requiredRoles={['ROLE_ADMIN']} />}>
+                        <Route index element={<AdminPanelPage/>}/>
+                    </Route>
 
 
                     <Route path="/login" element={<Authorization/>}/>

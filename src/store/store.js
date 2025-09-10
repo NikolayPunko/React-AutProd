@@ -57,7 +57,7 @@ export default class Store {
             const token = AuthService.decodeToken(localStorage.getItem("tokenAutomationProduction"));
             this.user.username = token?.username || "";
             this.user.userRoles = token?.roles || [];
-            console.log( this.user.userRoles)
+            // console.log( this.user.userRoles)
         } catch (e){
             console.log(e.response?.data?.message)
         } finally {

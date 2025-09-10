@@ -20,7 +20,7 @@ const PrivateRoute = ({requiredRoles = []}) => {
 
     const hasAccess = store.hasAnyRole(requiredRoles)
 
-//Доделать чтобы не видно было вкладок пользователям у которых недостаточно прав
+
     if (store.isAuth && hasAccess) {
         return <Outlet/>
     } else {

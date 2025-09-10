@@ -32,8 +32,8 @@ function ReportsPage() {
             const response = await ReportService.getReportsNameGroupCategory();
             setReportsName(response.data);
         } catch (e) {
-            setError(e.response.data.message);
             setIsModalError(true);
+            setError(e.response?.data.message || e.message);
         } finally {
             setIsLoading(false);
         }
@@ -44,18 +44,14 @@ function ReportsPage() {
             const response = await ReportService.getParametersMetaByReportName(reportName);
             setParametersMeta(response.data);
         } catch (e) {
-            setError(e.response.data.message);
             setIsModalError(true);
+            setError(e.response.data.message);
         }
     }
 
     useEffect(() => {
         fetchReportsName();
     }, []);
-
-    useEffect(() => {
-        console.log(selectName);
-    }, [selectName]);
 
 
     async function handleReportClick(reportName) {
@@ -75,6 +71,11 @@ function ReportsPage() {
         const encodedParams = encodeURIComponent(JSON.stringify(parameters));
         const url = `/report?name=${selectName}&params=${encodedParams}`;
         navigate(url);
+    }
+
+    async function closeReportSettings(){
+        setIsModalSettings(false);
+        await fetchReportsName();
     }
 
     return (<>
@@ -104,7 +105,7 @@ function ReportsPage() {
 
                                     <div className="mt-2 ">
                                         {option.reports.map((report, reportIndex) => (
-                                            <div className="flex flex-row rounded hover:bg-blue-50">
+                                            <div key={reportIndex} className="flex flex-row rounded hover:bg-blue-50">
 
                                                 <button
                                                     key={reportIndex}
@@ -112,11 +113,15 @@ function ReportsPage() {
                                                     className="block w-full my-1 px-2 text-left  text-blue-800 "
                                                 >
                                                     {report}
+                                                </button>
 
-                                                </button>
-                                                <button onClick={() => handleReportEditClick(report)}>
-                                                    <i className="fa-solid fa-file-pen hover:text-blue-800"></i>
-                                                </button>
+                                                {/* Для Админов */}
+                                                <RoleGuard requiredRoles={['ROLE_ADMIN', 'ROLE_EDITOR']}>
+                                                    <button onClick={() => handleReportEditClick(report)}>
+                                                        <i className="fa-solid fa-file-pen hover:text-blue-800"></i>
+                                                    </button>
+                                                </RoleGuard>
+
 
                                             </div>
                                         ))}
@@ -128,7 +133,8 @@ function ReportsPage() {
 
 
                 {isModalError &&
-                    <ModalNotify title={"Ошибка"} message={error} onClose={() => setIsModalError(false)}/>}
+                    <ModalNotify title={"Ошибка"} message={error} onClose={() => setIsModalError(false)}/>
+                }
 
 
                 {isModalParameter &&
@@ -137,7 +143,7 @@ function ReportsPage() {
                     }}/>}
 
                 {isModalSettings &&
-                    <ReportSetting reportName={selectName} onClose={() => setIsModalSettings(false)}/>}
+                    <ReportSetting reportName={selectName} onClose={closeReportSettings}/>}
 
 
 
