@@ -6,6 +6,8 @@ import Loading from "../components/loading/Loading";
 import {ModalNotify} from "../components/modal/ModalNotify";
 import {ModalParameter} from "../components/reportsConstruct/ModalParameter";
 import {useNavigate} from "react-router-dom";
+import RoleGuard from "../components/RoleGuard";
+import {ReportSetting} from "../components/report/ReportSetting";
 
 
 function ReportsPage() {
@@ -17,6 +19,7 @@ function ReportsPage() {
 
     const [isModalError, setIsModalError] = useState(false);
     const [isModalParameter, setIsModalParameter] = useState(false);
+    const [isModalSettings, setIsModalSettings] = useState(false);
 
     const [reportsName, setReportsName] = useState([]);
     const [selectName, setSelectName] = useState("unknown")
@@ -29,8 +32,8 @@ function ReportsPage() {
             const response = await ReportService.getReportsNameGroupCategory();
             setReportsName(response.data);
         } catch (e) {
-            setError(e.response.data.message);
             setIsModalError(true);
+            setError(e.response?.data.message || e.message);
         } finally {
             setIsLoading(false);
         }
@@ -41,8 +44,8 @@ function ReportsPage() {
             const response = await ReportService.getParametersMetaByReportName(reportName);
             setParametersMeta(response.data);
         } catch (e) {
-            setError(e.response.data.message);
             setIsModalError(true);
+            setError(e.response.data.message);
         }
     }
 
@@ -57,12 +60,22 @@ function ReportsPage() {
         setIsModalParameter(true);
     }
 
+    async function handleReportEditClick(reportName){
+        setSelectName(reportName);
+        setIsModalSettings(true);
+    }
+
 
     async function onSubmitParameters(parameters) {
         setIsModalParameter(false);
         const encodedParams = encodeURIComponent(JSON.stringify(parameters));
         const url = `/report?name=${selectName}&params=${encodedParams}`;
         navigate(url);
+    }
+
+    async function closeReportSettings(){
+        setIsModalSettings(false);
+        await fetchReportsName();
     }
 
     return (<>
@@ -90,14 +103,28 @@ function ReportsPage() {
                                             {index} {option.category}
                                     </span>
 
-                                    <div className="mt-2">
-                                        {option.reports.map((report, reportIndex) => (<button
-                                            key={reportIndex}
-                                            onClick={() => handleReportClick(report)}
-                                            className="block w-full my-1 px-2 text-left rounded text-blue-800 hover:bg-blue-50"
-                                        >
-                                            {report}
-                                        </button>))}
+                                    <div className="mt-2 ">
+                                        {option.reports.map((report, reportIndex) => (
+                                            <div key={reportIndex} className="flex flex-row rounded hover:bg-blue-50">
+
+                                                <button
+                                                    key={reportIndex}
+                                                    onClick={() => handleReportClick(report)}
+                                                    className="block w-full my-1 px-2 text-left  text-blue-800 "
+                                                >
+                                                    {report}
+                                                </button>
+
+                                                {/* Для Админов */}
+                                                <RoleGuard requiredRoles={['ROLE_ADMIN', 'ROLE_EDITOR']}>
+                                                    <button onClick={() => handleReportEditClick(report)}>
+                                                        <i className="fa-solid fa-file-pen hover:text-blue-800"></i>
+                                                    </button>
+                                                </RoleGuard>
+
+
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>))}
                         </div>
@@ -106,13 +133,19 @@ function ReportsPage() {
 
 
                 {isModalError &&
-                    <ModalNotify title={"Ошибка"} message={error} onClose={() => setIsModalError(false)}/>}
+                    <ModalNotify title={"Ошибка"} message={error} onClose={() => setIsModalError(false)}/>
+                }
 
 
                 {isModalParameter &&
                     <ModalParameter parameters={parametersMeta || []} onSubmit={onSubmitParameters} onClose={() => {
                         setIsModalParameter(false)
                     }}/>}
+
+                {isModalSettings &&
+                    <ReportSetting reportName={selectName} onClose={closeReportSettings}/>}
+
+
 
             </div>
 

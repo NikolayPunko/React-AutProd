@@ -13,9 +13,9 @@ export default class ReportService {
         return $api.get(`${API_URL}/api/report/` + reportName + `/parameters`)
     }
 
-    static async createReportTemplate(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, parametersMeta, content, styles, script, sqlMode, dataBands) {
+    static async createReportTemplate(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, parametersMeta, content, styles, script, sqlMode, dataBands, bookOrientation) {
         return $api.post(`${API_URL}/api/report/create`, {reportName, reportCategory, dbUrl, dbUsername,
-            dbPassword, dbDriver, sql, parameters: JSON.stringify(parametersMeta), content, styles, script, sqlMode, dataBands: JSON.stringify(dataBands)})
+            dbPassword, dbDriver, sql, parameters: JSON.stringify(parametersMeta), content, styles, script, sqlMode, dataBands: JSON.stringify(dataBands), bookOrientation})
     }
 
     static async getReportsName() {
@@ -28,6 +28,18 @@ export default class ReportService {
 
     static async getDataByReportName(reportName, parameters) {
         return $api.post(`${API_URL}/api/report/data/` + reportName, {parameters})
+    }
+
+    static async updateReportTemplate(report) {
+        return $api.patch(`${API_URL}/api/report/` + report.id, {
+            id: report.id,
+            reportName: report.reportName,
+            reportCategory: report.reportCategory
+        })
+    }
+
+    static async deleteReportTemplate(id) {
+        return $api.delete(`${API_URL}/api/report/` + id)
     }
 
     static async getDataForReport(reportName, reportCategory, dbUrl, dbUsername, dbPassword, dbDriver, sql, content, styles, parameters, script, sqlMode) {
@@ -65,6 +77,23 @@ export default class ReportService {
             options[i] = x;
         }
         return options;
+    }
+
+    //Добавляем параметры которые не были заданы
+    static addDefaultParameters(params, paramDescriptions) {
+        const result = {...params};
+        paramDescriptions.forEach(description => {
+            const {key, default: defaultValue} = description;
+            if (!(key in result) || result[key] === undefined || result[key] === null) {
+                if (description.type === "DATE" && defaultValue === true) {
+                    result[key] = new Date().toISOString().split('T')[0];
+                } else {
+                    result[key] = defaultValue;
+                }
+            }
+        });
+
+        return result;
     }
 
 }

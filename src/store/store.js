@@ -3,7 +3,10 @@ import AuthService from "../services/AuthService";
 
 export default class Store {
 
-    user = {} ;
+    user = {
+        username: "",
+        userRoles: []
+    } ;
     isAuth = false;
     isAuthInProgress = false;
 
@@ -17,17 +20,18 @@ export default class Store {
 
     setUser(user){
         this.user = user;
+        this.userRoles = user.roles || [];
     }
 
     async login(username, password){
         this.isAuthInProgress = true;
         try {
+            localStorage.removeItem('tokenAutomationProduction');
             const response = await AuthService.login(username,password);
-            console.log(response)
-            sessionStorage.setItem('tokenAutomationProduction', response.data.uuid);
+            localStorage.setItem('tokenAutomationProduction', response.data.uuid);
             await this.checkAuth()
         } catch (e){
-            console.log(e.response?.data?.message)
+            throw e;
         } finally {
             this.isAuthInProgress = false;
         }
@@ -36,7 +40,7 @@ export default class Store {
     async logout(){
         try {
             // const response = await AuthService.logout(); //не реализовано на сервере
-            sessionStorage.removeItem('tokenAutomationProduction');
+            localStorage.removeItem('tokenAutomationProduction');
             this.setAuth(false);
             this.setUser({});
         } catch (e){
@@ -47,10 +51,13 @@ export default class Store {
     async checkAuth(){
         this.isAuthInProgress = true;
         try {
-            const response = await AuthService.getAuthorizedUserData(); //временно, после доделать запрос на refresh и валидность токена
+            const response = await AuthService.getAuthorizedUserData();
             // console.log(response)
             this.setAuth(true);
-            this.setUser(response.data);
+            const token = AuthService.decodeToken(localStorage.getItem("tokenAutomationProduction"));
+            this.user.username = token?.username || "";
+            this.user.userRoles = token?.roles || [];
+            // console.log( this.user.userRoles)
         } catch (e){
             console.log(e.response?.data?.message)
         } finally {
@@ -67,6 +74,23 @@ export default class Store {
         } catch (e){
             console.log(e.response?.data?.message)
         }
+    }
+
+    // метод проверки ролей
+    hasRole(requiredRoles) {
+        if (!requiredRoles || requiredRoles.length === 0) return true;
+        return requiredRoles.some(role => this.user.userRoles.includes(role));
+    }
+
+    // метод проверки любой из ролей
+    hasAnyRole(requiredRoles) {
+        return this.hasRole(requiredRoles);
+    }
+
+    // метод проверки всех ролей
+    hasAllRoles(requiredRoles) {
+        if (!requiredRoles || requiredRoles.length === 0) return true;
+        return requiredRoles.every(role => this.user.userRoles.includes(role));
     }
 
 }

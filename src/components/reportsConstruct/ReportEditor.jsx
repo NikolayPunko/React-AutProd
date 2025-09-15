@@ -106,7 +106,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 container: editorRef.current,
                 telemetry: false,
                 fromElement: true,
-                height: 1200+"px",
+                height: 1200 + "px",
                 width: 'auto',
                 default_locale: 'ru',
                 i18n: {
@@ -121,15 +121,11 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
                 plugins: [grapesjspresetwebpage, plugin],
 
-                blockManager:{
+                blockManager: {
                     blocks: []
                 },
-                style: [
-
-                ],
-                canvas: {
-
-                },
+                style: [],
+                canvas: {},
                 // Очищаем список устройств
                 deviceManager: {
                     devices: [], // Полностью убираем все предустановленные размеры
@@ -602,6 +598,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
 
             return new Promise((resolve) => {
                 setPages((prevPages) => {
+                    console.log(prevPages)
                     const updatedPages = prevPages.map((page) => page.id === currentPage ? {
                         ...page,
                         content: html,
@@ -610,6 +607,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                     resolve(updatedPages);  // После обновления страницы вызываем resolve
                     return updatedPages;
                 });
+
             });
         };
 
@@ -672,7 +670,7 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 try {
                     reader.onload = (e) => {
                         const importedPages = JSON.parse(e.target.result);
-                        setPages(importedPages);
+                        // setPages(importedPages);
                         setCurrentPage(importedPages[0]?.id || 1);
 
                         setSettingDB({
@@ -1056,16 +1054,17 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             setIsModalParameter(true);
         }
 
-        async function enterPreviewMode(parameters) {
+        async function enterPreviewMode(params) {
+            params = ReportService.addDefaultParameters(params, parameters);
             let startTime = performance.now();
             setIsModalParameter(false);
             const data = await fetchReportData("", "", settingDB.url, settingDB.username,
-                settingDB.password, settingDB.driverClassName, sql, "", "", parameters, script, isSqlMode)
+                settingDB.password, settingDB.driverClassName, sql, "", "", params, script, isSqlMode)
             if (!data) {
                 return
             }
 
-            setDataParam(parameters)
+            setDataParam(params)
             setData(data)
             setHtml(editorView.getHtml())
             setCss(editorView.getCss())
@@ -1082,6 +1081,8 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             }, 1300)
 
         }
+
+
 
         function defineBands(html) {
             const parser = new DOMParser();
@@ -1357,28 +1358,32 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                             <div className="p-1 hover:bg-gray-200">
                                 <button onClick={addReportTitleBand}
                                         className="flex-col justify-center justify-items-center">
-                                    <img src="/icons/ReportTitle.png" className="icon-band" alt="Report title" draggable="false"/>
+                                    <img src="/icons/ReportTitle.png" className="icon-band" alt="Report title"
+                                         draggable="false"/>
                                     <span className="text-xs font-medium">Заголовок отчета</span>
                                 </button>
                             </div>
                             <div className="p-1 hover:bg-gray-200">
                                 <button onClick={addPageHeaderBand}
                                         className="flex-col justify-center justify-items-center">
-                                    <img src="/icons/PageHeader.png" className="icon-band" alt="Page header" draggable="false"/>
+                                    <img src="/icons/PageHeader.png" className="icon-band" alt="Page header"
+                                         draggable="false"/>
                                     <span className="text-xs font-medium">Заголовок страницы</span>
                                 </button>
                             </div>
                             <div className="p-1 hover:bg-gray-200">
                                 <button onClick={addReportSummaryBand}
                                         className="flex-col justify-center justify-items-center">
-                                    <img src="/icons/ReportSummary.png" className="icon-band" alt="Report Summary" draggable="false"/>
+                                    <img src="/icons/ReportSummary.png" className="icon-band" alt="Report Summary"
+                                         draggable="false"/>
                                     <span className="text-xs font-medium">Подвал отчета</span>
                                 </button>
                             </div>
                             <div className="p-1 hover:bg-gray-200">
                                 <button onClick={addPageFooterBand}
                                         className="flex-col justify-center justify-items-center">
-                                    <img src="/icons/PageFooter.png" className="icon-band" alt="Page footer" draggable="false"/>
+                                    <img src="/icons/PageFooter.png" className="icon-band" alt="Page footer"
+                                         draggable="false"/>
                                     <span className="text-xs font-medium">Подвал страницы</span>
                                 </button>
                             </div>
