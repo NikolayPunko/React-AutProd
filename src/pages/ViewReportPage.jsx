@@ -67,6 +67,7 @@ function ViewReportPage() {
     async function viewReport(parameters, reportName) {
         let template = await fetchReportTemplate(reportName);
         parameters = ReportService.addDefaultParameters(parameters, JSON.parse(template.parameters));
+        setParameters(parameters);
         await fetchReportData(reportName, parameters);
     }
 

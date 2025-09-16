@@ -1063,7 +1063,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             if (!data) {
                 return
             }
-
             setDataParam(params)
             setData(data)
             setHtml(editorView.getHtml())

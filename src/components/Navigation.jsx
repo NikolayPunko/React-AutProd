@@ -32,49 +32,24 @@ export function Navigation(props) {
 
     return (
 
-        <nav className=" lg:h-[50px] w-full flex justify-between bg-blue-800 item-center ">
-            <div className="flex flex-col w-9/12 lg:w-full lg:flex-row lg:justify-between items-center">
+        <nav className=" lg:h-[50px] w-full flex justify-between  item-center border-b-2">
+            <div className="flex flex-col w-9/12 lg:w-full lg:flex-row lg:justify-between bg-gray-50 items-center">
 
-                <div className="flex h-10 w-full text-center items-center lg:w-[225px] lg:text-center ">
-                    {!props.isOpenMenu && !props.isHiddenMenu &&
-                        <button className="w-auto lg:hidden pl-3 pt-1" onClick={handleClickMenu}>
-                            <svg width="30px" height="30px" viewBox="0 0 24 24" fill="none"
-                                 xmlns="http://www.w3.org/2000/svg" stroke="#ffffff">
-                                <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                                <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
-                                <g id="SVGRepo_iconCarrier">
-                                    <path fillRule="evenodd" clipRule="evenodd"
-                                          d="M4 5C3.44772 5 3 5.44772 3 6C3 6.55228 3.44772 7 4 7H20C20.5523 7 21 6.55228 21 6C21 5.44772 20.5523 5 20 5H4ZM3 12C3 11.4477 3.44772 11 4 11H20C20.5523 11 21 11.4477 21 12C21 12.5523 20.5523 13 20 13H4C3.44772 13 3 12.5523 3 12ZM3 18C3 17.4477 3.44772 17 4 17H20C20.5523 17 21 17.4477 21 18C21 18.5523 20.5523 19 20 19H4C3.44772 19 3 18.5523 3 18Z"
-                                          fill="#ffffff"></path>
-                                </g>
-                            </svg>
-                        </button>
-                    }
+                <div className="flex flex-row justify-center h-10 w-[202px] text-center items-center  lg:text-center ">
 
-                    {props.isOpenMenu && !props.isHiddenMenu &&
-                        <button className="w-auto lg:hidden pl-3 pt-1" onClick={handleClickMenu}>
-                            <svg width="30px" height="30px" viewBox="0 0 24 24" fill="none"
-                                 xmlns="http://www.w3.org/2000/svg" stroke="#ffffff" transform="rotate(90)">
-                                <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                                <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
-                                <g id="SVGRepo_iconCarrier">
-                                    <path fillRule="evenodd" clipRule="evenodd"
-                                          d="M4 5C3.44772 5 3 5.44772 3 6C3 6.55228 3.44772 7 4 7H20C20.5523 7 21 6.55228 21 6C21 5.44772 20.5523 5 20 5H4ZM3 12C3 11.4477 3.44772 11 4 11H20C20.5523 11 21 11.4477 21 12C21 12.5523 20.5523 13 20 13H4C3.44772 13 3 12.5523 3 12ZM3 18C3 17.4477 3.44772 17 4 17H20C20.5523 17 21 17.4477 21 18C21 18.5523 20.5523 19 20 19H4C3.44772 19 3 18.5523 3 18Z"
-                                          fill="#ffffff"></path>
-                                </g>
-                            </svg>
-                        </button>
-                    }
-                    <span className="font-medium text-white px-3 w-full ">Автоматизация производства</span>
+                    <div className="">
+                        <img src="/newpng.png" className="w-28" alt="Logo"/>
+                    </div>
+
+
                 </div>
-                <div
-                    className="flex h-10 lg:flex-row text-sm font-medium w-full px-3 space-x-4 text-white items-center">
-
+                <div className="flex h-full flex-row  font-medium w-full px-3 text-white items-center bg-blue-800">
+                    <span className="font-medium  text-white px-3 w-full">Автоматизация производства</span>
 
                 </div>
             </div>
 
-            <div className="flex h-10 w-3/12 lg:h-auto lg:w-auto justify-end items-center">
+            <div className="flex h-10 w-3/12 lg:h-auto lg:w-auto justify-end items-center bg-blue-800">
                 <div className="flex h-10  lg:h-auto lg:w-auto justify-end items-center bg-gray-50 rounded mr-4 ">
                     <div className="flex flex-row lg:px-3 ">
                         {store.isAuth &&
