@@ -100,7 +100,7 @@ function ReportsPage() {
                             {reportsName.map((option, index) => (
                                 <div key={index} className="border rounded-lg p-3">
                                     <span className="block w-full px-2 bg-blue-800 text-white rounded shadow-inner">
-                                            {index} {option.category}
+                                            {option.category}
                                     </span>
 
                                     <div className="mt-2 ">
