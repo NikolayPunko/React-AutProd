@@ -208,7 +208,12 @@ export function ViewReport({data, dataParam, html, css, onClose, isBookOrientati
 
     function replaceFieldsInHtml(html, data) {
         Object.keys(data).forEach(field => {
-            const value = data[field];
+            let value = data[field];
+
+            if(value === null){
+                value = "-";
+            }
+
             const style = data.style?.[field] || ''; // Получаем стиль для текущего поля
             // Если есть стиль для поля - оборачиваем в span
             if (style) {
