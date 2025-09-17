@@ -812,6 +812,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         highlightable: true,
                         copyable: false,
                         removable: true,
+                        attributes: {
+                            'band-parent': 'true',
+                        },
                         components: `
                               <div description-band="true" style="
                                    background: #f8b159;
@@ -858,6 +861,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         highlightable: true,
                         copyable: false,
                         removable: true,
+                        attributes: {
+                            'band-parent': 'true',
+                        },
                         components: `
                           <div description-band="true" style="
                                background: #cdcdcd;
@@ -895,6 +901,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         highlightable: true,
                         copyable: false,
                         removable: false,
+                        attributes: {
+                            'band-parent': 'true',
+                        },
                         components: `
                             <div description-band="true" style="
                                background: #cdcdcd;
@@ -934,6 +943,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         highlightable: true,
                         copyable: false,
                         removable: false,
+                        attributes: {
+                            'band-parent': 'true',
+                        },
                         components: `
                             <div description-band="true" style="
                                    background: #cdcdcd;
@@ -968,6 +980,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         highlightable: true,
                         copyable: false,
                         removable: false,
+                        attributes: {
+                            'band-parent': 'true',
+                        },
                         components: `
                              <div description-band="true" id="lablePageFooter" style="
                                    background: #cdcdcd;
@@ -1006,6 +1021,9 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                         highlightable: true,
                         copyable: false,
                         removable: false,
+                        attributes: {
+                            'band-parent': 'true',
+                        },
                         components: `
                             <div description-band="true" style="
                                    background: #cdcdcd;
@@ -1080,7 +1098,6 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
             }, 1300)
 
         }
-
 
 
         function defineBands(html) {
@@ -1215,8 +1232,58 @@ const ReportEditor = forwardRef(({htmlProps, cssProps, onCloseReport}, ref) => {
                 showModalNotif();
             } finally {
                 showModalDownloadReport();
+
             }
         }
+
+        useEffect(() => { //вызываем блокировку перемещения бэндов и других настроек при добавлении бэндов
+            lockAllBandParents()
+            lockAllBand()
+        }, [usedBands])
+
+        function lockAllBandParents() {
+            const bandParents = editorView?.DomComponents?.getWrapper()?.find('[band-parent="true"]');
+            if (!bandParents) return;
+            bandParents.forEach(element => {
+                element.set({
+                    draggable: false,    // Запрещаем перетаскивание
+                    resizable: false,    // Запрещаем изменение размера
+                    highlightable: true,
+                    copyable: false,
+                    removable: true,
+                    // Запрещаем изменение конкретных свойств позиционирования
+                    unstylable: ['position', 'top', 'left', 'right', 'bottom', 'transform', 'margin', 'padding', 'display', 'float'],
+                    // Фиксируем атрибуты
+                    attributes: { //Если указывать то оно заменяет все старые атрибуты!!!
+                        'data-locked-band': 'true',
+                        'data-gjs-type': 'locked-band',
+                        'data-position-locked': 'true',
+                        'band-parent': 'true' // Сохраняем оригинальный атрибут
+                    },
+                    // Блокируем взаимодействие
+                    // style: {
+                    //     'pointer-events': 'none'
+                    // }
+                });
+            });
+        }
+
+        function lockAllBand() {
+            const bandParents = editorView?.DomComponents?.getWrapper()?.find('[band="true"], [data-band="true"], [data-band-child="true"]');
+            if (!bandParents) return;
+            bandParents.forEach(element => {
+                element.set({
+                    draggable: false,
+                    resizable: false,
+                    highlightable: true,
+                    copyable: false,
+                    removable: true,
+                    // Запрещаем изменение конкретных свойств позиционирования
+                    unstylable: ['position', 'top', 'left', 'right', 'bottom', 'transform', 'margin', 'padding', 'display', 'float'],
+                });
+            });
+        }
+
 
         async function downloadReportsName() {
             try {
