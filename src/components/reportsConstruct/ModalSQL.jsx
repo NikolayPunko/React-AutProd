@@ -2,6 +2,7 @@ import {styleInput, styleInputWithoutRounded, styleLabelInput} from "../../data/
 import Select from "react-select";
 import {CustomStyle, CustomStyleWithoutRounded} from "../../data/styleForSelect";
 import React, {useEffect, useState} from "react";
+import { v4 as uuidv4 } from 'uuid';
 
 export function ModalSQL({value, parameters, isValid, onChange, onClose, setParameters}) {
 
@@ -21,6 +22,8 @@ export function ModalSQL({value, parameters, isValid, onChange, onClose, setPara
 
     const addParameter = (key) => {
         setParameters([...parameters, {
+            id: uuidv4(), // Генерирует уникальный ID
+            order: parameters.length,
             name: '',
             key: key,
             type: 'TEXT',
@@ -108,7 +111,13 @@ export function ModalSQL({value, parameters, isValid, onChange, onClose, setPara
 
                 <div className="max-h-36 overflow-auto">
                     {parameters.map((param,index) => (
-                        <div key={index} className="flex flex-row py-0">
+                        <div key={param.id} className="flex flex-row py-0">
+                            <input
+                                className={styleInputWithoutRounded + " font-medium w-[10%]"}
+                                type="number" min={1}
+                                value={param.order}
+                                onChange={(e) => updateParameter(param.id, 'order', e.target.value)}
+                            />
                             <input className={styleInputWithoutRounded + " font-medium mr-0 w-1/4"}
                                    value={param.name}
                                    onChange={(e) => {

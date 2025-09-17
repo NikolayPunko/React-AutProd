@@ -77,6 +77,7 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
     }, [])
 
     useEffect(() => {
+
         const initialValues = {};
        parameters
             .filter(param => param.type === "DATE")
@@ -86,6 +87,8 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
                     : param.default || '';
             });
         setValues(prevState => ({...prevState,...initialValues}));
+
+        console.log(parameters)
     }, []);
 
 
@@ -106,7 +109,16 @@ export function ModalParameter({parameters, reportName, onSubmit, onClose}) {
                 {parameters.length > 0 &&
                     <>
                         <div className="grid grid-rows-1 grid-cols-6 mb-2 justify-center ">
-                            {parameters.map(param => {
+                            {parameters
+                                .sort((a, b) => {
+                                    // Сортируем по полю order (если оно есть)
+                                    if (a.order !== undefined && b.order !== undefined) {
+                                        return a.order - b.order;
+                                    }
+                                    // Если order нет, сортируем по key или name
+                                    return (a.key || a.name).localeCompare(b.key || b.name);
+                                })
+                                .map(param => {
                                 switch (param.type) {
                                     case "TEXT":
                                         return (
