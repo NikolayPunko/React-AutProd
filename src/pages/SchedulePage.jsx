@@ -1,5 +1,5 @@
 import "./../App.css";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import moment from 'moment'
 import {Timeline} from "react-calendar-timeline";
@@ -10,6 +10,8 @@ import "./../components/scheduler/scheduler.css"
 import {ModalInfoItem} from "../components/scheduler/ModalInfoItem";
 import {ModalDateSettings} from "../components/scheduler/ModalDateSettings";
 import {ModalAnalyze} from "../components/scheduler/ModalAnalyze";
+import {ModalNotify} from "../components/modal/ModalNotify";
+import {observer} from "mobx-react-lite";
 
 
 function SchedulerPage() {
@@ -31,6 +33,8 @@ function SchedulerPage() {
     const [items, setItems] = useState([]);
 
     const [isLoading, setIsLoading] = useState(false);
+    const [msg, setMsg] = useState("");
+    const [isModalNotify, setIsModalNotify] = useState(false);
 
     const [isSolve, setIsSolve] = useState(false);
     const [score, setScore] = useState("-0hard/-0medium/-0soft");
@@ -91,7 +95,6 @@ function SchedulerPage() {
     const [timelineKey, setTimelineKey] = useState(0);
 
 
-
     const prepareDataForApi = () => {
         const lineStartTimes = {};
 
@@ -106,9 +109,31 @@ function SchedulerPage() {
         const requestData = prepareDataForApi();
 
         try {
-            await SchedulerService.assignSettings(selectDate, selectEndDate, idealEndDateTime, maxEndDateTime, requestData );
+            await SchedulerService.assignSettings(selectDate, selectEndDate, idealEndDateTime, maxEndDateTime, requestData);
         } catch (e) {
             console.error(e)
+            setMsg(e.message)
+            setIsModalNotify(true);
+        }
+    }
+
+    async function savePlan() {
+        try {
+            await SchedulerService.savePlan();
+        } catch (e) {
+            console.error(e)
+            setMsg("Ошибка сохранения отчета: " + e.message)
+            setIsModalNotify(true);
+        }
+    }
+
+    async function fetchLines() {
+        try {
+            await SchedulerService.getLines();
+        } catch (e) {
+            console.error(e)
+            setMsg("Ошибка загрузки линий отчета: " + e.message)
+            setIsModalNotify(true);
         }
     }
 
@@ -149,7 +174,7 @@ function SchedulerPage() {
         }
     }
 
-    async function exportExel(){
+    async function exportExel() {
         try {
             const response = await SchedulerService.getExel();
 
@@ -260,6 +285,7 @@ function SchedulerPage() {
     }
 
     useEffect(() => {
+        fetchLines();
         assignSettings(selectDate);
         setTimelineKey(prev => prev + 1); //для корректной прокрутки в начале
     }, [selectDate])
@@ -278,14 +304,34 @@ function SchedulerPage() {
     //Обертка для исключения в библиотеке о передаче пропсов
     const originalConsoleError = console.error;
     useEffect(() => {
-        console.error = (...args) => {
-            if (!args[0].includes('A props object containing a "key" prop')) {
-                originalConsoleError(...args);
-            }
-        };
-        return () => {
-            console.error = originalConsoleError;
-        };
+        // const originalError = console.error;
+        //
+        // console.error = (...args) => {
+        //     const errorMessage = args[0];
+        //
+        //     // Все варианты ошибок про невалидные объекты
+        //     const invalidObjectErrors = [
+        //         'Objects are not valid as a React child',
+        //         'found: object with keys',
+        //         'If you meant to render a collection of children, use an array instead'
+        //     ];
+        //
+        //     // Проверяем, нужно ли скрыть эту ошибку
+        //     const shouldSuppress = invalidObjectErrors.some(errorText =>
+        //         typeof errorMessage === 'string' && errorMessage.includes(errorText)
+        //     );
+        //
+        //     if (shouldSuppress) {
+        //         return; // Скрываем только эти ошибки
+        //     }
+        //
+        //     // Все остальные ошибки (сети, JavaScript, etc.) показываем
+        //     originalError.apply(console, args);
+        // };
+        //
+        // return () => {
+        //     console.error = originalError;
+        // };
     }, []);
 
     function onChangeSelectDate(e) {
@@ -302,123 +348,131 @@ function SchedulerPage() {
     }
 
 
-
-
     return (
-        <div className="w-full">
+        <>
+            <div className="w-full">
 
-            {selectedItem && <ModalInfoItem info={selectedItem.info} onClose={() => setSelectedItem(null)}/>}
+                {selectedItem && <ModalInfoItem info={selectedItem.info} onClose={() => setSelectedItem(null)}/>}
 
-            {isLoading &&
-                <div className="fixed bg-black/50 top-0 z-30 right-0 left-0 bottom-0 text-center ">Загрузка</div>
-            }
+                {isLoading &&
+                    <div className="fixed bg-black/50 top-0 z-30 right-0 left-0 bottom-0 text-center ">Загрузка</div>
+                }
 
-            <button onClick={() => {
-                navigate(from, {replace: true})
-            }} className="absolute ml-4 py-1 px-2 rounded text-blue-800  hover:bg-blue-50">Вернуться назад
-            </button>
+                <button onClick={() => {
+                    navigate(from, {replace: true})
+                }} className="absolute ml-4 py-1 px-2 rounded text-blue-800  hover:bg-blue-50">Вернуться назад
+                </button>
 
-            <h1 className="font-bold text-center text-2xl mb-8 mt-6">Планировщик задач</h1>
+                <h1 className="font-bold text-center text-2xl mb-8 mt-6">Планировщик задач</h1>
 
-            <div className="flex flex-row justify-between my-4 px-4 ">
-                <div className="">
-                    <button onClick={displayByParty}
-                            className={"border h-[30px] border-gray-300 border-r-0 rounded-l-md px-2 shadow-inner" + stylePartyBut}>По
-                        партиям
-                    </button>
-                    <button onClick={displayByHardware}
-                            className={"border h-[30px] border-gray-300 rounded-r-md px-2 shadow-inner" + styleHardwareBut}>По
-                        оборудованию
-                    </button>
-                </div>
-
-
-                <div className="w-auto flex flex-row" style={{position: "relative", zIndex: 20}}>
-
-
-                    {!isSolve &&
-                        <div onClick={solve}>
-                            <button
-                                className="border h-[30px] w-32 border-gray-300 rounded-md text-white px-1 bg-green-600 hover:bg-green-500">
-                                <i className="fa-solid fa-play"></i>
-                                <span className="pl-1">Решать</span>
-                            </button>
-                        </div>
-                    }
-                    {isSolve &&
-                        <div onClick={stopSolving}>
-                            <button
-                                className="border h-[30px] w-32 border-gray-300 rounded-md text-white px-1 bg-red-600 hover:bg-red-500">
-                                <i className="fa-solid fa-stop"></i>
-                                <span className="pl-1">Остановить</span>
-                            </button>
-                        </div>
-                    }
-
-                    <div className="flex items-center border rounded-md mx-2">
-                        <span className="font-medium px-4">
-                            Расчеты: {score}
-                        </span>
-                        <button onClick={() => {
-                            fetchAnalyze();
-                            setIsModalAnalyze(true);
-                        }}
-                                className={" h-full border-gray-300 rounded-r-md px-2 shadow-inner bg-blue-800 hover:bg-blue-700 text-white"}>
-                            Подробнее
-                            {/*<i className="fa-solid fa-question"></i>*/}
+                <div className="flex flex-row justify-between my-4 px-4 ">
+                    <div className="">
+                        <button onClick={displayByParty}
+                                className={"border h-[30px] border-gray-300 border-r-0 rounded-l-md px-2 shadow-inner" + stylePartyBut}>По
+                            партиям
+                        </button>
+                        <button onClick={displayByHardware}
+                                className={"border h-[30px] border-gray-300 rounded-r-md px-2 shadow-inner" + styleHardwareBut}>По
+                            оборудованию
                         </button>
                     </div>
 
+
+                    <div className="w-auto flex flex-row" style={{position: "relative", zIndex: 20}}>
+
+
+                        {!isSolve &&
+                            <div onClick={solve}>
+                                <button
+                                    className="border h-[30px] w-32 border-gray-300 rounded-md text-white px-1 bg-green-600 hover:bg-green-500">
+                                    <i className="fa-solid fa-play"></i>
+                                    <span className="pl-1">Решать</span>
+                                </button>
+                            </div>
+                        }
+                        {isSolve &&
+                            <div onClick={stopSolving}>
+                                <button
+                                    className="border h-[30px] w-32 border-gray-300 rounded-md text-white px-1 bg-red-600 hover:bg-red-500">
+                                    <i className="fa-solid fa-stop"></i>
+                                    <span className="pl-1">Остановить</span>
+                                </button>
+                            </div>
+                        }
+
+                        <div className="flex items-center border rounded-md mx-2">
+                        <span className="font-medium px-4">
+                            Расчеты: {score}
+                        </span>
+                            <button onClick={() => {
+                                fetchAnalyze();
+                                setIsModalAnalyze(true);
+                            }}
+                                    className={" h-full border-gray-300 rounded-r-md px-2 shadow-inner bg-blue-800 hover:bg-blue-700 text-white"}>
+                                Подробнее
+                                {/*<i className="fa-solid fa-question"></i>*/}
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <div>
+                        <button onClick={() => {
+                            setIsModalDateSettings(true)
+                        }}
+                                className={"border h-[30px] border-gray-300 rounded-md px-2 shadow-inner bg-blue-800 hover:bg-blue-700 text-white"}>Настроить
+                            дату
+                        </button>
+                    </div>
+                    <div>
+                        <button onClick={savePlan}
+                                className="h-[30px] px-2 mx-2 rounded shadow-sm border border-slate-400 hover:bg-gray-200">
+                            Сохранить
+                            <i className="pl-2 fa-solid fa-floppy-disk"></i>
+                        </button>
+                        <button onClick={exportExel}
+                                className="h-[30px] px-2 mx-2 rounded shadow-sm border border-slate-400 hover:bg-gray-200">
+                            Excel экспорт
+                            <i className="pl-2 fa-solid fa-file-excel"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <div>
-                    <button onClick={() => {
-                        setIsModalDateSettings(true)
-                    }}
-                            className={"border h-[30px] border-gray-300 rounded-md px-2 shadow-inner bg-blue-800 hover:bg-blue-700 text-white"}>Настроить
-                        дату
-                    </button>
+                <div className="m-4 border-x-2">
+                    <Timeline
+                        itemRenderer={customItemRenderer} // кастомный item
+                        key={timelineKey} //для корректной прокрутки в начале
+                        groups={groups}
+                        items={items}
+                        defaultTimeStart={moment(selectDate).startOf('day').add(-2, 'hour')} //период начального отображения
+                        defaultTimeEnd={moment(selectDate).startOf('day').add(30, 'hour')}
+                        onItemDoubleClick={onItemSelect}
+                        sidebarWidth={150}
+                        lineHeight={90}>
+                    </Timeline>
+
+
                 </div>
-                <div>
-                    <button onClick={exportExel}
-                            className="h-[30px] px-2 mx-2 rounded shadow-sm border border-slate-400 hover:bg-gray-200">
-                        Excel экспорт
-                        <i className="pl-2 fa-solid fa-file-excel"></i>
-                    </button>
-                </div>
+
+                {isModalDateSettings && <ModalDateSettings onClose={() => {setIsModalDateSettings(false)}}
+                                                           selectDate={selectDate} setDate={onChangeSelectDate}
+                                                           selectEndDate={selectEndDate} setSelectEndDate={onChangeEndDate}
+                                                           lines={startTimeLines} setLines={setStartTimeLines}
+                                                           apply={assignSettings}
+                                                           idealEndDateTime={idealEndDateTime} setIdealEndDateTime={setIdealEndDateTime}
+                                                           maxEndDateTime={maxEndDateTime} setMaxEndDateTime={setMaxEndDateTime}
+                />}
+
+                {isModalAnalyze && <ModalAnalyze onClose={() => setIsModalAnalyze(false)}
+                                                 analyzeObj={analyzeObj}
+                />}
+
+                {isModalNotify &&
+                    <ModalNotify title={"Ошибка"} message={msg} onClose={() => setIsModalNotify(false)}/>}
+
+
             </div>
-
-            <div className="m-4 border-x-2">
-                <Timeline
-                    itemRenderer={customItemRenderer} // кастомный item
-                    key={timelineKey} //для корректной прокрутки в начале
-                    groups={groups}
-                    items={items}
-                    defaultTimeStart={moment(selectDate).startOf('day').add(-2, 'hour')} //период начального отображения
-                    defaultTimeEnd={moment(selectDate).startOf('day').add(30, 'hour')}
-                    onItemDoubleClick={onItemSelect}
-                    sidebarWidth={150}
-                    lineHeight={90}>
-                </Timeline>
-
-
-            </div>
-
-            {isModalDateSettings && <ModalDateSettings onClose={() => {setIsModalDateSettings(false)}}
-                                                       selectDate={selectDate} setDate={onChangeSelectDate}
-                                                       selectEndDate={selectEndDate} setSelectEndDate={onChangeEndDate}
-                                                       lines={startTimeLines} setLines={setStartTimeLines}
-                                                       apply={assignSettings}
-                                                       idealEndDateTime={idealEndDateTime} setIdealEndDateTime={setIdealEndDateTime}
-                                                       maxEndDateTime={maxEndDateTime} setMaxEndDateTime={setMaxEndDateTime}
-            />}
-
-            {isModalAnalyze && <ModalAnalyze onClose={() => setIsModalAnalyze(false)}
-                                             analyzeObj={analyzeObj}
-            />}
-
-
-        </div>
+        </>
     )
 
 }
@@ -474,4 +528,4 @@ const customItemRenderer = ({item, itemContext, getItemProps}) => {  //каст�
 };
 
 
-export default SchedulerPage
+export default observer(SchedulerPage)

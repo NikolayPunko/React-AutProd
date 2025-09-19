@@ -205,8 +205,16 @@ export default class ScheduleService {
         return $apiSchedule.get(`${API_URL_SCHEDULER}/schedule`)
     }
 
+    static async getLines() {
+        return $apiSchedule.get(`${API_URL_SCHEDULER}/schedule/lines`)
+    }
+
     static async solve() {
         return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/solve`, {})
+    }
+
+    static async savePlan() {
+        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/save`, {})
     }
 
     static async stopSolving() {
