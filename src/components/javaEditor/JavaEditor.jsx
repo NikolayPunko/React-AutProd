@@ -44,6 +44,12 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
         });
     };
 
+    const removeParamById = (id) => {
+        setParameters(prevParameters =>
+            prevParameters.filter(param => param.id !== id)
+        );
+    }
+
     const addDataBand = () => {
         if (dataBandsOpt.length >=1){ //Ограничиваем до одного бэнда
             return
@@ -203,7 +209,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                                }}
                                                placeholder="Название параметра"
                                         />
-                                        <input className={styleInputWithoutRounded + " font-medium mr-0 w-[20%]"}
+                                        <input className={styleInputWithoutRounded + " font-medium mr-0 w-[15%]"}
                                                value={param.key}
                                                onChange={(e) => updateParameter(param.id, 'key', e.target.value)}
                                                placeholder="Параметр (:param)"
@@ -280,6 +286,10 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                                 />
                                             </div>
                                         }
+
+                                        <div className="w-[5%] text-center border border-slate-400 ">
+                                            <i className="fa-regular fa-trash-can text-red-600 hover:scale-125" onClick={()=> removeParamById(param.id)}></i>
+                                        </div>
 
                                     </div>
                                 ))}
