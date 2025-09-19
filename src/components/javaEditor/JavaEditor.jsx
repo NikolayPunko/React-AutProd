@@ -28,6 +28,7 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
     const addParameter = () => {
         setParameters([...parameters, {
             id: uuidv4(), // Генерирует уникальный ID
+            order: parameters.length+1,
             name: '',
             key: '',
             type: 'TEXT',
@@ -42,6 +43,12 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
             return prevParameters.slice(0, -1);
         });
     };
+
+    const removeParamById = (id) => {
+        setParameters(prevParameters =>
+            prevParameters.filter(param => param.id !== id)
+        );
+    }
 
     const addDataBand = () => {
         if (dataBandsOpt.length >=1){ //Ограничиваем до одного бэнда
@@ -179,23 +186,30 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
 
 
                             <div className="flex flex-row mb-1">
-                                <span className="text-sm text-center font-medium w-1/5">Название</span>
-                                <span className="text-sm text-center font-medium w-1/5">Параметр</span>
-                                <span className="text-sm text-center font-medium w-1/5">Тип</span>
-                                <span className="text-sm text-center font-medium w-2/5">Знач. по умолчанию</span>
+                                <span className="text-sm text-center font-medium w-[10%]">№</span>
+                                <span className="text-sm text-center font-medium w-[20%]">Название</span>
+                                <span className="text-sm text-center font-medium w-[20%]">Параметр</span>
+                                <span className="text-sm text-center font-medium w-[20%]">Тип</span>
+                                <span className="text-sm text-center font-medium w-[30%]">Знач. по умолчанию</span>
                             </div>
 
                             <div className="max-h-[500px] overflow-auto">
                                 {parameters.map((param, index) => (
                                     <div key={param.id} className="flex flex-row py-0">
-                                        <input className={styleInputWithoutRounded + " font-medium mr-0 w-[30%]"}
+                                        <input
+                                            className={styleInputWithoutRounded + " font-medium w-[10%]"}
+                                            type="number" min={1}
+                                            value={param.order}
+                                            onChange={(e) => updateParameter(param.id, 'order', e.target.value)}
+                                        />
+                                        <input className={styleInputWithoutRounded + " font-medium mr-0 w-[20%]"}
                                                value={param.name}
                                                onChange={(e) => {
                                                    updateParameter(param.id, 'name', e.target.value);
                                                }}
                                                placeholder="Название параметра"
                                         />
-                                        <input className={styleInputWithoutRounded + " font-medium mr-0 w-[20%]"}
+                                        <input className={styleInputWithoutRounded + " font-medium mr-0 w-[15%]"}
                                                value={param.key}
                                                onChange={(e) => updateParameter(param.id, 'key', e.target.value)}
                                                placeholder="Параметр (:param)"
@@ -272,6 +286,10 @@ export function JavaEditor({script, parameters, setScript, onClose, setParameter
                                                 />
                                             </div>
                                         }
+
+                                        <div className="w-[5%] text-center border border-slate-400 ">
+                                            <i className="fa-regular fa-trash-can text-red-600 hover:scale-125" onClick={()=> removeParamById(param.id)}></i>
+                                        </div>
 
                                     </div>
                                 ))}
