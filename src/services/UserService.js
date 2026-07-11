@@ -19,7 +19,7 @@ export default class UserService {
     }
 
     static async createUser(userData) {
-        return $api.post(`${API_URL}/api/admin/users`, userData);
+        return $api.post(`${API_URL}/api/admin/user`, userData);
     }
 
 }

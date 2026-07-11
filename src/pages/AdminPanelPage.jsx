@@ -20,13 +20,15 @@ function AdminPanelPage() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [selectedRoles, setSelectedRoles] = useState([]);
     const [availableRoles, setAvailableRoles] = useState([])
+    const [authType, setAuthType] = useState('standard'); // 'standard' или 'ntlm'
 
     const [userToDelete, setUserToDelete] = useState(null);
 
     const [newUser, setNewUser] = useState({
         username: '',
         password: '',
-        roles: ['ROLE_VIEWER']
+        roles: ['ROLE_VIEWER'],
+        isNtlm: authType === 'ntlm'
     });
 
     useEffect(() => {
@@ -129,13 +131,7 @@ function AdminPanelPage() {
             return;
         }
 
-        if (!newUser.password) {
-            setMsg("Введите пароль");
-            setIsModalNotify(true);
-            return;
-        }
-
-        if (newUser.password.length < 4) {
+        if (authType === 'standard' && newUser.password.length < 4) {
             setMsg("Пароль должен содержать минимум 4 символа");
             setIsModalNotify(true);
             return;
@@ -147,8 +143,9 @@ function AdminPanelPage() {
             setIsLoading(true);
             const response = await UserService.createUser({
                 username: newUser.username,
-                password: newUser.password,
-                roles: rolesToSend
+                password: authType === 'ntlm' ? "password" : newUser.password,
+                roles: rolesToSend,
+                ntlm: authType === 'ntlm'
             });
             setUsers(prevUsers => [...prevUsers, response.data]);
             setMsg(`Пользователь "${newUser.username}" успешно создан`);
@@ -219,7 +216,7 @@ function AdminPanelPage() {
                         </div>
                         <button
                             onClick={() => setIsModalAddUser(true)}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98]"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98]"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -429,37 +426,86 @@ function AdminPanelPage() {
                 </>}
 
                 {/* Модальные окна */}
+                {/* Модальные окна */}
                 {isModalAddUser && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-                            <div className="px-6 py-5 bg-gradient-to-r bg-gray-800 hover:bg-gray-700">
+                            <div className="px-6 py-5 bg-gradient-to-r from-gray-800 to-gray-700">
                                 <h3 className="text-lg font-semibold text-white">Добавление пользователя</h3>
-                                <p className="text-sm text-gray-400 mt-0.5">Заполните информацию о новом пользователе</p>
+                                <p className="text-sm text-gray-300 mt-0.5">Заполните информацию о новом пользователе</p>
                             </div>
 
                             <div className="p-6 space-y-4">
+                                {/* Выбор типа аутентификации */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Тип аутентификации</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setAuthType('standard');
+                                                setNewUser({...newUser, password: ''});
+                                            }}
+                                            className={`px-4 py-2 text-sm font-medium rounded-lg border transition-all ${
+                                                authType === 'standard'
+                                                    ? 'border-gray-800 bg-gray-700 text-white shadow-md shadow-gray-200'
+                                                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            Стандартный
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setAuthType('ntlm');
+                                                setNewUser({...newUser, password: ''});
+                                            }}
+                                            className={`px-4 py-2 text-sm font-medium rounded-lg border transition-all ${
+                                                authType === 'ntlm'
+                                                    ? 'border-gray-800 bg-gray-700 text-white shadow-md shadow-gray-200'
+                                                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            NTLM
+                                        </button>
+                                    </div>
+                                    {authType === 'ntlm' && (
+                                        <p className="mt-1 text-xs text-gray-500">
+                                            При NTLM аутентификации пароль не требуется
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Поле логина */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Логин</label>
                                     <input
                                         type="text"
                                         value={newUser.username}
                                         onChange={(e) => setNewUser({...newUser, username: e.target.value})}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
-                                        placeholder="ivan.ivanov"
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-transparent transition-all"
+                                        placeholder={authType === 'ntlm' ? 'domain\\username' : 'ivan.ivanov'}
                                     />
+                                    {authType === 'ntlm' && (
+                                        <p className="mt-1 text-xs text-gray-500">Формат: домен\пользователь</p>
+                                    )}
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Пароль</label>
-                                    <input
-                                        type="password"
-                                        value={newUser.password}
-                                        onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
-                                        placeholder="Минимум 4 символа"
-                                    />
-                                </div>
+                                {/* Поле пароля - скрываем при NTLM */}
+                                {authType === 'standard' && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Пароль</label>
+                                        <input
+                                            type="password"
+                                            value={newUser.password}
+                                            onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-transparent transition-all"
+                                            placeholder="Минимум 4 символа"
+                                        />
+                                    </div>
+                                )}
 
+                                {/* Роли */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Роли</label>
                                     <div className="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-48 overflow-auto">
@@ -467,7 +513,7 @@ function AdminPanelPage() {
                                             <label key={index} className="flex items-center p-3 hover:bg-gray-50 cursor-pointer transition-colors">
                                                 <input
                                                     type="checkbox"
-                                                    className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                                                    className="w-4 h-4 rounded border-gray-300 text-gray-800 focus:ring-gray-800 transition-all"
                                                     disabled={role === "ROLE_VIEWER"}
                                                     checked={newUser.roles.includes(role)}
                                                     onChange={() => handleNewUserRoleToggle(role)}
@@ -487,6 +533,7 @@ function AdminPanelPage() {
                                     onClick={() => {
                                         setIsModalAddUser(false);
                                         resetNewUserForm();
+                                        setAuthType('standard');
                                     }}
                                     className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors"
                                 >
@@ -494,7 +541,7 @@ function AdminPanelPage() {
                                 </button>
                                 <button
                                     onClick={handleAddUser}
-                                    className="px-4 py-2 text-sm font-medium rounded-lg bg-gray-800 text-white hover:bg-gray-800 transition-colors"
+                                    className="px-4 py-2 text-sm font-medium rounded-lg bg-gray-600 hover:bg-gray-500 text-white shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
                                 >
                                     Создать
                                 </button>
