@@ -20,6 +20,10 @@ export function LeftNavigation() {
                 <StringLeftNavigation disabled={false} title="Админ панель" navigationPath={"/admin"}/>
             </RoleGuard>
 
+            <RoleGuard requiredRoles={['ROLE_ADMIN']}>
+                <StringLeftNavigation disabled={false} title="Использование отчетов" navigationPath={"/report/monitor"}/>
+            </RoleGuard>
+
         </div>
     )
 }
