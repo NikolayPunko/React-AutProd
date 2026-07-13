@@ -8,7 +8,8 @@ export function BlueButton({
                                icon = null,
                                iconPosition = 'right', // 'left' или 'right'
                                disabled = false,
-                               title = ''
+                               title = '',
+                               type="button"
                            }) {
     return (
         <button
@@ -19,6 +20,7 @@ export function BlueButton({
                 ${disabled ? 'opacity-50 cursor-not-allowed hover:bg-blue-800 hover:shadow-sm active:scale-100' : ''}
                 ${className}`}
             style={{ height: `${heightPx}px` }}
+            type={type}
         >
             {icon && iconPosition === 'left' && (
                 <i className={`${icon} ${text ? 'pr-2' : ''}`}></i>

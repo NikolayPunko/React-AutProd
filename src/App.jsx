@@ -12,6 +12,7 @@ import AdminPanelPage from "./pages/AdminPanelPage";
 import TrackTracePage from "./pages/TrackTracePage";
 import {configureMomentLocale} from "./utils/date/momentConfig";
 import AuthorizationScheduler from "./pages/AuthorizationScheduler";
+import ReportMonitorPage from "./pages/ReportMonitorPage";
 
 
 function App() {
@@ -51,6 +52,10 @@ function App() {
 
                     <Route path="/admin" element={<PrivateRoute requiredRoles={['ROLE_ADMIN']} />}>
                         <Route index element={<AdminPanelPage/>}/>
+                    </Route>
+
+                    <Route path="/report/monitor" element={<PrivateRoute requiredRoles={['ROLE_ADMIN']} />}>
+                        <Route index element={<ReportMonitorPage/>}/>
                     </Route>
 
                     <Route path="/login-scheduler" element={<AuthorizationScheduler/>}/>

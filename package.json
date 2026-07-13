@@ -18,6 +18,7 @@
     "autoprefixer": "^10.4.20",
     "axios": "^1.7.9",
     "crypto-js": "^4.2.0",
+    "date-fns": "^4.4.0",
     "devextreme": "^24.2.3",
     "env-cmd": "^11.0.0",
     "grapesjs": "^0.22.15",

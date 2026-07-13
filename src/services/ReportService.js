@@ -85,6 +85,15 @@ export default class ReportService {
         return $api.get(`${API_URL}/api/report/globalVars`)
     }
 
+    static async getReportMonitorEvents(fromDate, toDate) {
+        return $api.get(`${API_URL}/api/monitoring/reports/events`, {
+            params: {
+                from: fromDate,
+                to: toDate
+            }
+        })
+    }
+
     static async saveReportGlobalVars(vars) {
         return $api.post(`${API_URL}/api/report/globalVars`, vars)
     }
