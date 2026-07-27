@@ -12,6 +12,10 @@ export function LeftNavigation() {
                 <StringLeftNavigation disabled={false} title="Планы производства" navigationPath={"/scheduler"}/>
             </RoleGuard>
 
+            <RoleGuard requiredRoles={['ROLE_SCHEDULER']}>
+                <StringLeftNavigation disabled={false} title="Списание материалов" navigationPath={"/materials"}/>
+            </RoleGuard>
+
             <RoleGuard requiredRoles={['ROLE_EDITOR']}>
                 <StringLeftNavigation disabled={false} title="Конструктор отчетов" navigationPath={"/designer"}/>
             </RoleGuard>
