@@ -7,6 +7,7 @@ import {ModalNotifyError} from "../components/modal/ModalNotifyError";
 import {Context} from '../index';
 import {observer} from 'mobx-react-lite';
 import MaterialService from "../services/MaterialService";
+import {ModalNotify} from "../components/modal/ModalNotify";
 
 function MaterialsPage() {
 
@@ -15,7 +16,9 @@ function MaterialsPage() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [msg, setMsg] = useState("");
     const [isModalError, setIsModalError] = useState(false);
+    const [isModalNotify, setIsModalNotify] = useState(false);
 
     // Данные для фильтров
     const [date, setDate] = useState(() => {
@@ -31,9 +34,7 @@ function MaterialsPage() {
     const [viewMode, setViewMode] = useState('products'); // 'products' | 'summary'
 
     const [updatingKolf, setUpdatingKolf] = useState(null);
-
-    // 👇 НОВОЕ: локальное состояние для значений KOLF
-    const [localKolf, setLocalKolf] = useState({}); // { kmt: value }
+    const [hasChanges, setHasChanges] = useState(false);
 
     // Загрузка получателей
     useEffect(() => {
@@ -68,7 +69,7 @@ function MaterialsPage() {
             const response = await MaterialService.loadProducts(date, kpp);
             setProducts(response.data || []);
             setSelectedProduct(null);
-            setLocalKolf({}); // 👈 Очищаем локальные значения при загрузке
+            setHasChanges(false);
         } catch (e) {
             setIsModalError(true);
             setError(e.response?.data?.message || 'Ошибка загрузки данных');
@@ -86,77 +87,61 @@ function MaterialsPage() {
         }
     }
 
+    // ===== ИЗМЕНЕНИЕ KOLF (НОВАЯ ЛОГИКА) =====
     async function handleKolfChange(kmt, value) {
-        // Находим оригинальное значение
-        const originalMaterial = products
-            .flatMap(p => p.materials || [])
-            .find(m => m.kmt === kmt);
-
-        const originalValue = originalMaterial?.kolf || 0;
-
-        // Если значение не изменилось - ничего не делаем
-        if (value === originalValue) {
-            setLocalKolf(prev => ({ ...prev, [kmt]: undefined }));
-            return;
-        }
-
         setUpdatingKolf(kmt);
 
         try {
-            const response = await MaterialService.updateKolf(kmt, value, date, kpp);
-            const updatedMaterial = response.data;
+            const request = {
+                date,
+                kpp,
+                kmt,
+                kolf: value,
+                data: products // ← передаем ВСЕ данные
+            };
 
-            setProducts(prevProducts =>
-                prevProducts.map(product => ({
-                    ...product,
-                    materials: product.materials?.map(material =>
-                        material.kmt === kmt
-                            ? updateCommonMaterialFields(material, updatedMaterial)
-                            : material
-                    )
-                }))
-            );
+            const response = await MaterialService.recalcKolf(request);
+            setProducts(response.data);
+            setHasChanges(true);
 
+            // Обновляем selectedProduct, если он есть
             if (selectedProduct) {
-                setSelectedProduct(prev => ({
-                    ...prev,
-                    materials: prev.materials?.map(material =>
-                        material.kmt === kmt
-                            ? updateCommonMaterialFields(material, updatedMaterial)
-                            : material
-                    )
-                }));
+                const updated = response.data.find(p => p.kmc === selectedProduct.kmc);
+                if (updated) {
+                    setSelectedProduct(updated);
+                }
             }
-
-            setLocalKolf(prev => ({ ...prev, [kmt]: undefined }));
-
         } catch (e) {
             setIsModalError(true);
-            setError(e.response?.data?.message || 'Ошибка сохранения KOLF');
-
-            setLocalKolf(prev => ({ ...prev, [kmt]: originalValue }));
+            setError(e.response?.data?.message || 'Ошибка пересчета KOLF');
         } finally {
             setUpdatingKolf(null);
         }
     }
 
-    // Функция для обновления только общих полей материала
-    function updateCommonMaterialFields(material, updatedMaterial) {
-        return {
-            ...material,
-            totalNormf: updatedMaterial.totalNormf ?? material.totalNormf,
-            kolf: updatedMaterial.kolf ?? material.kolf,
-            trnd: updatedMaterial.trnd ?? material.trnd,
-            order: updatedMaterial.order ?? material.order,
-            insurancePerc: updatedMaterial.insurancePerc ?? material.insurancePerc,
-            roundStep: updatedMaterial.roundStep ?? material.roundStep,
-            productCount: updatedMaterial.productCount ?? material.productCount
-        };
-    }
+    // ===== СОХРАНЕНИЕ =====
+    async function handleSave() {
+        if (!hasChanges) return;
 
-    const getKolfValue = (kmt, defaultKolf = 0) => {
-        return localKolf[kmt] !== undefined ? localKolf[kmt] : (defaultKolf || 0);
-    };
+        const request = {
+            date,
+            kpp,
+            data: products
+        };
+
+        try {
+            setIsLoading(true);
+            await MaterialService.saveAll(request);
+            setHasChanges(false);
+            setIsModalNotify(true);
+            setMsg('Данные успешно сохранены!');
+        } catch (e) {
+            setIsModalError(true);
+            setError(e.response?.data?.message || 'Ошибка сохранения');
+        } finally {
+            setIsLoading(false);
+        }
+    }
 
     function getMaterialSummary() {
         if (!products.length) return [];
@@ -199,10 +184,8 @@ function MaterialsPage() {
 
     const materialSummary = getMaterialSummary();
 
-    const renderKolfInput = (kmt, defaultKolf, isSummary = false) => {
-        const value = getKolfValue(kmt, defaultKolf);
+    const renderKolfInput = (kmt, defaultKolf) => {
         const isUpdating = updatingKolf === kmt;
-        const hasChanges = localKolf[kmt] !== undefined;
 
         return (
             <input
@@ -210,69 +193,44 @@ function MaterialsPage() {
                 step="0.01"
                 className={`w-20 px-1.5 py-0.5 text-right text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                     isUpdating ? 'opacity-50 bg-gray-100' : ''
-                } ${
-                    hasChanges ? 'border-yellow-400 bg-yellow-50' : ''
                 }`}
-                value={value}
+                value={defaultKolf || 0}
                 onChange={(e) => {
                     const rawValue = e.target.value;
-
-                    // Полностью блокируем отрицательные значения
-                    if (rawValue.startsWith('-')) {
-                        return;
-                    }
-
+                    if (rawValue.startsWith('-')) return;
                     const newValue = rawValue === '' ? 0 : parseFloat(rawValue) || 0;
-
-                    // Блокируем отрицательные числа
-                    if (newValue < 0) {
-                        setLocalKolf(prev => ({
-                            ...prev,
-                            [kmt]: 0
-                        }));
-                        return;
-                    }
-
-                    setLocalKolf(prev => ({
-                        ...prev,
-                        [kmt]: newValue
+                    if (newValue < 0) return;
+                    // Мгновенное обновление UI
+                    const updatedProducts = products.map(product => ({
+                        ...product,
+                        materials: product.materials?.map(m =>
+                            m.kmt === kmt ? { ...m, kolf: newValue } : m
+                        )
                     }));
+                    setProducts(updatedProducts);
+                    if (selectedProduct) {
+                        setSelectedProduct(prev => ({
+                            ...prev,
+                            materials: prev.materials?.map(m =>
+                                m.kmt === kmt ? { ...m, kolf: newValue } : m
+                            )
+                        }));
+                    }
+                    setHasChanges(true);
                 }}
                 onKeyDown={(e) => {
-                    // Блокируем клавишу минус
-                    if (e.key === '-' || e.key === 'Minus') {
-                        e.preventDefault();
-                        return;
-                    }
-
                     if (e.key === 'Enter') {
                         e.preventDefault();
-                        e.target.blur();
-                        const currentValue = getKolfValue(kmt, defaultKolf);
-
-                        // Проверка перед сохранением
-                        if (currentValue < 0) {
-                            setLocalKolf(prev => ({ ...prev, [kmt]: 0 }));
-                            setIsModalError(true);
-                            setError('Значение KOLF не может быть отрицательным');
-                            return;
-                        }
-
-                        handleKolfChange(kmt, currentValue);
-                    }
-                    if (e.key === 'Escape') {
-                        setLocalKolf(prev => ({
-                            ...prev,
-                            [kmt]: defaultKolf || 0
-                        }));
                         e.target.blur();
                     }
                 }}
                 onBlur={() => {
-                    // Опционально: сохранять при потере фокуса
-                    // Если хотите автосохранение - раскомментируйте:
-                    const currentValue = getKolfValue(kmt, defaultKolf);
-                    handleKolfChange(kmt, currentValue);
+                    const material = products
+                        .flatMap(p => p.materials || [])
+                        .find(m => m.kmt === kmt);
+                    if (material) {
+                        handleKolfChange(kmt, material.kolf);
+                    }
                 }}
                 disabled={isUpdating}
             />
@@ -328,12 +286,24 @@ function MaterialsPage() {
                             </div>
 
                             <button
-                                className="h-[30px] px-4 bg-blue-600 hover:bg-blue-700 text-white text-[0.950rem] font-medium rounded-md transition"
+                                className="h-[30px] px-4 bg-blue-700 hover:bg-blue-800 text-white text-[0.950rem] font-medium rounded-md transition"
                                 onClick={loadData}
                             >
                                 Загрузить
                             </button>
 
+                            {/* КНОПКА СОХРАНИТЬ */}
+                            <button
+                                className={`h-[30px] px-4 text-white text-[0.950rem] font-medium rounded-md transition ${
+                                    hasChanges
+                                        ? 'bg-blue-700 hover:bg-blue-800'
+                                        : 'bg-gray-400 cursor-not-allowed'
+                                }`}
+                                onClick={handleSave}
+                                disabled={!hasChanges}
+                            >
+                                Сохранить
+                            </button>
                         </div>
                     </div>
 
@@ -342,22 +312,22 @@ function MaterialsPage() {
                         <button
                             className={`px-4 py-1 text-sm font-medium rounded-md transition ${
                                 viewMode === 'products'
-                                    ? 'bg-blue-600 text-white'
+                                    ? 'bg-blue-700 text-white'
                                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                             }`}
                             onClick={() => setViewMode('products')}
                         >
-                            📦 По продуктам
+                            По продуктам
                         </button>
                         <button
                             className={`px-4 py-1 text-sm font-medium rounded-md transition ${
                                 viewMode === 'summary'
-                                    ? 'bg-blue-600 text-white'
+                                    ? 'bg-blue-700 text-white'
                                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                             }`}
                             onClick={() => setViewMode('summary')}
                         >
-                            📊 Сводка по материалам
+                            Сводка по материалам
                         </button>
                     </div>
 
@@ -386,13 +356,12 @@ function MaterialsPage() {
                                                 <th className="px-4 py-2 text-sm font-semibold text-gray-700 border-b border-gray-200">Масса, кг</th>
                                                 <th className="px-4 py-2 text-sm font-semibold text-gray-700 border-b border-gray-200">EAN13</th>
                                                 <th className="px-4 py-2 text-sm font-semibold text-gray-700 border-b border-gray-200">Материалов</th>
-                                                {/*<th className="px-4 py-2 text-sm font-semibold text-gray-700 text-center border-b border-gray-200">Действие</th>*/}
                                             </tr>
                                             </thead>
                                             <tbody>
                                             {products.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={8} className="px-4 py-8 text-center text-gray-400 text-sm">
+                                                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-sm">
                                                         Нет данных. Выберите дату и цех, нажмите "Загрузить".
                                                     </td>
                                                 </tr>
@@ -403,33 +372,29 @@ function MaterialsPage() {
                                                         className={`border-b border-gray-200 hover:bg-gray-50 ${
                                                             selectedProduct?.kmc === product.kmc ? 'bg-blue-50' : ''
                                                         }`}
+                                                        onClick={() => handleProductSelect(product)}
                                                     >
-                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer" onClick={() => handleProductSelect(product)}>
+                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer">
                                                             {product.kmc}
                                                         </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer" onClick={() => handleProductSelect(product)}>
+                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer">
                                                             {product.kt || '—'}
                                                         </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer" onClick={() => handleProductSelect(product)}>
+                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer">
                                                             {product.emk !== undefined && product.emk !== null ? product.emk.toFixed(1) : '—'}
                                                         </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-700 truncate max-w-[200px] cursor-pointer" title={product.name?.trim()} onClick={() => handleProductSelect(product)}>
+                                                        <td className="px-4 py-2 text-sm text-gray-700 truncate max-w-[200px] cursor-pointer" title={product.name?.trim()}>
                                                             {product.name?.trim()}
                                                         </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer" onClick={() => handleProductSelect(product)}>
+                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer">
                                                             {product.sumMass?.toFixed(1)}
                                                         </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer" onClick={() => handleProductSelect(product)}>
+                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer">
                                                             {product.ean13}
                                                         </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer" onClick={() => handleProductSelect(product)}>
+                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer">
                                                             {product.materials?.length || 0}
                                                         </td>
-                                                        {/*<td className="px-4 py-2 text-sm text-center">*/}
-                                                        {/*    <button className="text-blue-600 hover:text-blue-800 transition" onClick={() => handleProductSelect(product)}>*/}
-                                                        {/*        {selectedProduct?.kmc === product.kmc ? 'Скрыть' : 'Показать'}*/}
-                                                        {/*    </button>*/}
-                                                        {/*</td>*/}
                                                     </tr>
                                                 ))
                                             )}
@@ -460,19 +425,17 @@ function MaterialsPage() {
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 text-right border-b border-gray-200">Остаток</th>
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 text-right border-b border-gray-200">Страховка, %</th>
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 text-right border-b border-gray-200">Округлить до</th>
-                                                {/*<th className="px-3 py-1.5 font-semibold text-gray-700 text-right border-b border-gray-200" title="Норма со страховкой и округлением">Норма со страховкой</th>*/}
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 text-right border-b border-gray-200">Заказать</th>
                                             </tr>
                                             </thead>
                                             <tbody>
                                             {!selectedProduct ? (
-                                                <tr><td colSpan={9} className="px-3 py-8 text-center text-gray-400 text-sm">Выберите продукт, чтобы увидеть материалы</td></tr>
+                                                <tr><td colSpan={8} className="px-3 py-8 text-center text-gray-400 text-sm">Выберите продукт, чтобы увидеть материалы</td></tr>
                                             ) : selectedProduct.materials?.length === 0 ? (
-                                                <tr><td colSpan={9} className="px-3 py-8 text-center text-gray-400 text-sm">Нет материалов для этого продукта</td></tr>
+                                                <tr><td colSpan={8} className="px-3 py-8 text-center text-gray-400 text-sm">Нет материалов для этого продукта</td></tr>
                                             ) : (
                                                 selectedProduct.materials?.map((material, index) => {
                                                     const isCommon = material.productCount > 1;
-                                                    const trnd = typeof material.trnd === 'number' ? material.trnd : parseFloat(material.trnd) || 0;
                                                     const totalNormf = typeof material.totalNormf === 'number' ? material.totalNormf : parseFloat(material.totalNormf) || 0;
                                                     const norm = typeof material.norm === 'number' ? material.norm : parseFloat(material.norm) || 0;
                                                     const order = typeof material.order === 'number' ? material.order : parseFloat(material.order) || 0;
@@ -493,9 +456,6 @@ function MaterialsPage() {
                                                             </td>
                                                             <td className="px-3 py-1.5 text-gray-700 text-right">{insurancePerc}%</td>
                                                             <td className="px-3 py-1.5 text-gray-700 text-right">{roundStep}</td>
-                                                            {/*<td className="px-3 py-1.5 text-gray-700 text-right font-semibold text-blue-600 cursor-help" title={`Норма с учётом страховки и округления\nФормула: ceil(${totalNormf} × (1 + ${insurancePerc}%) / ${roundStep}) × ${roundStep} = ${trnd}`}>*/}
-                                                            {/*    {trnd > 0 ? trnd.toFixed(2) : '—'}*/}
-                                                            {/*</td>*/}
                                                             <td className="px-3 py-1.5 text-gray-700 text-right font-bold text-green-600">
                                                                 {order > 0 ? order.toFixed(2) : '0'}
                                                             </td>
@@ -530,13 +490,12 @@ function MaterialsPage() {
                                             <th className="px-3 py-1.5 text-xs font-semibold text-gray-700 text-right border-b border-gray-200">Остаток</th>
                                             <th className="px-3 py-1.5 text-xs font-semibold text-gray-700 text-right border-b border-gray-200">Страховка, %</th>
                                             <th className="px-3 py-1.5 text-xs font-semibold text-gray-700 text-right border-b border-gray-200">Округлить до</th>
-                                            {/*<th className="px-3 py-1.5 text-xs font-semibold text-gray-700 text-right border-b border-gray-200">Норма со страховкой</th>*/}
                                             <th className="px-3 py-1.5 text-xs font-semibold text-gray-700 text-right border-b border-gray-200">Заказать</th>
                                         </tr>
                                         </thead>
                                         <tbody>
                                         {materialSummary.length === 0 ? (
-                                            <tr><td colSpan={9} className="px-3 py-8 text-center text-gray-400 text-sm">Нет данных</td></tr>
+                                            <tr><td colSpan={8} className="px-3 py-8 text-center text-gray-400 text-sm">Нет данных</td></tr>
                                         ) : (
                                             materialSummary.map((item, index) => {
                                                 const isCommon = item.productCount > 1;
@@ -550,11 +509,10 @@ function MaterialsPage() {
                                                         <td className="px-3 py-1.5 text-xs text-gray-700 text-right">{item.productCount}</td>
                                                         <td className="px-3 py-1.5 text-xs text-gray-700 text-right font-semibold">{item.totalNormf > 0 ? item.totalNormf.toFixed(2) : '—'}</td>
                                                         <td className="px-3 py-1.5 text-xs text-gray-700 text-right">
-                                                            {renderKolfInput(item.kmt, item.kolf || 0, true)}
+                                                            {renderKolfInput(item.kmt, item.kolf || 0)}
                                                         </td>
                                                         <td className="px-3 py-1.5 text-xs text-gray-700 text-right">{item.insurancePerc}%</td>
                                                         <td className="px-3 py-1.5 text-xs text-gray-700 text-right">{item.roundStep}</td>
-                                                        {/*<td className="px-3 py-1.5 text-xs text-gray-700 text-right font-semibold text-blue-600">{item.trnd > 0 ? item.trnd.toFixed(2) : '—'}</td>*/}
                                                         <td className="px-3 py-1.5 text-xs text-gray-700 text-right font-bold text-green-600">
                                                             {item.order > 0 ? item.order.toFixed(2) : '0'}
                                                         </td>
@@ -571,6 +529,9 @@ function MaterialsPage() {
                 </>}
 
                 {isModalError && <ModalNotifyError title={"Ошибка"} message={error} onClose={() => setIsModalError(false)}/>}
+
+                {isModalNotify &&
+                    <ModalNotify title={"Результат операции"} message={msg} onClose={() => setIsModalNotify(false)}/>}
             </div>
         </div>
     </>);

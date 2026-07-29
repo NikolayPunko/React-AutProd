@@ -1,7 +1,6 @@
 import $api from "../http";
 import {API_URL_SCHEDULER} from "../http/scheduler";
 
-
 export default class MaterialService {
 
     // Получить список получателей (цехов)
@@ -9,21 +8,20 @@ export default class MaterialService {
         return $api.get(`${API_URL_SCHEDULER}/api/material/recipients`);
     }
 
-    // Загрузить продукты и материалы (POST)
+    // Загрузить данные (БЕЗ СОХРАНЕНИЯ в БД)
     static loadProducts(date, kpp) {
-        return $api.post(`${API_URL_SCHEDULER}/api/material/load`, {
-            date, kpp
+        return $api.get(`${API_URL_SCHEDULER}/api/material/load`, {
+            params: { date, kpp }
         });
     }
 
-    // Обновить KOLF для материала (PUT)
-    static updateKolf(kmt, kolf, date, kpp) {
-        return $api.put(`${API_URL_SCHEDULER}/api/material/kolf`, {
-            kmt,
-            kolf,
-            date,
-            kpp
-        });
+    // Пересчитать KOLF (БЕЗ СОХРАНЕНИЯ в БД)
+    static recalcKolf(request) {
+        return $api.post(`${API_URL_SCHEDULER}/api/material/recalc`, request);
     }
 
+    // Сохранить все данные
+    static saveAll(request) {
+        return $api.post(`${API_URL_SCHEDULER}/api/material/save`, request);
+    }
 }
