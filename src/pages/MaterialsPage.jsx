@@ -1,18 +1,17 @@
 import {Navigation} from "../components/Navigation";
 import {LeftNavigation} from "../components/leftNavigation/LeftNavigation";
-import React, {useEffect, useState, useContext} from "react";
+import React, {useState} from "react";
 import Loading from "../components/loading/Loading";
-import {useNavigate} from "react-router-dom";
 import {ModalNotifyError} from "../components/modal/ModalNotifyError";
-import {Context} from '../index';
 import {observer} from 'mobx-react-lite';
 import MaterialService from "../services/MaterialService";
 import {ModalNotify} from "../components/modal/ModalNotify";
+import {CustomStyleMaterialSelect} from "../data/styleForSelect";
+import AsyncSelect from "react-select/async";
+import {BlueButton} from "../components/reportsConstruct/buttons/BlueButton";
 
 function MaterialsPage() {
 
-    const navigate = useNavigate();
-    const {store} = useContext(Context);
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -20,47 +19,45 @@ function MaterialsPage() {
     const [isModalError, setIsModalError] = useState(false);
     const [isModalNotify, setIsModalNotify] = useState(false);
 
-    // Данные для фильтров
     const [date, setDate] = useState(() => {
         const today = new Date("2026-02-15");
         return today.toISOString().split('T')[0];
     });
     const [kpp, setKpp] = useState('');
-    const [recipients, setRecipients] = useState([]);
 
-    // Данные таблицы
     const [products, setProducts] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [viewMode, setViewMode] = useState('products'); // 'products' | 'summary'
 
     const [updatingKolf, setUpdatingKolf] = useState(null);
-    const [hasChanges, setHasChanges] = useState(false);
 
-    // Загрузка получателей
-    useEffect(() => {
-        fetchRecipients();
-    }, []);
+    const [selectedKpp, setSelectedKpp] = useState(null);
 
-    async function fetchRecipients() {
+
+    const fetchRecipients = async (inputValue, callback) => {
+        if (inputValue.length < 2) {
+            callback([]);
+            return;
+        }
+
         try {
-            setIsLoading(true);
-            const response = await MaterialService.getRecipients();
-            setRecipients(response.data || []);
-            if (response.data && response.data.length > 0) {
-                setKpp(response.data[0].kpp);
-            }
+            const response = await MaterialService.searchRecipients(inputValue);
+            const options = response.data.map(item => ({
+                value: item.kpp,
+                label: item.snm || item.kpp
+            }));
+            callback(options);
         } catch (e) {
+            callback([]);
             setIsModalError(true);
             setError(e.response?.data?.message || 'Ошибка загрузки получателей');
-        } finally {
-            setIsLoading(false);
         }
-    }
+    };
 
     async function loadData() {
         if (!date || !kpp) {
             setIsModalError(true);
-            setError('Выберите дату и цех');
+            setError('Выберите дату и материально ответственное лицо');
             return;
         }
 
@@ -69,7 +66,6 @@ function MaterialsPage() {
             const response = await MaterialService.loadProducts(date, kpp);
             setProducts(response.data || []);
             setSelectedProduct(null);
-            setHasChanges(false);
         } catch (e) {
             setIsModalError(true);
             setError(e.response?.data?.message || 'Ошибка загрузки данных');
@@ -87,7 +83,6 @@ function MaterialsPage() {
         }
     }
 
-    // ===== ИЗМЕНЕНИЕ KOLF (НОВАЯ ЛОГИКА) =====
     async function handleKolfChange(kmt, value) {
         setUpdatingKolf(kmt);
 
@@ -97,12 +92,11 @@ function MaterialsPage() {
                 kpp,
                 kmt,
                 kolf: value,
-                data: products // ← передаем ВСЕ данные
+                data: products
             };
 
             const response = await MaterialService.recalcKolf(request);
             setProducts(response.data);
-            setHasChanges(true);
 
             // Обновляем selectedProduct, если он есть
             if (selectedProduct) {
@@ -119,9 +113,7 @@ function MaterialsPage() {
         }
     }
 
-    // ===== СОХРАНЕНИЕ =====
     async function handleSave() {
-        if (!hasChanges) return;
 
         const request = {
             date,
@@ -132,7 +124,6 @@ function MaterialsPage() {
         try {
             setIsLoading(true);
             await MaterialService.saveAll(request);
-            setHasChanges(false);
             setIsModalNotify(true);
             setMsg('Данные успешно сохранены!');
         } catch (e) {
@@ -154,6 +145,7 @@ function MaterialsPage() {
                     grouped[material.kmt] = {
                         kmt: material.kmt,
                         snmMt: material.snmMt || material.kmt,
+                        eduMt: material.eduMt || material.kmt,
                         totalNormf: material.totalNormf || 0,
                         kolf: material.kolf || 0,
                         insurancePerc: material.insurancePerc || 0,
@@ -191,7 +183,7 @@ function MaterialsPage() {
             <input
                 type="number"
                 step="0.01"
-                className={`w-20 px-1.5 py-0.5 text-right text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                className={`w-20 px-1.5 text-right text-sm font-semibold border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                     isUpdating ? 'opacity-50 bg-gray-100' : ''
                 }`}
                 value={defaultKolf || 0}
@@ -200,7 +192,7 @@ function MaterialsPage() {
                     if (rawValue.startsWith('-')) return;
                     const newValue = rawValue === '' ? 0 : parseFloat(rawValue) || 0;
                     if (newValue < 0) return;
-                    // Мгновенное обновление UI
+
                     const updatedProducts = products.map(product => ({
                         ...product,
                         materials: product.materials?.map(m =>
@@ -216,7 +208,6 @@ function MaterialsPage() {
                             )
                         }));
                     }
-                    setHasChanges(true);
                 }}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -237,6 +228,7 @@ function MaterialsPage() {
         );
     };
 
+
     return (<>
         <Navigation isHiddenMenu={false} isOpenMenu={false} setOpenMenu={() => {}}/>
         <div className="flex flex-row window-height">
@@ -256,7 +248,8 @@ function MaterialsPage() {
                     <div className="px-24 py-2">
                         <div className="flex flex-row gap-5 items-center">
                             <div className="inline-flex items-center h-[30px] border border-gray-200 rounded-md">
-                                <span className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
+                                <span
+                                    className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
                                     Дата:
                                 </span>
                                 <input
@@ -268,42 +261,33 @@ function MaterialsPage() {
                             </div>
 
                             <div className="inline-flex items-center h-[30px] border border-gray-200 rounded-md">
-                                <span className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
+                                <span
+                                    className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
                                     МОЛ:
                                 </span>
-                                <select
-                                    className="px-2 text-[0.950rem] font-medium text-gray-700 cursor-pointer focus:outline-none bg-transparent"
-                                    value={kpp}
-                                    onChange={(e) => setKpp(e.target.value)}
-                                >
-                                    <option value="">Выберите цех</option>
-                                    {recipients.map((recipient) => (
-                                        <option key={recipient.kpp} value={recipient.kpp}>
-                                            {recipient.snm || recipient.kpp}
-                                        </option>
-                                    ))}
-                                </select>
+                                <AsyncSelect
+                                    className="w-72"
+                                    placeholder="Введите для поиска..."
+                                    value={selectedKpp}
+                                    onChange={(newValue) => {
+                                        setSelectedKpp(newValue);
+                                        setKpp(newValue ? newValue.value : '');
+                                    }}
+                                    loadOptions={fetchRecipients}
+                                    styles={CustomStyleMaterialSelect}
+                                    isSearchable={true}
+                                    noOptionsMessage={() => "Ничего не найдено"}
+                                    loadingMessage={() => "Загрузка..."}
+                                    cacheOptions={true}
+                                    defaultOptions={false}
+                                />
                             </div>
 
-                            <button
-                                className="h-[30px] px-4 bg-blue-700 hover:bg-blue-800 text-white text-[0.950rem] font-medium rounded-md transition"
-                                onClick={loadData}
-                            >
-                                Загрузить
-                            </button>
+                            <BlueButton onClick={loadData} text={"Загрузить"} icon={"fa-solid fa-download text-sm pt-0.5"}/>
 
-                            {/* КНОПКА СОХРАНИТЬ */}
-                            <button
-                                className={`h-[30px] px-4 text-white text-[0.950rem] font-medium rounded-md transition ${
-                                    hasChanges
-                                        ? 'bg-blue-700 hover:bg-blue-800'
-                                        : 'bg-gray-400 cursor-not-allowed'
-                                }`}
-                                onClick={handleSave}
-                                disabled={!hasChanges}
-                            >
-                                Сохранить
-                            </button>
+                            <BlueButton onClick={handleSave} text={"Сохранить"}
+                                        className={"bg-cyan-600 hover:bg-cyan-700"} icon={"fa-solid fa-floppy-disk text-sm pt-0.5"}/>
+
                         </div>
                     </div>
 
@@ -312,7 +296,7 @@ function MaterialsPage() {
                         <button
                             className={`px-4 py-1 text-sm font-medium rounded-md transition ${
                                 viewMode === 'products'
-                                    ? 'bg-blue-700 text-white'
+                                    ? 'bg-blue-800 text-white hover:bg-blue-700'
                                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                             }`}
                             onClick={() => setViewMode('products')}
@@ -322,19 +306,17 @@ function MaterialsPage() {
                         <button
                             className={`px-4 py-1 text-sm font-medium rounded-md transition ${
                                 viewMode === 'summary'
-                                    ? 'bg-blue-700 text-white'
+                                    ? 'bg-blue-800 text-white hover:bg-blue-700'
                                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                             }`}
                             onClick={() => setViewMode('summary')}
                         >
-                            Сводка по материалам
+                            По используемым материалам
                         </button>
                     </div>
 
-                    {/* ===== КОНТЕЙНЕР С ТАБЛИЦАМИ ===== */}
                     <div className="px-24 py-2 flex flex-col gap-4 h-[calc(100vh-280px)]">
 
-                        {/* ===== РЕЖИМ: ПО ПРОДУКТАМ ===== */}
                         {viewMode === 'products' && (
                             <>
                                 {/* ТАБЛИЦА ПРОДУКТОВ */}
@@ -347,15 +329,15 @@ function MaterialsPage() {
                                     </div>
                                     <div className="flex-1 overflow-auto border border-gray-200 rounded-md">
                                         <table className="w-full border-collapse text-center">
-                                            <thead className="sticky top-0 z-10">
+                                            <thead className="sticky top-0">
                                             <tr className="bg-gray-100">
-                                                <th className="px-4 py-2 text-sm font-semibold text-gray-700 border-b border-gray-200">Код</th>
-                                                <th className="px-4 py-2 text-sm font-semibold text-gray-700 border-b border-gray-200">KT</th>
-                                                <th className="px-4 py-2 text-sm font-semibold text-gray-700 border-b border-gray-200">EMK</th>
-                                                <th className="px-4 py-2 text-sm font-semibold text-gray-700 border-b border-gray-200">Продукт</th>
-                                                <th className="px-4 py-2 text-sm font-semibold text-gray-700 border-b border-gray-200">Масса, кг</th>
-                                                <th className="px-4 py-2 text-sm font-semibold text-gray-700 border-b border-gray-200">EAN13</th>
-                                                <th className="px-4 py-2 text-sm font-semibold text-gray-700 border-b border-gray-200">Материалов</th>
+                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Код</th>
+                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">KT</th>
+                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">EMK</th>
+                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Продукт</th>
+                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Масса, кг</th>
+                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">EAN13</th>
+                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Материалов</th>
                                             </tr>
                                             </thead>
                                             <tbody>
@@ -369,30 +351,30 @@ function MaterialsPage() {
                                                 products.map((product) => (
                                                     <tr
                                                         key={product.kmc}
-                                                        className={`border-b border-gray-200 hover:bg-gray-50 ${
-                                                            selectedProduct?.kmc === product.kmc ? 'bg-blue-50' : ''
+                                                        className={`border-b border-gray-200 hover:bg-gray-50 text-sm cursor-pointer ${
+                                                            selectedProduct?.kmc === product.kmc ? 'bg-blue-50' : ' text-gray-700'
                                                         }`}
                                                         onClick={() => handleProductSelect(product)}
                                                     >
-                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer">
+                                                        <td className="px-4 py-2">
                                                             {product.kmc}
                                                         </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer">
+                                                        <td className="px-4 py-2">
                                                             {product.kt || '—'}
                                                         </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer">
+                                                        <td className="px-4 py-2">
                                                             {product.emk !== undefined && product.emk !== null ? product.emk.toFixed(1) : '—'}
                                                         </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-700 truncate max-w-[200px] cursor-pointer" title={product.name?.trim()}>
+                                                        <td className="px-4 py-2 truncate max-w-[200px] " title={product.name?.trim()}>
                                                             {product.name?.trim()}
                                                         </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer">
+                                                        <td className="px-4 py-2">
                                                             {product.sumMass?.toFixed(1)}
                                                         </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer">
+                                                        <td className="px-4 py-2">
                                                             {product.ean13}
                                                         </td>
-                                                        <td className="px-4 py-2 text-sm text-gray-700 cursor-pointer">
+                                                        <td className="px-4 py-2">
                                                             {product.materials?.length || 0}
                                                         </td>
                                                     </tr>
@@ -416,16 +398,17 @@ function MaterialsPage() {
                                     </div>
                                     <div className="flex-1 overflow-auto border border-gray-200 rounded-md">
                                         <table className="w-full border-collapse">
-                                            <thead className="sticky top-0 z-10">
-                                            <tr className="bg-gray-200 text-center text-sm">
+                                            <thead className="sticky top-0">
+                                            <tr className="bg-gray-100 text-center text-sm">
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Код</th>
-                                                <th className="px-3 w-[30%] py-1.5 font-semibold text-gray-700 border-b border-gray-200">Материал</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 text-right border-b border-gray-200">Норма на тону</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 text-right border-b border-gray-200">Норма по всем продуктам</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 text-right border-b border-gray-200">Остаток</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 text-right border-b border-gray-200">Страховка, %</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 text-right border-b border-gray-200">Округлить до</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 text-right border-b border-gray-200">Заказать</th>
+                                                <th className="px-3 w-[20%] py-1.5 font-semibold text-gray-700 border-b border-gray-200">Материал</th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Ед. изм.</th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма на тону</th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма по всем продуктам</th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Остаток</th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Страховка, %</th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Округлить до</th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Заказать</th>
                                             </tr>
                                             </thead>
                                             <tbody>
@@ -443,21 +426,27 @@ function MaterialsPage() {
                                                     const roundStep = material.roundStep || 1;
 
                                                     return (
-                                                        <tr key={`${material.kmt}-${index}`} className={`text-xs border-b border-gray-200 hover:bg-gray-50 ${isCommon ? 'bg-yellow-50' : ''}`}>
+                                                        <tr key={`${material.kmt}-${index}`}
+                                                            className={`border-b border-gray-200 text-sm text-center hover:bg-gray-50 ${isCommon ? 'bg-yellow-50' : ''}`}>
                                                             <td className="px-3 py-1.5 text-gray-700">{material.kmt}</td>
-                                                            <td className="px-3 py-1.5 text-gray-700 truncate max-w-[150px]" title={material.snmMt}>
-                                                                {isCommon && (<span className="mr-1 text-orange-500 font-medium" title="Используется в нескольких продуктах">🟡</span>)}
+                                                            <td className="px-3 py-1.5 text-gray-700 text-left truncate max-w-[150px]"
+                                                                title={material.snmMt}>
+                                                                {isCommon && (
+                                                                    <span className="mr-1 text-yellow-400 font-medium pr-1"
+                                                                          title="Используется в нескольких продуктах"><i
+                                                                        className="fa-solid fa-triangle-exclamation"></i></span>)}
                                                                 {material.snmMt || material.kmt}
                                                             </td>
-                                                            <td className="px-3 py-1.5 text-gray-700 text-right">{norm.toFixed(2)}</td>
-                                                            <td className="px-3 py-1.5 text-gray-700 text-right font-semibold">{totalNormf > 0 ? totalNormf.toFixed(2) : '—'}</td>
-                                                            <td className="px-3 py-1.5 text-gray-700 text-right">
+                                                            <td className="px-3 py-1.5 text-gray-700 ">{material.eduMt}</td>
+                                                            <td className="px-3 py-1.5 text-gray-700 ">{norm.toFixed(2)}</td>
+                                                            <td className="px-3 py-1.5 text-gray-700 ">{`${totalNormf.toFixed(2)} ${material.eduMt}`}</td>
+                                                            <td className="px-3 py-1.5 text-gray-700 ">
                                                                 {renderKolfInput(material.kmt, material.kolf || 0)}
                                                             </td>
-                                                            <td className="px-3 py-1.5 text-gray-700 text-right">{insurancePerc}%</td>
-                                                            <td className="px-3 py-1.5 text-gray-700 text-right">{roundStep}</td>
-                                                            <td className="px-3 py-1.5 text-gray-700 text-right font-bold text-green-600">
-                                                                {order > 0 ? order.toFixed(2) : '0'}
+                                                            <td className="px-3 py-1.5 text-gray-700 ">{insurancePerc}%</td>
+                                                            <td className="px-3 py-1.5 text-gray-700 ">{roundStep}</td>
+                                                            <td className="px-3 py-1.5 text-gray-700 font-bold ">
+                                                                {`${order.toFixed(2)} ${material.eduMt}`}
                                                             </td>
                                                         </tr>
                                                     );
@@ -470,7 +459,6 @@ function MaterialsPage() {
                             </>
                         )}
 
-                        {/* ===== РЕЖИМ: СВОДКА ПО МАТЕРИАЛАМ ===== */}
                         {viewMode === 'summary' && (
                             <div className="flex flex-col flex-1 min-h-0">
                                 <div className="mb-1">
@@ -481,16 +469,17 @@ function MaterialsPage() {
                                 </div>
                                 <div className="flex-1 overflow-auto border border-gray-200 rounded-md">
                                     <table className="w-full border-collapse">
-                                        <thead className="sticky top-0 z-10">
-                                        <tr className="bg-gray-200 text-left">
-                                            <th className="px-3 py-1.5 text-xs font-semibold text-gray-700 border-b border-gray-200">Код</th>
-                                            <th className="px-3 py-1.5 text-xs font-semibold text-gray-700 border-b border-gray-200">Материал</th>
-                                            <th className="px-3 py-1.5 text-xs font-semibold text-gray-700 text-right border-b border-gray-200">Продуктов</th>
-                                            <th className="px-3 py-1.5 text-xs font-semibold text-gray-700 text-right border-b border-gray-200">Норма по всем</th>
-                                            <th className="px-3 py-1.5 text-xs font-semibold text-gray-700 text-right border-b border-gray-200">Остаток</th>
-                                            <th className="px-3 py-1.5 text-xs font-semibold text-gray-700 text-right border-b border-gray-200">Страховка, %</th>
-                                            <th className="px-3 py-1.5 text-xs font-semibold text-gray-700 text-right border-b border-gray-200">Округлить до</th>
-                                            <th className="px-3 py-1.5 text-xs font-semibold text-gray-700 text-right border-b border-gray-200">Заказать</th>
+                                        <thead className="sticky top-0">
+                                        <tr className="bg-gray-100 text-center text-sm">
+                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Код</th>
+                                            <th className="px-3 py-1.5 w-[20%] font-semibold text-gray-700 border-b border-gray-200">Материал</th>
+                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Ед. изм.</th>
+                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Продуктов</th>
+                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма по всем</th>
+                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Остаток</th>
+                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Страховка, %</th>
+                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Округлить до</th>
+                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Заказать</th>
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -500,21 +489,27 @@ function MaterialsPage() {
                                             materialSummary.map((item, index) => {
                                                 const isCommon = item.productCount > 1;
                                                 return (
-                                                    <tr key={`${item.kmt}-${index}`} className={`border-b border-gray-200 hover:bg-gray-50 ${isCommon ? 'bg-yellow-50' : ''}`}>
-                                                        <td className="px-3 py-1.5 text-xs text-gray-700">{item.kmt}</td>
-                                                        <td className="px-3 py-1.5 text-xs text-gray-700 truncate max-w-[150px]" title={item.snmMt}>
-                                                            {isCommon && (<span className="mr-1 text-orange-500 font-medium" title="Используется в нескольких продуктах">🟡</span>)}
+                                                    <tr key={`${item.kmt}-${index}`}
+                                                        className={`border-b border-gray-200 text-sm text-center hover:bg-gray-50 ${isCommon ? 'bg-yellow-50' : ''}`}>
+                                                        <td className="px-3 py-1.5 text-gray-700">{item.kmt}</td>
+                                                        <td className="px-3 py-1.5 text-gray-700 text-left truncate max-w-[150px]"
+                                                            title={item.snmMt}>
+                                                            {isCommon && (
+                                                                <span className="mr-1 text-yellow-400 font-medium pr-1"
+                                                                      title="Используется в нескольких продуктах"><i
+                                                                    className="fa-solid fa-triangle-exclamation"></i></span>)}
                                                             {item.snmMt}
                                                         </td>
-                                                        <td className="px-3 py-1.5 text-xs text-gray-700 text-right">{item.productCount}</td>
-                                                        <td className="px-3 py-1.5 text-xs text-gray-700 text-right font-semibold">{item.totalNormf > 0 ? item.totalNormf.toFixed(2) : '—'}</td>
-                                                        <td className="px-3 py-1.5 text-xs text-gray-700 text-right">
+                                                        <td className="px-3 py-1.5 text-gray-700 text-center">{item.eduMt}</td>
+                                                        <td className="px-3 py-1.5 text-gray-700 ">{item.productCount}</td>
+                                                        <td className="px-3 py-1.5 text-gray-700 ">{`${item.totalNormf.toFixed(2)} ${item.eduMt}`}</td>
+                                                        <td className="px-3 py-1.5 text-gray-700 ">
                                                             {renderKolfInput(item.kmt, item.kolf || 0)}
                                                         </td>
-                                                        <td className="px-3 py-1.5 text-xs text-gray-700 text-right">{item.insurancePerc}%</td>
-                                                        <td className="px-3 py-1.5 text-xs text-gray-700 text-right">{item.roundStep}</td>
-                                                        <td className="px-3 py-1.5 text-xs text-gray-700 text-right font-bold text-green-600">
-                                                            {item.order > 0 ? item.order.toFixed(2) : '0'}
+                                                        <td className="px-3 py-1.5 text-gray-700 ">{item.insurancePerc}%</td>
+                                                        <td className="px-3 py-1.5 text-gray-700 ">{item.roundStep}</td>
+                                                        <td className="px-3 py-1.5 text-gray-700 font-bold">
+                                                            {`${item.order.toFixed(2)} ${item.eduMt}`}
                                                         </td>
                                                     </tr>
                                                 );
