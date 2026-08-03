@@ -334,8 +334,9 @@ function MaterialsPage() {
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Код</th>
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">KT</th>
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">EMK</th>
-                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Продукт</th>
+                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Товар</th>
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Масса, кг</th>
+                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Единиц</th>
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">EAN13</th>
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Материалов</th>
                                             </tr>
@@ -365,11 +366,15 @@ function MaterialsPage() {
                                                         <td className="px-4 py-2">
                                                             {product.emk !== undefined && product.emk !== null ? product.emk.toFixed(1) : '—'}
                                                         </td>
-                                                        <td className="px-4 py-2 truncate max-w-[200px] " title={product.name?.trim()}>
+                                                        <td className="px-4 py-2 truncate max-w-[200px] "
+                                                            title={product.name?.trim()}>
                                                             {product.name?.trim()}
                                                         </td>
                                                         <td className="px-4 py-2">
-                                                            {product.sumMass?.toFixed(1)}
+                                                            {product.sumMass?.toFixed(0)}
+                                                        </td>
+                                                        <td className="px-4 py-2">
+                                                            {product.sumKolev?.toFixed(0)}
                                                         </td>
                                                         <td className="px-4 py-2">
                                                             {product.ean13}
