@@ -315,7 +315,7 @@ function MaterialsPage() {
                         </button>
                     </div>
 
-                    <div className="px-24 py-2 flex flex-col gap-4 h-[calc(100vh-280px)]">
+                    <div className="px-24 py-2 flex flex-col gap-4 h-[calc(100vh-240px)]">
 
                         {viewMode === 'products' && (
                             <>
@@ -332,19 +332,21 @@ function MaterialsPage() {
                                             <thead className="sticky top-0">
                                             <tr className="bg-gray-100">
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Код</th>
-                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">KT</th>
-                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">EMK</th>
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Товар</th>
-                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Масса, кг</th>
+                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Масса,
+                                                    кг
+                                                </th>
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Единиц</th>
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">EAN13</th>
+                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">KT</th>
+                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">EMK</th>
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Материалов</th>
                                             </tr>
                                             </thead>
                                             <tbody>
                                             {products.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-sm">
+                                                <td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-sm">
                                                         Нет данных. Выберите дату и цех, нажмите "Загрузить".
                                                     </td>
                                                 </tr>
@@ -360,15 +362,9 @@ function MaterialsPage() {
                                                         <td className="px-4 py-2">
                                                             {product.kmc}
                                                         </td>
-                                                        <td className="px-4 py-2">
-                                                            {product.kt || '—'}
-                                                        </td>
-                                                        <td className="px-4 py-2">
-                                                            {product.emk !== undefined && product.emk !== null ? product.emk.toFixed(1) : '—'}
-                                                        </td>
-                                                        <td className="px-4 py-2 truncate max-w-[200px] "
+                                                        <td className="px-4 py-2 truncate max-w-[200px] text-left"
                                                             title={product.name?.trim()}>
-                                                            {product.name?.trim()}
+                                                            {product.krkmc + " " + product.name?.trim()}
                                                         </td>
                                                         <td className="px-4 py-2">
                                                             {product.sumMass?.toFixed(0)}
@@ -378,6 +374,12 @@ function MaterialsPage() {
                                                         </td>
                                                         <td className="px-4 py-2">
                                                             {product.ean13}
+                                                        </td>
+                                                        <td className="px-4 py-2">
+                                                            {product.kt || '—'}
+                                                        </td>
+                                                        <td className="px-4 py-2">
+                                                            {product.emk !== undefined && product.emk !== null ? product.emk.toFixed(1) : '—'}
                                                         </td>
                                                         <td className="px-4 py-2">
                                                             {product.materials?.length || 0}
@@ -392,7 +394,7 @@ function MaterialsPage() {
 
                                 {/* ТАБЛИЦА МАТЕРИАЛОВ ВЫБРАННОГО ПРОДУКТА */}
                                 <div className="flex flex-col min-h-[308px] max-h-[308px]">
-                                    <div className="mb-1">
+                                <div className="mb-1">
                                         <span className="text-sm font-semibold text-gray-700">Материалы</span>
                                         {selectedProduct && (
                                             <span className="ml-2 text-xs text-gray-500">{selectedProduct.name?.trim()}</span>
