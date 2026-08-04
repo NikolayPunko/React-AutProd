@@ -64,7 +64,31 @@ function MaterialsPage() {
         try {
             setIsLoading(true);
             const response = await MaterialService.loadProducts(date, kpp);
-            setProducts(response.data || []);
+            // Группируем материалы внутри каждого продукта
+            const groupedData = (response.data || []).map(product => {
+                const groupedMaterials = {};
+
+                product.materials?.forEach(material => {
+                    if (!groupedMaterials[material.kmt]) {
+                        // Первое вхождение - сохраняем все поля
+                        groupedMaterials[material.kmt] = {
+                            ...material,
+                            norm: 0,
+                            normf: 0
+                        };
+                    }
+                    // Суммируем нормы
+                    groupedMaterials[material.kmt].norm += material.norm || 0;
+                    groupedMaterials[material.kmt].normf += material.normf || 0;
+                });
+
+                return {
+                    ...product,
+                    materials: Object.values(groupedMaterials)
+                };
+            });
+
+            setProducts(groupedData);
             setSelectedProduct(null);
         } catch (e) {
             setIsModalError(true);
@@ -183,7 +207,7 @@ function MaterialsPage() {
             <input
                 type="number"
                 step="0.01"
-                className={`w-20 px-1.5 text-right text-sm font-semibold border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                className={`w-24 px-1.5 text-right text-sm font-semibold border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                     isUpdating ? 'opacity-50 bg-gray-100' : ''
                 }`}
                 value={defaultKolf || 0}
@@ -354,8 +378,8 @@ function MaterialsPage() {
                                                 products.map((product) => (
                                                     <tr
                                                         key={product.kmc}
-                                                        className={`border-b border-gray-200 hover:bg-gray-50 text-sm cursor-pointer ${
-                                                            selectedProduct?.kmc === product.kmc ? 'bg-blue-50' : ' text-gray-700'
+                                                        className={`border-b border-gray-200 text-sm cursor-pointer ${
+                                                            selectedProduct?.kmc === product.kmc ? 'bg-blue-800 text-white' : ' text-gray-700 hover:bg-gray-100'
                                                         }`}
                                                         onClick={() => handleProductSelect(product)}
                                                     >
@@ -393,15 +417,26 @@ function MaterialsPage() {
                                 </div>
 
                                 {/* ТАБЛИЦА МАТЕРИАЛОВ ВЫБРАННОГО ПРОДУКТА */}
-                                <div className="flex flex-col min-h-[308px] max-h-[308px]">
-                                <div className="mb-1">
-                                        <span className="text-sm font-semibold text-gray-700">Материалы</span>
-                                        {selectedProduct && (
-                                            <span className="ml-2 text-xs text-gray-500">{selectedProduct.name?.trim()}</span>
-                                        )}
-                                        {selectedProduct?.materials?.length > 0 && (
-                                            <span className="ml-1 text-xs text-gray-500">({selectedProduct.materials.length})</span>
-                                        )}
+                                <div className="flex flex-col min-h-[273px] max-h-[308px]">
+                                    <div className="mb-1 flex items-center justify-between">
+                                        <div>
+                                            <span className="text-sm font-semibold text-gray-700">Материалы</span>
+                                            {selectedProduct && (
+                                                <span
+                                                    className="ml-2 text-xs text-gray-500">{selectedProduct.name?.trim()}</span>
+                                            )}
+                                            {selectedProduct?.materials?.length > 0 && (
+                                                <span
+                                                    className="ml-1 text-xs text-gray-500">({selectedProduct.materials.length})</span>
+                                            )}
+                                        </div>
+                                        {/* ПОДСКАЗКА */}
+                                        <div className="text-xs text-gray-500 flex items-center gap-2">
+                                            <span className="flex items-center gap-1">
+                                                <span className="text-yellow-400 text-sm"><i className="fa-solid fa-triangle-exclamation"></i></span>
+                                                <span>— материал используется в нескольких продуктах</span>
+                                            </span>
+                                        </div>
                                     </div>
                                     <div className="flex-1 overflow-auto border border-gray-200 rounded-md">
                                         <table className="w-full border-collapse">
@@ -409,20 +444,40 @@ function MaterialsPage() {
                                             <tr className="bg-gray-100 text-center text-sm">
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Код</th>
                                                 <th className="px-3 w-[20%] py-1.5 font-semibold text-gray-700 border-b border-gray-200">Материал</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Ед. изм.</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма на тону</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма по всем продуктам</th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Ед.
+                                                    изм.
+                                                </th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма
+                                                    на тону
+                                                </th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма
+                                                    по всем продуктам
+                                                </th>
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Остаток</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Страховка, %</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Округлить до</th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Страховой
+                                                    запас
+                                                </th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Округление
+                                                    до тарного места
+                                                </th>
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Заказать</th>
                                             </tr>
                                             </thead>
                                             <tbody>
                                             {!selectedProduct ? (
-                                                <tr><td colSpan={8} className="px-3 py-8 text-center text-gray-400 text-sm">Выберите продукт, чтобы увидеть материалы</td></tr>
+                                                <tr>
+                                                    <td colSpan={8}
+                                                        className="px-3 py-8 text-center text-gray-400 text-sm">Выберите
+                                                        продукт, чтобы увидеть материалы
+                                                    </td>
+                                                </tr>
                                             ) : selectedProduct.materials?.length === 0 ? (
-                                                <tr><td colSpan={8} className="px-3 py-8 text-center text-gray-400 text-sm">Нет материалов для этого продукта</td></tr>
+                                                <tr>
+                                                    <td colSpan={8}
+                                                        className="px-3 py-8 text-center text-gray-400 text-sm">Нет
+                                                        материалов для этого продукта
+                                                    </td>
+                                                </tr>
                                             ) : (
                                                 selectedProduct.materials?.map((material, index) => {
                                                     const isCommon = material.productCount > 1;
@@ -439,8 +494,9 @@ function MaterialsPage() {
                                                             <td className="px-3 py-1.5 text-gray-700 text-left truncate max-w-[150px]"
                                                                 title={material.snmMt}>
                                                                 {isCommon && (
-                                                                    <span className="mr-1 text-yellow-400 font-medium pr-1"
-                                                                          title="Используется в нескольких продуктах"><i
+                                                                    <span
+                                                                        className="mr-1 text-yellow-400 font-medium pr-1"
+                                                                        title="Используется в нескольких продуктах"><i
                                                                         className="fa-solid fa-triangle-exclamation"></i></span>)}
                                                                 {material.snmMt || material.kmt}
                                                             </td>
@@ -468,11 +524,22 @@ function MaterialsPage() {
 
                         {viewMode === 'summary' && (
                             <div className="flex flex-col flex-1 min-h-0">
-                                <div className="mb-1">
-                                    <span className="text-sm font-semibold text-gray-700">Сводка по материалам</span>
-                                    {materialSummary.length > 0 && (
-                                        <span className="ml-2 text-xs text-gray-500">({materialSummary.length})</span>
-                                    )}
+                                <div className="mb-1 flex items-center justify-between">
+                                    <div>
+                                        <span
+                                            className="text-sm font-semibold text-gray-700">Сводка по материалам</span>
+                                        {materialSummary.length > 0 && (
+                                            <span
+                                                className="ml-2 text-xs text-gray-500">({materialSummary.length})</span>
+                                        )}
+                                    </div>
+                                    {/* ПОДСКАЗКА */}
+                                    <div className="text-xs text-gray-500 flex items-center gap-2">
+                                        <span className="flex items-center gap-1">
+                                            <span className="text-yellow-400 text-sm"><i className="fa-solid fa-triangle-exclamation"></i></span>
+                                            <span>— материал используется в нескольких продуктах</span>
+                                        </span>
+                                    </div>
                                 </div>
                                 <div className="flex-1 overflow-auto border border-gray-200 rounded-md">
                                     <table className="w-full border-collapse">
@@ -480,18 +547,30 @@ function MaterialsPage() {
                                         <tr className="bg-gray-100 text-center text-sm">
                                             <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Код</th>
                                             <th className="px-3 py-1.5 w-[20%] font-semibold text-gray-700 border-b border-gray-200">Материал</th>
-                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Ед. изм.</th>
+                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Ед.
+                                                изм.
+                                            </th>
                                             <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Продуктов</th>
-                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма по всем</th>
+                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма
+                                                по всем
+                                            </th>
                                             <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Остаток</th>
-                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Страховка, %</th>
-                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Округлить до</th>
+                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Страховка,
+                                                %
+                                            </th>
+                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Округлить
+                                                до
+                                            </th>
                                             <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Заказать</th>
                                         </tr>
                                         </thead>
                                         <tbody>
                                         {materialSummary.length === 0 ? (
-                                            <tr><td colSpan={8} className="px-3 py-8 text-center text-gray-400 text-sm">Нет данных</td></tr>
+                                            <tr>
+                                                <td colSpan={8}
+                                                    className="px-3 py-8 text-center text-gray-400 text-sm">Нет данных
+                                                </td>
+                                            </tr>
                                         ) : (
                                             materialSummary.map((item, index) => {
                                                 const isCommon = item.productCount > 1;
@@ -530,7 +609,8 @@ function MaterialsPage() {
                     </div>
                 </>}
 
-                {isModalError && <ModalNotifyError title={"Ошибка"} message={error} onClose={() => setIsModalError(false)}/>}
+                {isModalError &&
+                    <ModalNotifyError title={"Ошибка"} message={error} onClose={() => setIsModalError(false)}/>}
 
                 {isModalNotify &&
                     <ModalNotify title={"Результат операции"} message={msg} onClose={() => setIsModalNotify(false)}/>}
