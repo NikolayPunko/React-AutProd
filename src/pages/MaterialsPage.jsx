@@ -1,6 +1,6 @@
 import {Navigation} from "../components/Navigation";
 import {LeftNavigation} from "../components/leftNavigation/LeftNavigation";
-import React, {useState, useMemo} from "react";
+import React, {useState, useMemo, useEffect} from "react";
 import Loading from "../components/loading/Loading";
 import {ModalNotifyError} from "../components/modal/ModalNotifyError";
 import {observer} from 'mobx-react-lite';
@@ -84,6 +84,10 @@ function MaterialsPage() {
             setError(e.response?.data?.message || 'Ошибка загрузки получателей');
         }
     };
+
+    useEffect(()=>{
+        setProducts([])
+    }, [date, kpp])
 
     async function loadData() {
         if (!date || !kpp) {
@@ -304,7 +308,7 @@ function MaterialsPage() {
 
                 {!isLoading && <>
                     <div className="px-16 py-6">
-                        <span className="text-2xl font-bold">Списание материалов в планировщике</span>
+                        <span className="text-2xl font-bold">Расчет материалов в планировщике</span>
                     </div>
 
                     {/* Фильтры */}
@@ -410,13 +414,12 @@ function MaterialsPage() {
                                         <table className="w-full border-collapse text-center">
                                             <thead className="sticky top-0">
                                             <tr className="bg-gray-100">
-                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Код</th>
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Товар</th>
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Масса, кг</th>
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Единиц</th>
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">EAN13</th>
-                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">KT</th>
-                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">EMK</th>
+                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Тара</th>
+                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Емкость</th>
                                                 <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Материалов</th>
                                             </tr>
                                             </thead>
@@ -436,8 +439,7 @@ function MaterialsPage() {
                                                         }`}
                                                         onClick={() => handleProductSelect(product)}
                                                     >
-                                                        <td className="px-4 py-2">{product.kmc}</td>
-                                                        <td className="px-4 py-2 truncate max-w-[200px] text-left" title={product.name?.trim()}>
+                                                        <td className="px-4 py-2 truncate max-w-[200px] text-left" title={product.name?.trim() + "  " + product.kmc}>
                                                             {product.krkmc + " " + product.name?.trim()}
                                                         </td>
                                                         <td className="px-4 py-2">{product.sumMass?.toFixed(0)}</td>
@@ -477,15 +479,14 @@ function MaterialsPage() {
                                         <table className="w-full border-collapse">
                                             <thead className="sticky top-0">
                                             <tr className="bg-gray-100 text-center text-sm">
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Код</th>
-                                                <th className="px-3 w-[20%] py-1.5 font-semibold text-gray-700 border-b border-gray-200">Материал</th>
+                                                <th className="px-3 w-[25%] py-1.5 font-semibold text-gray-700 border-b border-gray-200">Материал</th>
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Ед. изм.</th>
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма на тону</th>
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма по всем продуктам</th>
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Остаток</th>
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Страховой запас</th>
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Округление до тарного места</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Заказать</th>
+                                                <th className="px-3 w-[10%] py-1.5 font-semibold text-gray-700 border-b border-gray-200">Заказать</th>
                                             </tr>
                                             </thead>
                                             <tbody>
@@ -513,14 +514,13 @@ function MaterialsPage() {
                                                     return (
                                                         <tr key={`${material.kmt}-${index}`}
                                                             className={`border-b border-gray-200 text-sm text-center hover:bg-gray-50 ${isCommon ? 'bg-yellow-50' : ''}`}>
-                                                            <td className="px-3 py-1.5 text-gray-700">{material.kmt}</td>
-                                                            <td className="px-3 py-1.5 text-gray-700 text-left truncate max-w-[150px]" title={material.snmMt}>
+                                                            <td className="px-3 py-1.5 text-gray-700 text-left truncate " title={`${material.snmMt} ${material.kmt}`}>
                                                                 {isCommon && (
                                                                     <span className="mr-1 text-yellow-400 font-medium pr-1" title="Используется в нескольких продуктах">
                                                                         <i className="fa-solid fa-triangle-exclamation"></i>
                                                                     </span>
                                                                 )}
-                                                                {material.snmMt || material.kmt}
+                                                                {`${material.snmMt}`}
                                                             </td>
                                                             <td className="px-3 py-1.5 text-gray-700">{material.eduMt}</td>
                                                             <td className="px-3 py-1.5 text-gray-700">{norm.toFixed(2)}</td>
@@ -564,7 +564,6 @@ function MaterialsPage() {
                                     <table className="w-full border-collapse">
                                         <thead className="sticky top-0">
                                         <tr className="bg-gray-100 text-center text-sm">
-                                            <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Код</th>
                                             <th className="px-3 py-1.5 w-[20%] font-semibold text-gray-700 border-b border-gray-200">Материал</th>
                                             <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Ед. изм.</th>
                                             <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Продуктов</th>
@@ -578,7 +577,7 @@ function MaterialsPage() {
                                         <tbody>
                                         {materialSummary.length === 0 ? (
                                             <tr>
-                                                <td colSpan={8} className="px-3 py-8 text-center text-gray-400 text-sm">Нет данных</td>
+                                                <td colSpan={9} className="px-3 py-8 text-center text-gray-400 text-sm">Нет данных. Выберите дату и цех, нажмите "Загрузить".</td>
                                             </tr>
                                         ) : (
                                             materialSummary.map((item, index) => {
@@ -586,8 +585,7 @@ function MaterialsPage() {
                                                 return (
                                                     <tr key={`${item.kmt}-${index}`}
                                                         className={`border-b border-gray-200 text-sm text-center hover:bg-gray-50 ${isCommon ? 'bg-yellow-50' : ''}`}>
-                                                        <td className="px-3 py-1.5 text-gray-700">{item.kmt}</td>
-                                                        <td className="px-3 py-1.5 text-gray-700 text-left truncate max-w-[150px]" title={item.snmMt}>
+                                                        <td className="px-3 py-1.5 text-gray-700 text-left truncate max-w-[150px]" title={`${item.snmMt} ${item.kmt}`}>
                                                             {isCommon && (
                                                                 <span className="mr-1 text-yellow-400 font-medium pr-1" title="Используется в нескольких продуктах">
                                                                     <i className="fa-solid fa-triangle-exclamation"></i>
