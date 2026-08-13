@@ -9,7 +9,6 @@ import {ModalNotify} from "../components/modal/ModalNotify";
 import {CustomStyleMaterialSelect} from "../data/styleForSelect";
 import AsyncSelect from "react-select/async";
 import {BlueButton} from "../components/reportsConstruct/buttons/BlueButton";
-import {WhiteButton} from "../components/reportsConstruct/buttons/WhiteButton";
 
 function MaterialsPage() {
 
@@ -87,14 +86,20 @@ function MaterialsPage() {
 
     useEffect(()=>{
         setProducts([])
+        if (!date || !kpp) {
+            // setIsModalError(true);
+            // setError('Выберите дату и материально ответственное лицо');
+            return;
+        }
+        loadData()
     }, [date, kpp])
 
     async function loadData() {
-        if (!date || !kpp) {
-            setIsModalError(true);
-            setError('Выберите дату и материально ответственное лицо');
-            return;
-        }
+        // if (!date || !kpp) {
+        //     setIsModalError(true);
+        //     setError('Выберите дату и материально ответственное лицо');
+        //     return;
+        // }
 
         try {
             setIsLoading(true);
@@ -307,12 +312,15 @@ function MaterialsPage() {
                 {isLoading && <Loading/>}
 
                 {!isLoading && <>
-                    <div className="px-16 py-6">
+                    <div className="px-16 pt-6 pb-2">
                         <span className="text-2xl font-bold">Расчет материалов в планировщике</span>
                     </div>
 
                     {/* Фильтры */}
-                    <div className="px-24 py-2">
+                    <div className="px-24 pb-2">
+                        <div className="text-xs text-gray-500 flex items-center gap-2 py-2">
+                            Выберите дату и материально ответственное лицо
+                        </div>
                         <div className="flex flex-row gap-5 items-center">
                             <div className="inline-flex items-center h-[30px] border border-gray-200 rounded-md">
                                 <span
@@ -350,14 +358,12 @@ function MaterialsPage() {
                                 />
                             </div>
 
-                            <BlueButton onClick={loadData} text={"Загрузить"}
-                                        icon={"fa-solid fa-download text-sm pt-0.5"}/>
                             <BlueButton onClick={handleSave} text={"Сохранить"}
                                         className={"bg-cyan-600 hover:bg-cyan-700"}
                                         icon={"fa-solid fa-floppy-disk text-sm pt-0.5"}/>
 
                             <button onClick={handleImportReferenceData} disabled={isImporting}
-                                className="px-3 h-[30px] text-[0.900rem] font-medium transition-all duration-200 border border-gray-200 rounded-md disabled:bg-gray-50 disabled:cursor-progress disabled:border-gray-200 hover:bg-gray-50 hover:text-gray-800 hover:border-gray-400 text-gray-600">
+                                    className="px-3 h-[30px] text-[0.900rem] font-medium transition-all duration-200 border border-gray-200 rounded-md disabled:bg-gray-50 disabled:cursor-progress disabled:border-gray-200 hover:bg-gray-50 hover:text-gray-800 hover:border-gray-400 text-gray-600">
                                 {isImporting ? (
                                     <>
                                         Обновление справочных данных
