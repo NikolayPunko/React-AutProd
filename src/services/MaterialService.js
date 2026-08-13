@@ -3,6 +3,7 @@ import {API_URL_SCHEDULER} from "../http/scheduler";
 
 export default class MaterialService {
 
+    static PATH_IMPORT_FOLDER = "C:/Users/punko/Desktop/test/";
 
     static searchRecipients(query) {
         return $api.get(`${API_URL_SCHEDULER}/api/material/recipients/search`, {
@@ -22,6 +23,30 @@ export default class MaterialService {
 
     static saveAll(request) {
         return $api.post(`${API_URL_SCHEDULER}/api/material/save`, request);
+    }
+
+    static importSprogByPath() {
+        return $api.post(`${API_URL_SCHEDULER}/api/dbf/import/sprog/path`, {},{
+            params: { path: this.PATH_IMPORT_FOLDER + "BD_SPROG.DBF" }
+        });
+    }
+
+    static importRnppByPath() {
+        return $api.post(`${API_URL_SCHEDULER}/api/dbf/import/rnpp/path`, {}, {
+            params: { path: this.PATH_IMPORT_FOLDER + "BD_RNPP.DBF" }
+        });
+    }
+
+    static importPpByPath() {
+        return $api.post(`${API_URL_SCHEDULER}/api/dbf/import/pp/path`, {},{
+            params: { path: this.PATH_IMPORT_FOLDER + "NS_PP.DBF" }
+        });
+    }
+
+    static importMtByPath() {
+        return $api.post(`${API_URL_SCHEDULER}/api/dbf/import/mt/path`, {},{
+            params: { path: this.PATH_IMPORT_FOLDER + "NS_MT.DBF" }
+        });
     }
 
 

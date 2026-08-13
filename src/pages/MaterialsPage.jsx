@@ -9,6 +9,7 @@ import {ModalNotify} from "../components/modal/ModalNotify";
 import {CustomStyleMaterialSelect} from "../data/styleForSelect";
 import AsyncSelect from "react-select/async";
 import {BlueButton} from "../components/reportsConstruct/buttons/BlueButton";
+import {WhiteButton} from "../components/reportsConstruct/buttons/WhiteButton";
 
 function MaterialsPage() {
 
@@ -24,7 +25,6 @@ function MaterialsPage() {
     });
     const [kpp, setKpp] = useState('');
 
-    // ✅ Оригинальные данные для бэкенда
     const [products, setProducts] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [viewMode, setViewMode] = useState('products');
@@ -32,7 +32,8 @@ function MaterialsPage() {
     const [updatingKolf, setUpdatingKolf] = useState(null);
     const [selectedKpp, setSelectedKpp] = useState(null);
 
-    // ✅ Группируем материалы ТОЛЬКО для отображения
+    const [isImporting, setIsImporting] = useState(false);
+
     const displayProducts = useMemo(() => {
         return (products || []).map(product => {
             const groupedMaterials = {};
@@ -59,7 +60,6 @@ function MaterialsPage() {
         });
     }, [products]);
 
-    // ✅ Для выбранного продукта используем данные из displayProducts
     const selectedDisplayProduct = useMemo(() => {
         if (!selectedProduct) return null;
         return displayProducts.find(p => p.kmc === selectedProduct.kmc) || null;
@@ -96,7 +96,6 @@ function MaterialsPage() {
             setIsLoading(true);
             const response = await MaterialService.loadProducts(date, kpp);
 
-            // ✅ Сохраняем оригинальные данные
             setProducts(response.data || []);
             setSelectedProduct(null);
         } catch (e) {
@@ -126,12 +125,11 @@ function MaterialsPage() {
                 kpp,
                 kmt,
                 kolf: value,
-                data: products  // ✅ отправляем оригинальные данные
+                data: products
             };
 
             const response = await MaterialService.recalcKolf(request);
 
-            // ✅ Обновляем оригинальные данные
             setProducts(response.data);
 
             // Обновляем selectedProduct если он есть
@@ -153,7 +151,7 @@ function MaterialsPage() {
         const request = {
             date,
             kpp,
-            data: products  // ✅ отправляем оригинальные данные
+            data: products
         };
 
         try {
@@ -169,8 +167,37 @@ function MaterialsPage() {
         }
     }
 
+    async function handleImportReferenceData() {
+        try {
+            setIsImporting(true);
+            setError(null);
+
+            // Последовательно вызываем все 4 метода импорта
+            const results = await Promise.all([
+                MaterialService.importSprogByPath(),
+                MaterialService.importRnppByPath(),
+                MaterialService.importPpByPath(),
+                MaterialService.importMtByPath()
+            ]);
+
+            // Проверяем, все ли запросы успешны
+            const allSuccess = results.every(res => res.status === 200 || res.status === 201);
+
+            if (allSuccess) {
+                setIsModalNotify(true);
+                setMsg('Справочные данные успешно обновлены!');
+            } else {
+                throw new Error('Один из импортов завершился с ошибкой');
+            }
+        } catch (e) {
+            setIsModalError(true);
+            setError('Ошибка при обновлении справочных данных: ' + (e.response?.data?.message || e.message ) );
+        } finally {
+            setIsImporting(false);
+        }
+    }
+
     function getMaterialSummary() {
-        // ✅ Используем displayProducts для сводки
         if (!displayProducts.length) return [];
 
         const grouped = {};
@@ -229,7 +256,6 @@ function MaterialsPage() {
                     const newValue = rawValue === '' ? 0 : parseFloat(rawValue) || 0;
                     if (newValue < 0) return;
 
-                    // ✅ Обновляем оригинальные данные
                     const updatedProducts = products.map(product => ({
                         ...product,
                         materials: product.materials?.map(m =>
@@ -285,7 +311,8 @@ function MaterialsPage() {
                     <div className="px-24 py-2">
                         <div className="flex flex-row gap-5 items-center">
                             <div className="inline-flex items-center h-[30px] border border-gray-200 rounded-md">
-                                <span className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
+                                <span
+                                    className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
                                     Дата:
                                 </span>
                                 <input
@@ -297,7 +324,8 @@ function MaterialsPage() {
                             </div>
 
                             <div className="inline-flex items-center h-[30px] border border-gray-200 rounded-md">
-                                <span className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
+                                <span
+                                    className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
                                     МОЛ:
                                 </span>
                                 <AsyncSelect
@@ -318,8 +346,27 @@ function MaterialsPage() {
                                 />
                             </div>
 
-                            <BlueButton onClick={loadData} text={"Загрузить"} icon={"fa-solid fa-download text-sm pt-0.5"}/>
-                            <BlueButton onClick={handleSave} text={"Сохранить"} className={"bg-cyan-600 hover:bg-cyan-700"} icon={"fa-solid fa-floppy-disk text-sm pt-0.5"}/>
+                            <BlueButton onClick={loadData} text={"Загрузить"}
+                                        icon={"fa-solid fa-download text-sm pt-0.5"}/>
+                            <BlueButton onClick={handleSave} text={"Сохранить"}
+                                        className={"bg-cyan-600 hover:bg-cyan-700"}
+                                        icon={"fa-solid fa-floppy-disk text-sm pt-0.5"}/>
+
+                            <button onClick={handleImportReferenceData} disabled={isImporting}
+                                className="px-3 h-[30px] text-[0.900rem] font-medium transition-all duration-200 border border-gray-200 rounded-md disabled:bg-gray-50 disabled:cursor-progress disabled:border-gray-200 hover:bg-gray-50 hover:text-gray-800 hover:border-gray-400 text-gray-600">
+                                {isImporting ? (
+                                    <>
+                                        Обновление справочных данных
+                                        <i className="fa-solid text-blue-800 fa-spinner fa-spin ml-2"></i>
+                                    </>
+                                ) : (
+                                    <>
+                                        Обновить справочные данные
+                                        <i className="pl-2 fa-solid fa-cloud-arrow-down"></i>
+                                    </>
+                                )}
+                            </button>
+
                         </div>
                     </div>
 
@@ -376,7 +423,7 @@ function MaterialsPage() {
                                             <tbody>
                                             {displayProducts.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-sm">
+                                                    <td colSpan={8} className="px-4 py-8 text-center text-gray-400 text-sm">
                                                         Нет данных. Выберите дату и цех, нажмите "Загрузить".
                                                     </td>
                                                 </tr>
@@ -444,13 +491,13 @@ function MaterialsPage() {
                                             <tbody>
                                             {!selectedDisplayProduct ? (
                                                 <tr>
-                                                    <td colSpan={8} className="px-3 py-8 text-center text-gray-400 text-sm">
+                                                    <td colSpan={9} className="px-3 py-8 text-center text-gray-400 text-sm">
                                                         Выберите продукт, чтобы увидеть материалы
                                                     </td>
                                                 </tr>
                                             ) : selectedDisplayProduct.materials?.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={8} className="px-3 py-8 text-center text-gray-400 text-sm">
+                                                    <td colSpan={9} className="px-3 py-8 text-center text-gray-400 text-sm">
                                                         Нет материалов для этого продукта
                                                     </td>
                                                 </tr>
