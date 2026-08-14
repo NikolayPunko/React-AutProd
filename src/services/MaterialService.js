@@ -1,5 +1,5 @@
 import $api from "../http";
-import {API_URL_SCHEDULER} from "../http/scheduler";
+import { API_URL_SCHEDULER } from "../http/scheduler";
 
 export default class MaterialService {
 
@@ -25,8 +25,9 @@ export default class MaterialService {
         return $api.post(`${API_URL_SCHEDULER}/api/material/save`, request);
     }
 
+    // Старые методы (по пути) - оставляем для обратной совместимости
     static importSprogByPath() {
-        return $api.post(`${API_URL_SCHEDULER}/api/dbf/import/sprog/path`, {},{
+        return $api.post(`${API_URL_SCHEDULER}/api/dbf/import/sprog/path`, {}, {
             params: { path: this.PATH_IMPORT_FOLDER + "BD_SPROG.DBF" }
         });
     }
@@ -38,16 +39,55 @@ export default class MaterialService {
     }
 
     static importPpByPath() {
-        return $api.post(`${API_URL_SCHEDULER}/api/dbf/import/pp/path`, {},{
+        return $api.post(`${API_URL_SCHEDULER}/api/dbf/import/pp/path`, {}, {
             params: { path: this.PATH_IMPORT_FOLDER + "NS_PP.DBF" }
         });
     }
 
     static importMtByPath() {
-        return $api.post(`${API_URL_SCHEDULER}/api/dbf/import/mt/path`, {},{
+        return $api.post(`${API_URL_SCHEDULER}/api/dbf/import/mt/path`, {}, {
             params: { path: this.PATH_IMPORT_FOLDER + "NS_MT.DBF" }
         });
     }
 
+    // НОВЫЕ МЕТОДЫ - загрузка файлов через multipart/form-data
+    static importSprogFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        return $api.post(`${API_URL_SCHEDULER}/api/dbf/import/sprog`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+    }
 
+    static importRnppFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        return $api.post(`${API_URL_SCHEDULER}/api/dbf/import/rnpp`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+    }
+
+    static importPpFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        return $api.post(`${API_URL_SCHEDULER}/api/dbf/import/pp`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+    }
+
+    static importMtFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        return $api.post(`${API_URL_SCHEDULER}/api/dbf/import/mt`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+    }
 }

@@ -1,6 +1,6 @@
 import {Navigation} from "../components/Navigation";
 import {LeftNavigation} from "../components/leftNavigation/LeftNavigation";
-import React, {useState, useMemo, useEffect} from "react";
+import React, {useState, useMemo, useEffect, useRef} from "react";
 import Loading from "../components/loading/Loading";
 import {ModalNotifyError} from "../components/modal/ModalNotifyError";
 import {observer} from 'mobx-react-lite';
@@ -33,6 +33,9 @@ function MaterialsPage() {
 
     const [isImporting, setIsImporting] = useState(false);
 
+    // Ref для скрытого input
+    const fileInputRef = useRef(null);
+
     const displayProducts = useMemo(() => {
         return (products || []).map(product => {
             const groupedMaterials = {};
@@ -45,7 +48,6 @@ function MaterialsPage() {
                         normf: 0
                     };
                 }
-                // Суммируем с округлением до 2 знаков
                 const normSum = (groupedMaterials[material.kmt].norm || 0) + (material.norm || 0);
                 const normfSum = (groupedMaterials[material.kmt].normf || 0) + (material.normf || 0);
                 groupedMaterials[material.kmt].norm = Math.round(normSum * 100) / 100;
@@ -84,27 +86,18 @@ function MaterialsPage() {
         }
     };
 
-    useEffect(()=>{
+    useEffect(() => {
         setProducts([])
         if (!date || !kpp) {
-            // setIsModalError(true);
-            // setError('Выберите дату и материально ответственное лицо');
             return;
         }
         loadData()
     }, [date, kpp])
 
     async function loadData() {
-        // if (!date || !kpp) {
-        //     setIsModalError(true);
-        //     setError('Выберите дату и материально ответственное лицо');
-        //     return;
-        // }
-
         try {
             setIsLoading(true);
             const response = await MaterialService.loadProducts(date, kpp);
-
             setProducts(response.data || []);
             setSelectedProduct(null);
         } catch (e) {
@@ -116,7 +109,6 @@ function MaterialsPage() {
     }
 
     function handleProductSelect(product) {
-        // product здесь из displayProducts, ищем оригинальный по kmc
         const originalProduct = products.find(p => p.kmc === product.kmc);
         if (selectedProduct && selectedProduct.kmc === product.kmc) {
             setSelectedProduct(null);
@@ -138,10 +130,8 @@ function MaterialsPage() {
             };
 
             const response = await MaterialService.recalcKolf(request);
-
             setProducts(response.data);
 
-            // Обновляем selectedProduct если он есть
             if (selectedProduct) {
                 const updated = response.data.find(p => p.kmc === selectedProduct.kmc);
                 if (updated) {
@@ -176,35 +166,56 @@ function MaterialsPage() {
         }
     }
 
-    async function handleImportReferenceData() {
+    // Обработка выбранных файлов
+    const handleFileSelect = async (event) => {
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
+
+        const fileMap = {};
+        for (let file of files) {
+            const name = file.name.toUpperCase();
+            if (name === 'BD_SPROG.DBF') fileMap.sprog = file;
+            else if (name === 'BD_RNPP.DBF') fileMap.rnpp = file;
+            else if (name === 'NS_PP.DBF') fileMap.pp = file;
+            else if (name === 'NS_MT.DBF') fileMap.mt = file;
+        }
+
+        // Проверяем наличие всех 4 файлов
+        const required = ['sprog', 'rnpp', 'pp', 'mt'];
+        const missing = required.filter(key => !fileMap[key]);
+        if (missing.length > 0) {
+            setIsModalError(true);
+            setError(`Не найдены файлы: ${missing.join(', ')}`);
+            return;
+        }
+
         try {
             setIsImporting(true);
-            setError(null);
 
-            // Последовательно вызываем все 4 метода импорта
-            const results = await Promise.all([
-                MaterialService.importSprogByPath(),
-                MaterialService.importRnppByPath(),
-                MaterialService.importPpByPath(),
-                MaterialService.importMtByPath()
-            ]);
+            // Последовательно загружаем файлы
+            await MaterialService.importSprogFile(fileMap.sprog);
+            await MaterialService.importRnppFile(fileMap.rnpp);
+            await MaterialService.importPpFile(fileMap.pp);
+            await MaterialService.importMtFile(fileMap.mt);
 
-            // Проверяем, все ли запросы успешны
-            const allSuccess = results.every(res => res.status === 200 || res.status === 201);
-
-            if (allSuccess) {
-                setIsModalNotify(true);
-                setMsg('Справочные данные успешно обновлены!');
-            } else {
-                throw new Error('Один из импортов завершился с ошибкой');
-            }
+            setIsModalNotify(true);
+            setMsg('Справочные данные успешно обновлены!');
         } catch (e) {
             setIsModalError(true);
-            setError('Ошибка при обновлении справочных данных: ' + (e.response?.data?.message || e.message ) );
+            setError('Ошибка при обновлении справочных данных: ' + (e.response?.data?.message || e.message));
         } finally {
             setIsImporting(false);
+            // Очищаем input для возможности повторного выбора
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
-    }
+    };
+
+    // Открытие диалога выбора файлов
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
 
     function getMaterialSummary() {
         if (!displayProducts.length) return [];
@@ -323,8 +334,7 @@ function MaterialsPage() {
                         </div>
                         <div className="flex flex-row gap-5 items-center">
                             <div className="inline-flex items-center h-[30px] border border-gray-200 rounded-md">
-                                <span
-                                    className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
+                                <span className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
                                     Дата:
                                 </span>
                                 <input
@@ -336,8 +346,7 @@ function MaterialsPage() {
                             </div>
 
                             <div className="inline-flex items-center h-[30px] border border-gray-200 rounded-md">
-                                <span
-                                    className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
+                                <span className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
                                     МОЛ:
                                 </span>
                                 <AsyncSelect
@@ -362,8 +371,22 @@ function MaterialsPage() {
                                         className={"bg-cyan-600 hover:bg-cyan-700"}
                                         icon={"fa-solid fa-floppy-disk text-sm pt-0.5"}/>
 
-                            <button onClick={handleImportReferenceData} disabled={isImporting}
-                                    className="px-3 h-[30px] text-[0.900rem] font-medium transition-all duration-200 border border-gray-200 rounded-md disabled:bg-gray-50 disabled:cursor-progress disabled:border-gray-200 hover:bg-gray-50 hover:text-gray-800 hover:border-gray-400 text-gray-600">
+                            {/* Скрытый input для выбора файлов */}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                multiple
+                                accept=".dbf"
+                                onChange={handleFileSelect}
+                                className="hidden"
+                            />
+
+                            {/* Кнопка обновления справочных данных */}
+                            <button
+                                onClick={handleImportClick}
+                                disabled={isImporting}
+                                className="px-3 h-[30px] text-[0.900rem] font-medium transition-all duration-200 border border-gray-200 rounded-md disabled:bg-gray-50 disabled:cursor-progress disabled:border-gray-200 hover:bg-gray-50 hover:text-gray-800 hover:border-gray-400 text-gray-600"
+                            >
                                 {isImporting ? (
                                     <>
                                         Обновление справочных данных
@@ -376,7 +399,6 @@ function MaterialsPage() {
                                     </>
                                 )}
                             </button>
-
                         </div>
                     </div>
 
@@ -408,7 +430,7 @@ function MaterialsPage() {
 
                         {viewMode === 'products' && (
                             <>
-                                {/* ТАБЛИЦА ПРОДУКТОВ - используем displayProducts */}
+                                {/* ТАБЛИЦА ПРОДУКТОВ */}
                                 <div className="flex flex-col flex-1 min-h-0">
                                     <div className="mb-1">
                                         <span className="text-sm font-semibold text-gray-700">Продукты</span>
@@ -462,7 +484,7 @@ function MaterialsPage() {
                                     </div>
                                 </div>
 
-                                {/* ТАБЛИЦА МАТЕРИАЛОВ - используем selectedDisplayProduct */}
+                                {/* ТАБЛИЦА МАТЕРИАЛОВ */}
                                 <div className="flex flex-col min-h-[273px] max-h-[308px]">
                                     <div className="mb-1 flex items-center justify-between">
                                         <div>
