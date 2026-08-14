@@ -666,4 +666,9 @@ export default class ScheduleService {
         })
     }
 
+    static async getDailyProductions(startDate) {
+        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/dailyProductions`, {startDate})
+    }
+
+
 }

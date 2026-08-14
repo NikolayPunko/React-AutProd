@@ -13,7 +13,7 @@ export function LeftNavigation() {
             </RoleGuard>
 
             <RoleGuard requiredRoles={['ROLE_SCHEDULER']}>
-                <StringLeftNavigation disabled={false} title="Списание материалов" navigationPath={"/materials"}/>
+                <StringLeftNavigation disabled={false} title="Расчет материалов" navigationPath={"/materials"}/>
             </RoleGuard>
 
             <RoleGuard requiredRoles={['ROLE_EDITOR']}>

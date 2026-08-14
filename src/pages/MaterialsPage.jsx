@@ -487,7 +487,7 @@ function MaterialsPage() {
                                             <tr className="bg-gray-100 text-center text-sm">
                                                 <th className="px-3 w-[25%] py-1.5 font-semibold text-gray-700 border-b border-gray-200">Материал</th>
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Ед. изм.</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма на тону</th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма на тонну</th>
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма по всем продуктам</th>
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Остаток</th>
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Страховой запас</th>
