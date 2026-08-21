@@ -666,9 +666,16 @@ export default class ScheduleService {
         })
     }
 
-    static async getDailyProductions(startDate) {
-        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/dailyProductions`, {startDate})
-    }
-
+    static getDailyProductions(selectedDate, shiftNumber) {
+    return $apiSchedule.get(
+        `${API_URL_SCHEDULER}/schedule/dailyProductions`,
+        {
+            params: {
+                selectedDate,
+                ...(shiftNumber != null ? { shiftNumber } : {})
+            }
+        }
+    );
+}
 
 }
