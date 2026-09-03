@@ -15,7 +15,7 @@ export function ModalDailyProductions({selectDate, onClose, setIsModalNotifyErro
     async function fetchDailyProductions() {
         setLoading(true);
         try {
-            const response = await SchedulerService.getDailyProductions(selectDate)
+            const response = await SchedulerService.getDailyProductions(`${selectDate}T08:00:00`)
             setData(response.data)
         } catch (e) {
             console.error(e)
