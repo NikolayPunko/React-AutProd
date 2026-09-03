@@ -9,8 +9,11 @@ import {ModalNotify} from "../components/modal/ModalNotify";
 import {CustomStyleMaterialSelect} from "../data/styleForSelect";
 import AsyncSelect from "react-select/async";
 import {BlueButton} from "../components/reportsConstruct/buttons/BlueButton";
+import {useNavigate} from "react-router-dom";
 
 function MaterialsPage() {
+
+    const navigate = useNavigate();
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -19,7 +22,7 @@ function MaterialsPage() {
     const [isModalNotify, setIsModalNotify] = useState(false);
 
     const [date, setDate] = useState(() => {
-        const today = new Date("2026-02-15");
+        const today = new Date();
         return today.toISOString().split('T')[0];
     });
     const [kpp, setKpp] = useState('');
@@ -334,7 +337,8 @@ function MaterialsPage() {
                         </div>
                         <div className="flex flex-row gap-5 items-center">
                             <div className="inline-flex items-center h-[30px] border border-gray-200 rounded-md">
-                                <span className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
+                                <span
+                                    className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
                                     Дата:
                                 </span>
                                 <input
@@ -346,7 +350,8 @@ function MaterialsPage() {
                             </div>
 
                             <div className="inline-flex items-center h-[30px] border border-gray-200 rounded-md">
-                                <span className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
+                                <span
+                                    className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
                                     МОЛ:
                                 </span>
                                 <AsyncSelect
@@ -370,6 +375,14 @@ function MaterialsPage() {
                             <BlueButton onClick={handleSave} text={"Сохранить"}
                                         className={"bg-cyan-600 hover:bg-cyan-700"}
                                         icon={"fa-solid fa-floppy-disk text-sm pt-0.5"}/>
+
+                            <button onClick={() => {
+                                navigate('/scheduler', {replace: true})
+                            }}
+                                    className="px-3 mr-1 h-[30px] text-[0.900rem] font-medium transition-all duration-200 border border-gray-200 rounded-md hover:bg-gray-50 hover:text-gray-800 hover:border-gray-400 text-gray-600">
+                                Планировщик
+                                <i className="pl-2 fa-solid fa-chart-gantt"></i>
+                            </button>
 
                             {/* Скрытый input для выбора файлов */}
                             <input
