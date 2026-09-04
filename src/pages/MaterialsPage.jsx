@@ -377,7 +377,7 @@ function MaterialsPage() {
                                         icon={"fa-solid fa-floppy-disk text-sm pt-0.5"}/>
 
                             <button onClick={() => {
-                                navigate('/scheduler', {replace: true})
+                                navigate('/scheduler', {replace: false})
                             }}
                                     className="px-3 mr-1 h-[30px] text-[0.900rem] font-medium transition-all duration-200 border border-gray-200 rounded-md hover:bg-gray-50 hover:text-gray-800 hover:border-gray-400 text-gray-600">
                                 Планировщик
