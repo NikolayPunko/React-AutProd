@@ -318,7 +318,7 @@ function MaterialsPage() {
     return (<>
         <Navigation isHiddenMenu={false} isOpenMenu={false} setOpenMenu={() => {}}/>
         <div className="flex flex-row window-height">
-            <div className="w-[200px] py-2 border-r-2 bg-gray-50 justify-stretch">
+            <div className="hidden lg:block w-[200px] py-2 border-r-2 bg-gray-50 justify-stretch">
                 <LeftNavigation/>
             </div>
             <div className="flex flex-col w-full">
@@ -326,16 +326,16 @@ function MaterialsPage() {
                 {isLoading && <Loading/>}
 
                 {!isLoading && <>
-                    <div className="px-16 pt-6 pb-2">
+                    <div className="px-1 lg:px-16 pt-6 pb-2">
                         <span className="text-2xl font-bold">Расчет материалов в планировщике</span>
                     </div>
 
                     {/* Фильтры */}
-                    <div className="px-24 pb-2">
+                    <div className="px-1 lg:px-24 pb-2">
                         <div className="text-xs text-gray-500 flex items-center gap-2 py-2">
                             Выберите дату и материально ответственное лицо
                         </div>
-                        <div className="flex flex-row gap-5 items-center">
+                        <div className="flex flex-row flex-wrap gap-5 items-center">
                             <div className="inline-flex items-center h-[30px] border border-gray-200 rounded-md">
                                 <span
                                     className="px-3 text-[0.950rem] font-medium text-gray-600 border-r border-gray-200">
@@ -416,7 +416,7 @@ function MaterialsPage() {
                     </div>
 
                     {/* Кнопки переключения режимов */}
-                    <div className="px-24 py-2 flex gap-2">
+                    <div className="px-1 lg:px-24 py-2 flex gap-2">
                         <button
                             className={`px-4 py-1 text-sm font-medium rounded-md transition ${
                                 viewMode === 'products'
@@ -439,7 +439,7 @@ function MaterialsPage() {
                         </button>
                     </div>
 
-                    <div className="px-24 py-2 flex flex-col gap-4 h-[calc(100vh-240px)]">
+                    <div className="px-1 lg:px-24 py-2 flex flex-col gap-4 h-[calc(100vh-240px)]">
 
                         {viewMode === 'products' && (
                             <>

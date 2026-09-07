@@ -5,7 +5,7 @@ import RoleGuard from "../RoleGuard";
 export function LeftNavigation() {
 
     return (
-        <div className="flex flex-wrap lg:flex-col w-full ">
+        <div className="flex flex-wrap flex-col w-full ">
             <StringLeftNavigation disabled={false} title="Отчеты АСУТП" navigationPath={"/"}/>
 
             <RoleGuard requiredRoles={['ROLE_SCHEDULER']}>
