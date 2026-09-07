@@ -451,7 +451,7 @@ function MaterialsPage() {
                                             <span className="ml-2 text-xs text-gray-500">({displayProducts.length})</span>
                                         )}
                                     </div>
-                                    <div className="flex-1 overflow-auto border border-gray-200 rounded-md">
+                                    <div className="flex-1 min-h-[300px] lg:min-h-auto overflow-auto border border-gray-200 rounded-md">
                                         <table className="w-full border-collapse text-center">
                                             <thead className="sticky top-0">
                                             <tr className="bg-gray-100">
@@ -498,7 +498,7 @@ function MaterialsPage() {
                                 </div>
 
                                 {/* ТАБЛИЦА МАТЕРИАЛОВ */}
-                                <div className="flex flex-col min-h-[273px] max-h-[308px]">
+                                <div className="flex flex-col min-h-[300px] lg:min-h-[273px] max-h-[308px]">
                                     <div className="mb-1 flex items-center justify-between">
                                         <div>
                                             <span className="text-sm font-semibold text-gray-700">Материалы</span>
