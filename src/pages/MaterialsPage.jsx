@@ -10,6 +10,7 @@ import {CustomStyleMaterialSelect} from "../data/styleForSelect";
 import AsyncSelect from "react-select/async";
 import {BlueButton} from "../components/reportsConstruct/buttons/BlueButton";
 import {useNavigate} from "react-router-dom";
+import {MaterialsSettings} from "../components/materials/MaterialsSettings";
 
 function MaterialsPage() {
 
@@ -315,6 +316,19 @@ function MaterialsPage() {
         );
     };
 
+    async function fetchMaterials() {
+        try {
+            setIsLoading(true);
+            const response = await MaterialService.getMaterialsByDate(date, kpp);
+
+        } catch (e) {
+            setIsModalError(true);
+            setError(e.response?.data?.message || 'Ошибка загрузки данных');
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
     return (<>
         <Navigation isHiddenMenu={false} isOpenMenu={false} setOpenMenu={() => {}}/>
         <div className="flex flex-row window-height">
@@ -437,6 +451,17 @@ function MaterialsPage() {
                         >
                             По используемым материалам
                         </button>
+
+                        <button
+                            className={`px-4 py-1 text-sm font-medium rounded-md transition ${
+                                viewMode === 'settings'
+                                    ? 'bg-blue-800 text-white hover:bg-blue-700'
+                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                            onClick={() => setViewMode('settings')}
+                        >
+                            Фильтрация материалов
+                        </button>
                     </div>
 
                     <div className="px-1 lg:px-24 py-2 flex flex-col gap-4 h-[calc(100vh-240px)]">
@@ -521,12 +546,22 @@ function MaterialsPage() {
                                             <thead className="sticky top-0">
                                             <tr className="bg-gray-100 text-center text-sm">
                                                 <th className="px-3 w-[25%] py-1.5 font-semibold text-gray-700 border-b border-gray-200">Материал</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Ед. изм.</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма на тонну</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма по всем продуктам</th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Ед.
+                                                    изм.
+                                                </th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма
+                                                    на тонну
+                                                </th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма
+                                                    по всем продуктам
+                                                </th>
                                                 <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Остаток</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Страховой запас</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Округление до тарного места</th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Страховой
+                                                    запас
+                                                </th>
+                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Округление
+                                                    до тарного места
+                                                </th>
                                                 <th className="px-3 w-[10%] py-1.5 font-semibold text-gray-700 border-b border-gray-200">Заказать</th>
                                             </tr>
                                             </thead>
@@ -555,9 +590,12 @@ function MaterialsPage() {
                                                     return (
                                                         <tr key={`${material.kmt}-${index}`}
                                                             className={`border-b border-gray-200 text-sm text-center hover:bg-gray-50 ${isCommon ? 'bg-yellow-50' : ''}`}>
-                                                            <td className="px-3 py-1.5 text-gray-700 text-left truncate " title={`${material.snmMt} ${material.kmt}`}>
+                                                            <td className="px-3 py-1.5 text-gray-700 text-left truncate "
+                                                                title={`${material.snmMt} ${material.kmt}`}>
                                                                 {isCommon && (
-                                                                    <span className="mr-1 text-yellow-400 font-medium pr-1" title="Используется в нескольких продуктах">
+                                                                    <span
+                                                                        className="mr-1 text-yellow-400 font-medium pr-1"
+                                                                        title="Используется в нескольких продуктах">
                                                                         <i className="fa-solid fa-triangle-exclamation"></i>
                                                                     </span>
                                                                 )}
@@ -654,6 +692,12 @@ function MaterialsPage() {
                                 </div>
                             </div>
                         )}
+
+                        {viewMode === 'settings' && (
+                            <MaterialsSettings date={date} kpp={kpp}/>
+                        )}
+
+
                     </div>
                 </>}
 

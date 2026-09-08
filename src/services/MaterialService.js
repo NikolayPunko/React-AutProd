@@ -90,4 +90,14 @@ export default class MaterialService {
             }
         });
     }
+
+    static getMaterialsSettings(date, kpp) {
+        return $api.get(`${API_URL_SCHEDULER}/api/material/settings`, {
+            params: { date, kpp }
+        });
+    }
+
+    static saveMaterialsSettings(settings) {
+        return $api.put(`${API_URL_SCHEDULER}/api/material/settings`, settings);
+    }
 }
