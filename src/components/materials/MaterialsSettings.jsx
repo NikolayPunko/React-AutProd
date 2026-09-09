@@ -4,11 +4,12 @@ import { ModalNotifyError } from "../modal/ModalNotifyError";
 import { ModalNotify } from "../modal/ModalNotify";
 import Loading from "../loading/Loading";
 import { BlueButton } from "../reportsConstruct/buttons/BlueButton";
+import {tr} from "date-fns/locale/tr";
 
-export function MaterialsSettings({ date, kpp }) {
+export function MaterialsSettings({ date, kpp, updateData, recalcTriger}) {
     const [materials, setMaterials] = useState([]);
     const [original, setOriginal] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(tr);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [msg, setMsg] = useState("");
@@ -82,7 +83,7 @@ export function MaterialsSettings({ date, kpp }) {
             setSaving(true);
             await MaterialService.saveMaterialsSettings(materials);
             setOriginal(JSON.parse(JSON.stringify(materials)));
-            setMsg('Сохранено');
+            setMsg('Выбор материалов сохранен.');
             setModalNotify(true);
         } catch (e) {
             setError(e.response?.data?.message || 'Ошибка сохранения');
@@ -90,6 +91,8 @@ export function MaterialsSettings({ date, kpp }) {
             setMaterials(JSON.parse(JSON.stringify(original)));
         } finally {
             setSaving(false);
+            await updateData();
+            recalcTriger()
         }
     };
 
