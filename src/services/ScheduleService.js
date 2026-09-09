@@ -531,7 +531,7 @@ export default class ScheduleService {
     }
 
     static async init(startDate) {
-        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/init`, {startDate})
+        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule`, { startDate })
     }
 
     static async getPlan() {
@@ -643,15 +643,15 @@ export default class ScheduleService {
     }
 
     static async getVersionList(startDate) {
-        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/versionsByDate`, {startDate})
+        return $apiSchedule.get(`${API_URL_SCHEDULER}/schedule/versions`, { params: { startDate } })
     }
 
     static async saveVersion(startDate, version) {
-        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/saveVersion`, {startDate, version})
+        return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/versions`, { startDate, version })
     }
 
     static async initVersion(startDate, version) {
-        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/initVersion`, {startDate, version})
+        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/versions`, { startDate, version })
     }
 
     static async getDowntimePeriodsByIdBatch(idBatch) {
