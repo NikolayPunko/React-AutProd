@@ -627,11 +627,11 @@ export default class ScheduleService {
     }
 
     static async determineFactPlace(snpz) {
-        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/findPlaceFact`, {snpz})
+        return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/facts/place`, { snpz })
     }
 
     static async determineCameraFact(snpz) {
-        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/findCameraFact`, {snpz})
+        return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/facts/camera`, { snpz })
     }
 
     static async updateDelayJob(lineId, index, delayNote) {
