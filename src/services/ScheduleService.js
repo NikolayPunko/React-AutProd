@@ -655,13 +655,14 @@ export default class ScheduleService {
     }
 
     static async getUserLogReport(from, to) {
-        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/userLogReport`, {from, to}, {
+        return $apiSchedule.get(`${API_URL_SCHEDULER}/schedule/reports/userLog`, {
+            params: { from, to },
             responseType: 'blob'
         })
     }
 
     static async getCleaningReport(from, to) {
-        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/cleaningReport`, {from, to}, {
+        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/reports/cleaning`, { from, to }, {
             responseType: 'blob'
         })
     }
