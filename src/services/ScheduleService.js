@@ -559,7 +559,7 @@ export default class ScheduleService {
     }
 
     static async analyze() {
-        return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/analyze`, {})
+        return $apiSchedule.get(`${API_URL_SCHEDULER}/schedule/analyze`)
     }
 
     static async pinItem(lineId, pinCount) {
