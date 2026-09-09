@@ -563,7 +563,7 @@ export default class ScheduleService {
     }
 
     static async pinItem(lineId, pinCount) {
-        return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/lines/pin`, { lineId, pinCount })
+        return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/line/pin`, { lineId, pinCount })
     }
 
     static async moveJobs(fromLineId, toLineId, fromIndex, count, insertIndex) {
@@ -615,11 +615,11 @@ export default class ScheduleService {
     }
 
     static async updateMaxEndDateTime(lineId, lineMaxEndDateTime) {
-        return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/lines/maxEnd`, { lineId, lineMaxEndDateTime })
+        return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/line/maxEnd`, { lineId, lineMaxEndDateTime })
     }
 
     static async updateLineStart(lineId, startLineDateTime) {
-        return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/lines/start`, { lineId, startLineDateTime })
+        return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/line/start`, { lineId, startLineDateTime })
     }
 
     static async reloadDirectory() {
