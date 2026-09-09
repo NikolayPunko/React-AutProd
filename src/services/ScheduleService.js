@@ -635,11 +635,11 @@ export default class ScheduleService {
     }
 
     static async updateDelayJob(lineId, index, delayNote) {
-        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/delayNote`, {lineId, index, delayNote})
+        return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/notes`, { lineId, index, delayNote })
     }
 
     static async updateDelayCleaning(lineId, index, delayNote) {
-        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/cleaningDelay`, {lineId, index, delayNote})
+        return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/notes/cleaning`, { lineId, index, delayNote })
     }
 
     static async getVersionList(startDate) {
