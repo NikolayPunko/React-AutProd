@@ -567,7 +567,7 @@ export default class ScheduleService {
     }
 
     static async moveJobs(fromLineId, toLineId, fromIndex, count, insertIndex) {
-        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/moveJobs`, {fromLineId, toLineId, fromIndex, count, insertIndex})
+        return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/moveJobs`, { fromLineId, toLineId, fromIndex, count, insertIndex })
     }
 
     static async sortRangeScheduler(fromIndex, sortCount, lineId, sortUp) {
@@ -611,7 +611,7 @@ export default class ScheduleService {
     }
 
     static async reloadPlan(selection) {
-        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/selection`, {selection})
+        return $apiSchedule.put(`${API_URL_SCHEDULER}/schedule/selection`, { selection })
     }
 
     static async updateMaxEndDateTime(lineId, lineMaxEndDateTime) {
