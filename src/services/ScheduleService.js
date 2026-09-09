@@ -599,7 +599,11 @@ export default class ScheduleService {
     }
 
     static async alignPlan() {
-        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/alignPlan`, {})
+        return $apiSchedule.post(`${API_URL_SCHEDULER}/schedule/alignment`, {})
+    }
+
+    static async resetAlign() {
+        return $apiSchedule.delete(`${API_URL_SCHEDULER}/schedule/alignment`)
     }
 
     static async dailyCleaning() {
