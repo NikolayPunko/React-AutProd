@@ -481,173 +481,177 @@ function MaterialsPage() {
 
                         {isLoading && <Loading/>}
 
-                        {viewMode === 'products' && (
+                        {!isLoading &&
                             <>
-                                {/* ТАБЛИЦА ПРОДУКТОВ */}
-                                <div className="flex flex-col flex-1 min-h-0">
-                                    <div className="mb-1">
-                                        <span className="text-sm font-semibold text-gray-700">Продукты</span>
-                                        {displayProducts.length > 0 && (
-                                            <span
-                                                className="ml-2 text-xs text-gray-500">({displayProducts.length})</span>
-                                        )}
-                                    </div>
-                                    <div
-                                        className="flex-1 min-h-[300px] lg:min-h-auto overflow-auto border border-gray-200 rounded-md">
-                                        <table className="w-full border-collapse text-center">
-                                            <thead className="sticky top-0">
-                                            <tr className="bg-gray-100">
-                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Товар</th>
-                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Масса,
-                                                    кг
-                                                </th>
-                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Единиц</th>
-                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">EAN13</th>
-                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Тара</th>
-                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Емкость</th>
-                                                <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Материалов</th>
-                                            </tr>
-                                            </thead>
-                                            <tbody>
-                                            {displayProducts.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan={8}
-                                                        className="px-4 py-8 text-center text-gray-400 text-sm">
-                                                        Нет данных. Выберите дату и цех, нажмите "Загрузить".
-                                                    </td>
-                                                </tr>
-                                            ) : (
-                                                displayProducts.map((product) => (
-                                                    <tr
-                                                        key={product.kmc}
-                                                        className={`border-b border-gray-200 text-sm cursor-pointer ${
-                                                            selectedProduct?.kmc === product.kmc ? 'bg-blue-800 text-white' : ' text-gray-700 hover:bg-gray-100'
-                                                        }`}
-                                                        onClick={() => handleProductSelect(product)}
-                                                    >
-                                                        <td className="px-4 py-2 truncate max-w-[200px] text-left"
-                                                            title={product.name?.trim() + "  " + product.kmc}>
-                                                            {product.krkmc + " " + product.name?.trim()}
-                                                        </td>
-                                                        <td className="px-4 py-2">{product.sumMass?.toFixed(0)}</td>
-                                                        <td className="px-4 py-2">{product.sumKolev?.toFixed(0)}</td>
-                                                        <td className="px-4 py-2">{product.ean13}</td>
-                                                        <td className="px-4 py-2">{product.kt || '—'}</td>
-                                                        <td className="px-4 py-2">{product.emk !== undefined && product.emk !== null ? product.emk.toFixed(1) : '—'}</td>
-                                                        <td className="px-4 py-2">{product.materials?.length || 0}</td>
+                                {viewMode === 'products' && (
+                                    <>
+                                        {/* ТАБЛИЦА ПРОДУКТОВ */}
+                                        <div className="flex flex-col flex-1 min-h-0">
+                                            <div className="mb-1">
+                                                <span className="text-sm font-semibold text-gray-700">Продукты</span>
+                                                {displayProducts.length > 0 && (
+                                                    <span
+                                                        className="ml-2 text-xs text-gray-500">({displayProducts.length})</span>
+                                                )}
+                                            </div>
+                                            <div
+                                                className="flex-1 min-h-[300px] lg:min-h-auto overflow-auto border border-gray-200 rounded-md">
+                                                <table className="w-full border-collapse text-center">
+                                                    <thead className="sticky top-0">
+                                                    <tr className="bg-gray-100">
+                                                        <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Товар</th>
+                                                        <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Масса,
+                                                            кг
+                                                        </th>
+                                                        <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Единиц</th>
+                                                        <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">EAN13</th>
+                                                        <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Тара</th>
+                                                        <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Емкость</th>
+                                                        <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Материалов</th>
                                                     </tr>
-                                                ))
-                                            )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                {/* ТАБЛИЦА МАТЕРИАЛОВ */}
-                                <div className="flex flex-col min-h-[300px] lg:min-h-[273px] max-h-[308px]">
-                                    <div className="mb-1 flex items-center justify-between">
-                                        <div>
-                                            <span className="text-sm font-semibold text-gray-700">Материалы</span>
-                                            {selectedProduct && (
-                                                <span
-                                                    className="ml-2 text-xs text-gray-500">{selectedProduct.name?.trim()}</span>
-                                            )}
-                                            {selectedDisplayProduct?.materials?.length > 0 && (
-                                                <span
-                                                    className="ml-1 text-xs text-gray-500">({selectedDisplayProduct.materials.length})</span>
-                                            )}
+                                                    </thead>
+                                                    <tbody>
+                                                    {displayProducts.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan={8}
+                                                                className="px-4 py-8 text-center text-gray-400 text-sm">
+                                                                Нет данных. Выберите дату и цех, нажмите "Загрузить".
+                                                            </td>
+                                                        </tr>
+                                                    ) : (
+                                                        displayProducts.map((product) => (
+                                                            <tr
+                                                                key={product.kmc}
+                                                                className={`border-b border-gray-200 text-sm cursor-pointer ${
+                                                                    selectedProduct?.kmc === product.kmc ? 'bg-blue-800 text-white' : ' text-gray-700 hover:bg-gray-100'
+                                                                }`}
+                                                                onClick={() => handleProductSelect(product)}
+                                                            >
+                                                                <td className="px-4 py-2 truncate max-w-[200px] text-left"
+                                                                    title={product.name?.trim() + "  " + product.kmc}>
+                                                                    {product.krkmc + " " + product.name?.trim()}
+                                                                </td>
+                                                                <td className="px-4 py-2">{product.sumMass?.toFixed(0)}</td>
+                                                                <td className="px-4 py-2">{product.sumKolev?.toFixed(0)}</td>
+                                                                <td className="px-4 py-2">{product.ean13}</td>
+                                                                <td className="px-4 py-2">{product.kt || '—'}</td>
+                                                                <td className="px-4 py-2">{product.emk !== undefined && product.emk !== null ? product.emk.toFixed(1) : '—'}</td>
+                                                                <td className="px-4 py-2">{product.materials?.length || 0}</td>
+                                                            </tr>
+                                                        ))
+                                                    )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
-                                        <div className="text-xs text-gray-500 flex items-center gap-2">
+
+                                        {/* ТАБЛИЦА МАТЕРИАЛОВ */}
+                                        <div className="flex flex-col min-h-[300px] lg:min-h-[273px] max-h-[308px]">
+                                            <div className="mb-1 flex items-center justify-between">
+                                                <div>
+                                                    <span className="text-sm font-semibold text-gray-700">Материалы</span>
+                                                    {selectedProduct && (
+                                                        <span
+                                                            className="ml-2 text-xs text-gray-500">{selectedProduct.name?.trim()}</span>
+                                                    )}
+                                                    {selectedDisplayProduct?.materials?.length > 0 && (
+                                                        <span
+                                                            className="ml-1 text-xs text-gray-500">({selectedDisplayProduct.materials.length})</span>
+                                                    )}
+                                                </div>
+                                                <div className="text-xs text-gray-500 flex items-center gap-2">
                                             <span className="flex items-center gap-1">
                                                 <span className="text-yellow-400 text-sm"><i
                                                     className="fa-solid fa-triangle-exclamation"></i></span>
                                                 <span>— материал используется в нескольких продуктах</span>
                                             </span>
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 overflow-auto border border-gray-200 rounded-md">
-                                        <table className="w-full border-collapse">
-                                            <thead className="sticky top-0">
-                                            <tr className="bg-gray-100 text-center text-sm">
-                                                <th className="px-3 w-[25%] py-1.5 font-semibold text-gray-700 border-b border-gray-200">Материал</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Ед.
-                                                    изм.
-                                                </th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма
-                                                    на тонну
-                                                </th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма
-                                                    по всем продуктам
-                                                </th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Остаток</th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Страховой
-                                                    запас
-                                                </th>
-                                                <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Округление
-                                                    до тарного места
-                                                </th>
-                                                <th className="px-3 w-[10%] py-1.5 font-semibold text-gray-700 border-b border-gray-200">Заказать</th>
-                                            </tr>
-                                            </thead>
-                                            <tbody>
-                                            {!selectedDisplayProduct ? (
-                                                <tr>
-                                                    <td colSpan={9}
-                                                        className="px-3 py-8 text-center text-gray-400 text-sm">
-                                                        Выберите продукт, чтобы увидеть материалы
-                                                    </td>
-                                                </tr>
-                                            ) : selectedDisplayProduct.materials?.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan={9}
-                                                        className="px-3 py-8 text-center text-gray-400 text-sm">
-                                                        Нет материалов для этого продукта
-                                                    </td>
-                                                </tr>
-                                            ) : (
-                                                selectedDisplayProduct.materials?.map((material, index) => {
-                                                    const isCommon = material.productCount > 1;
-                                                    const totalNormf = typeof material.totalNormf === 'number' ? material.totalNormf : parseFloat(material.totalNormf) || 0;
-                                                    const norm = typeof material.norm === 'number' ? material.norm : parseFloat(material.norm) || 0;
-                                                    const order = typeof material.order === 'number' ? material.order : parseFloat(material.order) || 0;
-                                                    const insurancePerc = material.insurancePerc || 0;
-                                                    const roundStep = material.roundStep || 1;
-
-                                                    return (
-                                                        <tr key={`${material.kmt}-${index}`}
-                                                            className={`border-b border-gray-200 text-sm text-center hover:bg-gray-50 ${isCommon ? 'bg-yellow-50' : ''}`}>
-                                                            <td className="px-3 py-1.5 text-gray-700 text-left truncate "
-                                                                title={`${material.snmMt} ${material.kmt}`}>
-                                                                {isCommon && (
-                                                                    <span
-                                                                        className="mr-1 text-yellow-400 font-medium pr-1"
-                                                                        title="Используется в нескольких продуктах">
-                                                                        <i className="fa-solid fa-triangle-exclamation"></i>
-                                                                    </span>
-                                                                )}
-                                                                {`${material.snmMt}`}
-                                                            </td>
-                                                            <td className="px-3 py-1.5 text-gray-700">{material.eduMt}</td>
-                                                            <td className="px-3 py-1.5 text-gray-700">{norm.toFixed(2)}</td>
-                                                            <td className="px-3 py-1.5 text-gray-700">{`${totalNormf.toFixed(2)} ${material.eduMt}`}</td>
-                                                            <td className="px-3 py-1.5 text-gray-700">
-                                                                {renderKolfInput(material.kmt, material.kolf || 0)}
-                                                            </td>
-                                                            <td className="px-3 py-1.5 text-gray-700">{insurancePerc}%</td>
-                                                            <td className="px-3 py-1.5 text-gray-700">{roundStep}</td>
-                                                            <td className="px-3 py-1.5 text-gray-700 font-bold">
-                                                                {`${order.toFixed(2)} ${material.eduMt}`}
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 overflow-auto border border-gray-200 rounded-md">
+                                                <table className="w-full border-collapse">
+                                                    <thead className="sticky top-0">
+                                                    <tr className="bg-gray-100 text-center text-sm">
+                                                        <th className="px-3 w-[25%] py-1.5 font-semibold text-gray-700 border-b border-gray-200">Материал</th>
+                                                        <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Ед.
+                                                            изм.
+                                                        </th>
+                                                        <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма
+                                                            на тонну
+                                                        </th>
+                                                        <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Норма
+                                                            по всем продуктам
+                                                        </th>
+                                                        <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Остаток</th>
+                                                        <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Страховой
+                                                            запас
+                                                        </th>
+                                                        <th className="px-3 py-1.5 font-semibold text-gray-700 border-b border-gray-200">Округление
+                                                            до тарного места
+                                                        </th>
+                                                        <th className="px-3 w-[10%] py-1.5 font-semibold text-gray-700 border-b border-gray-200">Заказать</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    {!selectedDisplayProduct ? (
+                                                        <tr>
+                                                            <td colSpan={9}
+                                                                className="px-3 py-8 text-center text-gray-400 text-sm">
+                                                                Выберите продукт, чтобы увидеть материалы
                                                             </td>
                                                         </tr>
-                                                    );
-                                                })
-                                            )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                                                    ) : selectedDisplayProduct.materials?.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan={9}
+                                                                className="px-3 py-8 text-center text-gray-400 text-sm">
+                                                                Нет материалов для этого продукта
+                                                            </td>
+                                                        </tr>
+                                                    ) : (
+                                                        selectedDisplayProduct.materials?.map((material, index) => {
+                                                            const isCommon = material.productCount > 1;
+                                                            const totalNormf = typeof material.totalNormf === 'number' ? material.totalNormf : parseFloat(material.totalNormf) || 0;
+                                                            const norm = typeof material.norm === 'number' ? material.norm : parseFloat(material.norm) || 0;
+                                                            const order = typeof material.order === 'number' ? material.order : parseFloat(material.order) || 0;
+                                                            const insurancePerc = material.insurancePerc || 0;
+                                                            const roundStep = material.roundStep || 1;
+
+                                                            return (
+                                                                <tr key={`${material.kmt}-${index}`}
+                                                                    className={`border-b border-gray-200 text-sm text-center hover:bg-gray-50 ${isCommon ? 'bg-yellow-50' : ''}`}>
+                                                                    <td className="px-3 py-1.5 text-gray-700 text-left truncate "
+                                                                        title={`${material.snmMt} ${material.kmt}`}>
+                                                                        {isCommon && (
+                                                                            <span
+                                                                                className="mr-1 text-yellow-400 font-medium pr-1"
+                                                                                title="Используется в нескольких продуктах">
+                                                                        <i className="fa-solid fa-triangle-exclamation"></i>
+                                                                    </span>
+                                                                        )}
+                                                                        {`${material.snmMt}`}
+                                                                    </td>
+                                                                    <td className="px-3 py-1.5 text-gray-700">{material.eduMt}</td>
+                                                                    <td className="px-3 py-1.5 text-gray-700">{norm.toFixed(2)}</td>
+                                                                    <td className="px-3 py-1.5 text-gray-700">{`${totalNormf.toFixed(2)} ${material.eduMt}`}</td>
+                                                                    <td className="px-3 py-1.5 text-gray-700">
+                                                                        {renderKolfInput(material.kmt, material.kolf || 0)}
+                                                                    </td>
+                                                                    <td className="px-3 py-1.5 text-gray-700">{insurancePerc}%</td>
+                                                                    <td className="px-3 py-1.5 text-gray-700">{roundStep}</td>
+                                                                    <td className="px-3 py-1.5 text-gray-700 font-bold">
+                                                                        {`${order.toFixed(2)} ${material.eduMt}`}
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })
+                                                    )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </>
-                        )}
+                        }
 
                         {!isLoading &&
                             <>
