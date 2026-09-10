@@ -5,7 +5,7 @@ import { ModalNotify } from "../modal/ModalNotify";
 import Loading from "../loading/Loading";
 import { BlueButton } from "../reportsConstruct/buttons/BlueButton";
 
-export function MaterialsSettings({ date, kpp, updateData, recalcTriger}) {
+export function MaterialsSettings({ date, kpp, updateData, recalcTriger }) {
     const [materials, setMaterials] = useState([]);
     const [original, setOriginal] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -38,10 +38,19 @@ export function MaterialsSettings({ date, kpp, updateData, recalcTriger}) {
         fetchData();
     }, [fetchData]);
 
-    const hasChanges = useMemo(
-        () => JSON.stringify(materials) !== JSON.stringify(original),
-        [materials, original]
-    );
+    const hasChanges = useMemo(() => {
+        if (materials.length !== original.length) return true;
+
+        return materials.some((m, i) => {
+            const o = original[i];
+            return (
+                m.kmt !== o.kmt ||
+                m.inCalc !== o.inCalc ||
+                Number(m.pers ?? 0) !== Number(o.pers ?? 0) ||
+                Number(m.rnd ?? 0) !== Number(o.rnd ?? 0)
+            );
+        });
+    }, [materials, original]);
 
     const filtered = useMemo(() => {
         let result = materials;
@@ -71,6 +80,25 @@ export function MaterialsSettings({ date, kpp, updateData, recalcTriger}) {
         setMaterials(prev => prev.map(m => ({ ...m, inCalc: value })));
     };
 
+    const handleNumberChange = (kmt, field, rawValue) => {
+        const parsed = rawValue === '' ? 0 : Number(rawValue);
+        const finalValue = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+
+        setMaterials(prev => prev.map(m =>
+            m.kmt === kmt ? { ...m, [field]: finalValue } : m
+        ));
+    };
+
+    const handleNumberKeyDown = (e) => {
+        if (['-', '+', 'e', 'E'].includes(e.key)) {
+            e.preventDefault();
+        }
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.target.blur();
+        }
+    };
+
     const save = async () => {
         if (!hasChanges) {
             setMsg('Нет изменений');
@@ -91,7 +119,7 @@ export function MaterialsSettings({ date, kpp, updateData, recalcTriger}) {
         } finally {
             setSaving(false);
             await updateData();
-            recalcTriger()
+            recalcTriger();
         }
     };
 
@@ -201,52 +229,86 @@ export function MaterialsSettings({ date, kpp, updateData, recalcTriger}) {
             </div>
 
             {/* Таблица */}
-            <div className=" bg-white border rounded overflow-hidden w-fit min-w-[60%]">
+            <div className="bg-white border rounded overflow-hidden w-fit min-w-[80%]">
                 <div className="h-full overflow-auto">
                     <table className="w-full">
                         <thead className="sticky top-0 bg-gray-50">
                         <tr className="text-left text-sm">
-                            <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200 w-12">
-                                №
-                            </th>
-                            <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200 w-28">
-                                Код
-                            </th>
-                            <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">
-                                Наименование
-                            </th>
-                            <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200 w-20 text-center">
-                                Ед. изм.
-                            </th>
-                            <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200 w-32 text-center">
-                                В расчете
-                            </th>
+                            <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">№</th>
+                            <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Код</th>
+                            <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200">Наименование</th>
+                            <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200 text-center">Страховой запас</th>
+                            <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200 text-center">Округление до</th>
+                            <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200 text-center">Ед. изм.</th>
+                            <th className="px-4 py-1.5 text-sm font-semibold text-gray-700 border-b border-gray-200 text-center">В расчете</th>
                         </tr>
                         </thead>
                         <tbody>
                         {filtered.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="px-4 py-8 text-center text-gray-400 text-sm">
+                                <td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-sm">
                                     {materials.length === 0 ? 'Нет данных' : 'Ничего не найдено'}
                                 </td>
                             </tr>
                         ) : (
                             filtered.map((item, idx) => {
-                                const changed = original.find(m => m.kmt === item.kmt)?.inCalc !== item.inCalc;
+                                const origItem = original.find(m => m.kmt === item.kmt);
+                                const isPersChanged = origItem && Number(origItem.pers ?? 0) !== Number(item.pers ?? 0);
+                                const isRndChanged = origItem && Number(origItem.rnd ?? 0) !== Number(item.rnd ?? 0);
+                                const isInCalcChanged = origItem && origItem.inCalc !== item.inCalc;
+                                const isChanged = isPersChanged || isRndChanged || isInCalcChanged;
+
                                 return (
-                                    <tr key={item.kmt} className={`border-b border-gray-200 hover:bg-gray-50 ${changed ? 'bg-blue-50' : ''}`}>
+                                    <tr
+                                        key={item.kmt}
+                                        className={`border-b border-gray-200 hover:bg-gray-50`}
+                                    >
                                         <td className="px-4 py-2 text-sm text-gray-500">{idx + 1}</td>
                                         <td className="px-4 py-2 text-sm font-mono text-gray-700">{item.kmt}</td>
                                         <td className="px-4 py-2 text-sm text-gray-700">{item.snm || item.kmt}</td>
+                                        <td className={`px-4 py-1.5 text-center`}>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                value={item.pers ?? 0}
+                                                onChange={(e) => handleNumberChange(item.kmt, 'pers', e.target.value)}
+                                                onKeyDown={handleNumberKeyDown}
+                                                disabled={saving}
+                                                className={`w-24 px-1.5 py-0.5 text-sm text-center font-semibold border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                                                    isPersChanged
+                                                        ? 'text-blue-800'
+                                                        : 'border-gray-200 text-gray-700'
+                                                } disabled:opacity-50 disabled:bg-gray-50`}
+                                            />
+                                        </td>
+                                        <td className={`px-4 py-1.5 text-center`}>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                value={item.rnd ?? 0}
+                                                onChange={(e) => handleNumberChange(item.kmt, 'rnd', e.target.value)}
+                                                onKeyDown={handleNumberKeyDown}
+                                                disabled={saving}
+                                                className={`w-24 px-1.5 py-0.5 text-sm text-center font-semibold border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                                                    isRndChanged
+                                                        ? 'text-blue-800'
+                                                        : 'border-gray-200 text-gray-700'
+                                                } disabled:opacity-50 disabled:bg-gray-50`}
+                                            />
+                                        </td>
                                         <td className="px-4 py-2 text-sm text-gray-500 text-center">{item.edu || '—'}</td>
                                         <td className="px-4 py-2 text-center">
-                                            <input
-                                                type="checkbox"
-                                                checked={item.inCalc}
-                                                onChange={() => toggle(item.kmt)}
-                                                disabled={saving}
-                                                className="w-4 h-4 rounded focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                                            />
+                                            <div className={`w-6 h-6 ${isChanged ? 'bg-blue-100 rounded' : ''}`}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={item.inCalc}
+                                                    onChange={() => toggle(item.kmt)}
+                                                    disabled={saving}
+                                                    className="w-4 h-4 mt-1 rounded  focus:ring-blue-500 disabled:opacity-50"
+                                                />
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -257,8 +319,8 @@ export function MaterialsSettings({ date, kpp, updateData, recalcTriger}) {
                 </div>
             </div>
 
-            {modalError && <ModalNotifyError title="Ошибка" message={error} onClose={() => setModalError(false)} />}
-            {modalNotify && <ModalNotify title="Результат" message={msg} onClose={() => setModalNotify(false)} />}
+            {modalError && <ModalNotifyError title="Ошибка" message={error} onClose={() => setModalError(false)}/>}
+            {modalNotify && <ModalNotify title="Результат" message={msg} onClose={() => setModalNotify(false)}/>}
         </div>
     );
 }

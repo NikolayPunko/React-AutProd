@@ -93,7 +93,7 @@ export default class MaterialService {
 
     static getMaterialsSettings(date, kpp) {
         return $api.get(`${API_URL_SCHEDULER}/api/material/settings`, {
-            params: { date, kpp }
+            params: { date }
         });
     }
 
