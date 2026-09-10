@@ -26,14 +26,21 @@ function MaterialsPage() {
         const today = new Date();
         return today.toISOString().split('T')[0];
     });
-    const [kpp, setKpp] = useState('');
+
+    const DEFAULT_KPP = `${process.env.REACT_APP_KPP}`;
+    const DEFAULT_KPP_LABEL = `${process.env.REACT_APP_KPP_LABEL}`;
+
+    const [kpp, setKpp] = useState(DEFAULT_KPP);
 
     const [products, setProducts] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [viewMode, setViewMode] = useState('products');
 
     const [updatingKolf, setUpdatingKolf] = useState(null);
-    const [selectedKpp, setSelectedKpp] = useState(null);
+    const [selectedKpp, setSelectedKpp] = useState({
+        value: DEFAULT_KPP,
+        label: DEFAULT_KPP_LABEL
+    });
 
     const [isImporting, setIsImporting] = useState(false);
 
@@ -75,7 +82,11 @@ function MaterialsPage() {
             callback([]);
             return;
         }
-
+        // {"kpp":"01022003","snm":"Русина В.И. (ЦМП Бер)"}
+        // {
+        //     value: "01022003",
+        //         label: "Русина В.И. (ЦМП Бер)"
+        // }
         try {
             const response = await MaterialService.searchRecipients(inputValue);
             const options = response.data.map(item => ({
@@ -390,7 +401,12 @@ function MaterialsPage() {
                                     noOptionsMessage={() => "Ничего не найдено"}
                                     loadingMessage={() => "Загрузка..."}
                                     cacheOptions={true}
-                                    defaultOptions={false}
+                                    defaultOptions={[{
+                                        value: DEFAULT_KPP,
+                                        label: DEFAULT_KPP_LABEL
+                                    }]}
+                                    defaultValue={DEFAULT_KPP}
+                                    defaultInputValue={DEFAULT_KPP_LABEL}
                                 />
                             </div>
 

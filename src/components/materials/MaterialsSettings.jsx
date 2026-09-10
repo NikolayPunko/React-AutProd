@@ -4,12 +4,11 @@ import { ModalNotifyError } from "../modal/ModalNotifyError";
 import { ModalNotify } from "../modal/ModalNotify";
 import Loading from "../loading/Loading";
 import { BlueButton } from "../reportsConstruct/buttons/BlueButton";
-import {tr} from "date-fns/locale/tr";
 
 export function MaterialsSettings({ date, kpp, updateData, recalcTriger}) {
     const [materials, setMaterials] = useState([]);
     const [original, setOriginal] = useState([]);
-    const [loading, setLoading] = useState(tr);
+    const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [msg, setMsg] = useState("");
