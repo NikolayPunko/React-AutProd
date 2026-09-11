@@ -675,5 +675,4 @@ export default class ScheduleService {
         return $apiSchedule.get(`${API_URL_SCHEDULER}/schedule/dailyProductions?shiftStart=` + shiftStart)
     }
 
-
 }
