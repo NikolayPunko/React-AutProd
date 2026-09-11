@@ -432,24 +432,24 @@ function MaterialsPage() {
                                 className="hidden"
                             />
 
-                            {/* Кнопка обновления справочных данных */}
-                            <button
-                                onClick={handleImportClick}
-                                disabled={isImporting}
-                                className="px-3 h-[30px] text-[0.900rem] font-medium transition-all duration-200 border border-gray-200 rounded-md disabled:bg-gray-50 disabled:cursor-progress disabled:border-gray-200 hover:bg-gray-50 hover:text-gray-800 hover:border-gray-400 text-gray-600"
-                            >
-                                {isImporting ? (
-                                    <>
-                                        Обновление справочных данных
-                                        <i className="fa-solid text-blue-800 fa-spinner fa-spin ml-2"></i>
-                                    </>
-                                ) : (
-                                    <>
-                                        Обновить справочные данные
-                                        <i className="pl-2 fa-solid fa-cloud-arrow-down"></i>
-                                    </>
-                                )}
-                            </button>
+                            {/*/!* Кнопка обновления справочных данных *!/*/}
+                            {/*<button*/}
+                            {/*    onClick={handleImportClick}*/}
+                            {/*    disabled={isImporting}*/}
+                            {/*    className="px-3 h-[30px] text-[0.900rem] font-medium transition-all duration-200 border border-gray-200 rounded-md disabled:bg-gray-50 disabled:cursor-progress disabled:border-gray-200 hover:bg-gray-50 hover:text-gray-800 hover:border-gray-400 text-gray-600"*/}
+                            {/*>*/}
+                            {/*    {isImporting ? (*/}
+                            {/*        <>*/}
+                            {/*            Обновление справочных данных*/}
+                            {/*            <i className="fa-solid text-blue-800 fa-spinner fa-spin ml-2"></i>*/}
+                            {/*        </>*/}
+                            {/*    ) : (*/}
+                            {/*        <>*/}
+                            {/*            Обновить справочные данные*/}
+                            {/*            <i className="pl-2 fa-solid fa-cloud-arrow-down"></i>*/}
+                            {/*        </>*/}
+                            {/*    )}*/}
+                            {/*</button>*/}
                         </div>
                     </div>
 
